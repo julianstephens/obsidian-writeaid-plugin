@@ -125,7 +125,7 @@ function parseFrontmatter(content: string): ProjectMetadata | null {
       
       // Parse numbers
       // Only parse as number if the entire value is a valid number
-      if (Number.isFinite(Number(value))) {
+      if (/^-?\d+(\.\d+)?$/.test(value)) {
         value = Number(value);
       }
       // Remove quotes from strings
