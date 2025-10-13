@@ -89,11 +89,7 @@ export async function updateMetaStats(
 
   // Apply optional metadata updates
   if (options) {
-    Object.entries(options).forEach(([key, value]) => {
-      if (value !== undefined) {
-        (metadata as any)[key] = value;
-      }
-    });
+    Object.assign(metadata, options);
   }
 
   // Calculate optional statistics
