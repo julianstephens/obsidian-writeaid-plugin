@@ -110,7 +110,7 @@ function parseFrontmatter(content: string): ProjectMetadata | null {
   }
 
   const yamlContent = fmMatch[1];
-  const metadata: any = {};
+  const metadata: Partial<ProjectMetadata> = {};
 
   const lines = yamlContent.split('\n');
   for (const line of lines) {
