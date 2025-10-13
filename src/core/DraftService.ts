@@ -1,8 +1,8 @@
 import { App, Notice, TFolder } from 'obsidian';
 import { WriteAidSettings } from '../types';
+import { updateMetaStats } from './meta';
 import { TemplateService } from './TemplateService';
 import { slugifyDraftName } from './utils';
-import { updateMetaStats } from './meta';
 
 export class DraftService {
   app: App;

@@ -1,9 +1,9 @@
 import { App, Notice, TFile } from "obsidian";
 import { DraftService } from './core/DraftService';
+import { updateMetaStats } from './core/meta';
 import { ProjectService } from './core/ProjectService';
 import { TemplateService } from './core/TemplateService';
 import { PluginLike, WriteAidSettings } from './types';
-import { updateMetaStats } from './core/meta';
 
 import { ConfirmExistingProjectModal } from './ui/modals/ConfirmExistingProjectModal';
 import { ConvertIndexModal } from './ui/modals/ConvertIndexModal';
