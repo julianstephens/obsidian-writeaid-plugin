@@ -1,6 +1,7 @@
 import { App, Notice, TFile, TFolder } from 'obsidian';
 import { WriteAidSettings } from '../types';
 import { TemplateService } from './TemplateService';
+import { slugifyDraftName } from './utils';
 
 export class ProjectService {
   app: App;
@@ -39,21 +40,32 @@ export class ProjectService {
     }
 
     // Optionally create sample files in the project
-  const projectFileTemplate = settings?.projectFileTemplate ?? '';
-  const chapterTemplate = settings?.chapterTemplate ?? '';
+    const projectFileTemplate = settings?.projectFileTemplate ?? '';
+    const chapterTemplate = settings?.chapterTemplate ?? '';
+
+    // Create a meta file at the project root (matches README example)
+    const metaPath = `${projectPath}/meta.md`;
+    if (!this.app.vault.getAbstractFileByPath(metaPath)) {
+      const metaContent = await this.tpl.render(projectFileTemplate, { projectName });
+      await this.app.vault.create(metaPath, metaContent);
+    }
 
     if (singleFile) {
-      const filePath = `${projectPath}/${projectName}.md`;
-      if (!this.app.vault.getAbstractFileByPath(filePath)) {
-  const content = await this.tpl.render(projectFileTemplate, { projectName });
-        await this.app.vault.create(filePath, content);
+      // For single-file projects, create a canonical project file if desired
+      // but ensure each draft folder also gets its own draft file (e.g., draft1.md)
+      const projectFilePath = `${projectPath}/${projectName}.md`;
+      if (!this.app.vault.getAbstractFileByPath(projectFilePath)) {
+        const content = await this.tpl.render(projectFileTemplate, { projectName });
+        await this.app.vault.create(projectFilePath, content);
       }
 
-      // Link file to draft via frontmatter in the draft folder
-      const notePath = `${newDraftFolder}/${projectName}.md`;
+      // Create a draft file inside the draft folder with a slugified draft name (e.g. Draft 1 -> draft1.md)
+  const slug = slugifyDraftName(draftName, settings?.slugStyle as any);
+  const draftFileName = `${slug}.md`;
+      const notePath = `${newDraftFolder}/${draftFileName}`;
       if (!this.app.vault.getAbstractFileByPath(notePath)) {
         const fm = `---\ndraft: ${draftName}\nproject: ${projectName}\ncreated: ${new Date().toISOString()}\n---\n\n`;
-  const projectContent = await this.tpl.render(projectFileTemplate, { projectName });
+        const projectContent = await this.tpl.render(projectFileTemplate, { projectName });
         await this.app.vault.create(notePath, fm + projectContent);
       }
     } else {

@@ -1,6 +1,7 @@
 import { App, Notice, TFolder } from 'obsidian';
 import { WriteAidSettings } from '../types';
 import { TemplateService } from './TemplateService';
+import { slugifyDraftName } from './utils';
 
 export class DraftService {
   app: App;
@@ -53,6 +54,24 @@ export class DraftService {
       const draftOutlineTemplate = settings?.draftOutlineTemplate ?? '';
       const outlineContent = await this.tpl.render(draftOutlineTemplate, { draftName });
       await this.app.vault.create(`${newDraftFolder}/outline.md`, outlineContent);
+      
+        // If the project is single-file (detected by presence of <projectName>.md or meta.md),
+        // also create a main draft file inside the draft folder (e.g., draft1.md)
+        const projectName = projectPathResolved.split('/').pop() || projectPathResolved;
+        const singleFileCandidate = `${projectPathResolved}/${projectName}.md`;
+        const metaCandidate = `${projectPathResolved}/meta.md`;
+        const isSingleFileProject = !!this.app.vault.getAbstractFileByPath(singleFileCandidate) || !!this.app.vault.getAbstractFileByPath(metaCandidate);
+
+        if (isSingleFileProject) {
+          const slug = slugifyDraftName(draftName, settings?.slugStyle as any);
+          const draftFileName = `${slug}.md`;
+          const draftMainPath = `${newDraftFolder}/${draftFileName}`;
+          if (!this.app.vault.getAbstractFileByPath(draftMainPath)) {
+            const fm = `---\ndraft: ${draftName}\nproject: ${projectName}\ncreated: ${new Date().toISOString()}\n---\n\n`;
+            const projectContent = await this.tpl.render(settings?.projectFileTemplate ?? '', { projectName });
+            await this.app.vault.create(draftMainPath, fm + projectContent);
+          }
+        }
     }
   }
 

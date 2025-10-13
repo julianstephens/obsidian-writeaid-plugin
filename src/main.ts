@@ -1,4 +1,5 @@
 import { App, Modal, Plugin, PluginSettingTab, Setting, TFile, TFolder } from "obsidian";
+import { slugifyDraftName } from './core/utils';
 import { WriteAidManager } from "./manager";
 import { WriteAidSettings } from './types';
 
@@ -7,6 +8,7 @@ const DEFAULT_SETTINGS: WriteAidSettings = {
   draftOutlineTemplate: "# Outline for {{draftName}}",
   planningTemplate: "# Planning: {{projectName}}\n\n- [ ] ...",
   chapterTemplate: "# {{chapterTitle}}\n\n",
+  slugStyle: 'compact',
 };
 
 function normalizeSettings(data?: Partial<WriteAidSettings>): WriteAidSettings {
@@ -159,6 +161,45 @@ class WriteAidSettingTab extends PluginSettingTab {
           }).open();
         })
       );
+
+    new Setting(containerEl)
+      .setName('Draft filename slug style')
+      .setDesc('How per-draft main filenames are generated')
+      .addDropdown((d) => {
+        d.addOption('compact', 'compact (draft1)');
+        d.addOption('kebab', 'kebab (draft-1)');
+        d.setValue(plugin.settings.slugStyle || 'compact');
+        d.onChange((v) => {
+          plugin.settings.slugStyle = v as any;
+          plugin.saveSettings();
+          // update preview
+          const prev = containerEl.querySelector('.wat-slug-preview');
+          if (prev) prev.textContent = `Example: Draft 1 → ${slugifyDraftName('Draft 1', v as any)}.md`;
+        });
+      });
+
+    // Preview line for slug style
+    // sample draft name input + preview
+    let sampleName = 'Draft 1';
+    const sampleSetting = new Setting(containerEl)
+      .setName('Sample draft name')
+      .setDesc('Type a sample draft name to preview the generated filename')
+      .addText((t) => t
+        .setPlaceholder('Draft 1')
+        .setValue(sampleName)
+        .onChange((v) => {
+          sampleName = v || 'Draft 1';
+          const prev = containerEl.querySelector('.wat-slug-preview');
+          if (prev) {
+            const s = slugifyDraftName(sampleName, plugin.settings.slugStyle as any);
+            prev.textContent = `Example: ${sampleName} → ${s}.md`;
+          }
+        })
+      );
+
+    const previewEl = containerEl.createDiv({ cls: 'wat-slug-preview' });
+  const initialSlug = slugifyDraftName(sampleName, plugin.settings.slugStyle as any);
+  previewEl.setText(`Example: ${sampleName} → ${initialSlug}.md`);
   }
 }
 

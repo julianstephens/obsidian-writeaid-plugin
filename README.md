@@ -22,11 +22,11 @@ A novel writing plugin for Obsidian supporting multiple drafts per project. Orga
 ```
 MyVault/
 ├── TheFantasticShortStory/
-|   ├── meta.md
+|   ├── meta.md               # created from projectFileTemplate
 |   └── Drafts/
 |       ├── Draft 1/
-|       │   ├── outline.md
-|       │   └── draft1.md
+|       │   ├── outline.md    # created from draftOutlineTemplate
+|       │   └── draft1.md      # per-draft main file (slugified draft name)
 |       └── Draft 2/
 |           ├── outline.md
 |           └── draft2.md
@@ -35,15 +35,31 @@ MyVault/
     └── Drafts/
         ├── Draft 1/
         │   ├── outline.md
-        │   ├── chapter1.md
+        │   ├── chapter1.md   # chapter files created from chapterTemplate
         │   └── chapter2.md
         └── Draft 2/
             ├── outline.md
             ├── chapter1.md
             └── chapter2.md
-
 ```
 
-## License
+## Draft filename slugging
 
-MIT
+Per-draft main files (the single-file draft main note inside a `Drafts/Draft N/` folder) are created using a slugified draft name. The plugin supports two styles:
+
+- `compact` (default): remove whitespace and lowercase. "Draft 1" -> `draft1.md`
+- `kebab`: replace whitespace with dashes and lowercase. "Draft 1" -> `draft-1.md`
+
+Change the behavior via the plugin settings (`slugStyle`). The default is `compact`.
+
+## Commands
+
+The plugin registers the following commands (useable via the command palette or keybindings):
+
+| Command ID | Command name | Description | Suggested keybinding |
+|---|---|---|---|
+| `create-new-draft` | Create New Draft | Prompt to create a new draft for the current project (or choose a project). Creates a `Drafts/Draft N/` folder with an `outline.md` and, for single-file projects, a per-draft main file. | Ctrl/Cmd+Alt+D |
+| `create-new-project` | Create New Project | Prompt to create a new project scaffold (project folder, `meta.md`, initial draft folder and sample files). | Ctrl/Cmd+Alt+P |
+| `convert-index-to-planning` | Convert Index to Planning Document | Convert an index-style note into a planning document using the planning template. | Ctrl/Cmd+Alt+L |
+| `switch-draft` | Switch Active Draft | Open a modal to select and switch the active draft for the current project. | Ctrl/Cmd+Alt+S |
+
