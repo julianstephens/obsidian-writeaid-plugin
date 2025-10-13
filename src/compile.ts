@@ -149,6 +149,13 @@ async function getActiveDraft(app: App, projectPath: string): Promise<string | n
  * Remove YAML frontmatter from content
  */
 function stripFrontmatter(content: string): string {
+  // Match YAML frontmatter delimited by lines containing only '---' at the start and end.
+  // Example:
+  // ---
+  // title: My Title
+  // author: Someone
+  // ---
+  // The regex matches from the first '---' line to the closing '---' line (including both).
   const fmMatch = content.match(/^---\s*\n[\s\S]*?\n---\s*\n/);
   if (fmMatch) {
     return content.substring(fmMatch[0].length);
