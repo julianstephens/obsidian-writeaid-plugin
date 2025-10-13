@@ -8,6 +8,7 @@ A novel writing plugin for Obsidian supporting multiple drafts per project. Orga
 - Easy draft creation, duplication, and selection
 - Draft-aware navigation for chapters and scenes
 - Metadata and structure management for each draft
+- Manuscript compilation: compile a draft into a formatted manuscript
 - (Planned) Draft comparison and merging
 
 ## Getting Started
@@ -51,6 +52,38 @@ Per-draft main files (the single-file draft main note inside a `Drafts/Draft N/`
 - `kebab`: replace whitespace with dashes and lowercase. "Draft 1" -> `draft-1.md`
 
 Change the behavior via the plugin settings (`slugStyle`). The default is `compact`.
+
+## Compiling a Manuscript
+
+The plugin provides a `compileProject` function to compile a draft into a formatted manuscript. This function:
+
+- Collects all markdown files from a draft folder
+- Strips YAML frontmatter from each file
+- Concatenates them in alphabetical order
+- Creates a formatted manuscript with a title page
+- Writes the result to the project root folder as `Manuscript.md`
+
+### Usage
+
+```typescript
+import { compileProject } from './compile';
+
+// Compile the active draft (detected from meta.md or first draft found)
+await compileProject(app);
+
+// Compile a specific draft
+await compileProject(app, {
+  projectPath: 'MyProject',
+  draftName: 'Draft 1'
+});
+
+// Compile with a custom output filename
+await compileProject(app, {
+  projectPath: 'MyProject',
+  draftName: 'Draft 2',
+  outputFilename: 'MyNovel-Draft2.md'
+});
+```
 
 ## Commands
 
