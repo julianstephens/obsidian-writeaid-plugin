@@ -135,7 +135,7 @@ async function getActiveDraft(app: App, projectPath: string): Promise<string | n
   if (draftsFolder && draftsFolder instanceof TFolder) {
     const draftFolders = draftsFolder.children
       .filter(child => child instanceof TFolder)
-      .map((child: TFolder) => child.name);
+      .map(child => child.name);
     
     if (draftFolders.length > 0) {
       return draftFolders[0];
