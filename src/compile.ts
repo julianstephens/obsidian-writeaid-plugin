@@ -124,7 +124,7 @@ async function getActiveDraft(app: App, projectPath: string): Promise<string | n
     // or
     // current_active_draft: DraftName
     // This regex matches the value of current_active_draft, whether or not it is quoted.
-    const match = content.match(/current_active_draft:\s*"?([^"\n]+)"?/);
+    const match = content.match(/current_active_draft:\s*"?([^"\s\n]+)"?/);
     if (match && match[1]) {
       return match[1];
     }
