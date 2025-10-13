@@ -1,0 +1,10 @@
+{
+  "id": "obsidian-writeaid-plugin",
+  "name": "WriteAid",
+  "version": "0.1.0",
+  "minAppVersion": "0.15.0",
+  "description": "A novel writing plugin for Obsidian supporting multiple drafts per project.",
+  "author": "julianstephens",
+  "authorUrl": "https://github.com/julianstephens",
+  "isDesktopOnly": false
+}

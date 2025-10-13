@@ -1,0 +1,26 @@
+{
+  "name": "obsidian-writeaid-plugin",
+  "version": "0.1.0",
+  "description": "A novel writing plugin for Obsidian supporting multiple drafts per project.",
+  "main": "main.js",
+  "scripts": {
+    "dev": "webpack --mode development --watch",
+    "build": "webpack --mode production"
+  },
+  "keywords": [
+    "obsidian-plugin",
+    "writing",
+    "novel",
+    "drafts"
+  ],
+  "author": "Julian Stephens<julian@julianstephens.net>",
+  "license": "ISC",
+  "packageManager": "pnpm@10.15.0",
+  "devDependencies": {
+    "obsidian": "^1.10.0",
+    "ts-loader": "^9.5.4",
+    "typescript": "^5.9.3",
+    "webpack": "^5.102.1",
+    "webpack-cli": "^6.0.1"
+  }
+}
