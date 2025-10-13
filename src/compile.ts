@@ -156,7 +156,7 @@ function stripFrontmatter(content: string): string {
   // author: Someone
   // ---
   // The regex matches from the first '---' line to the closing '---' line (including both).
-  const fmMatch = content.match(/^---\s*\n[\s\S]*?\n---\s*\n/);
+  const fmMatch = content.match(/^[\s]*---\s*\n[\s\S]*?\n---\s*\n/);
   if (fmMatch) {
     return content.substring(fmMatch[0].length);
   }
