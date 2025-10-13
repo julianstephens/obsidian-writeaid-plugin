@@ -114,7 +114,7 @@ function parseFrontmatter(content: string): ProjectMetadata | null {
 
   const lines = yamlContent.split('\n');
   for (const line of lines) {
-    const match = line.match(/^(\w+):\s*(.+)$/);
+    const match = line.match(/^([a-zA-Z_][a-zA-Z0-9_-]*):\s*(.*)$/);
     if (match) {
       const key = match[1];
       let value: any = match[2].trim();
