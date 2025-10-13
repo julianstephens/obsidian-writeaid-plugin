@@ -21,6 +21,15 @@ A novel writing plugin for Obsidian supporting multiple drafts per project. Orga
 
 ```
 MyVault/
+├── TheFantasticShortStory/
+|   ├── meta.md
+|   └── Drafts/
+|       ├── Draft 1/
+|       │   ├── outline.md
+|       │   └── draft1.md
+|       └── Draft 2/
+|           ├── outline.md
+|           └── draft2.md
 └── TheGreatNovel/
     ├── meta.md
     └── Drafts/
@@ -32,6 +41,7 @@ MyVault/
             ├── outline.md
             ├── chapter1.md
             └── chapter2.md
+
 ```
 
 ## License

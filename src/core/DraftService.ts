@@ -1,0 +1,86 @@
+import { App, Notice, TFolder } from 'obsidian';
+import { WriteAidSettings } from '../types';
+import { TemplateService } from './TemplateService';
+
+export class DraftService {
+  app: App;
+  tpl: TemplateService;
+
+  constructor(app: App) {
+    this.app = app;
+    this.tpl = new TemplateService(app);
+  }
+
+  private resolveProjectPath(projectPath?: string): string | null {
+    if (projectPath && projectPath !== '') return projectPath;
+    const activeFile = this.app.workspace.getActiveFile();
+    if (!activeFile) return null;
+    const folder = activeFile.parent;
+    return folder ? folder.path : null;
+  }
+
+  async createDraft(draftName: string, copyFromDraft?: string, projectPath?: string, settings?: WriteAidSettings) {
+    const projectPathResolved = this.resolveProjectPath(projectPath);
+    if (!projectPathResolved) {
+      new Notice('No project folder detected. Please open a folder named after your project.');
+      return;
+    }
+
+    const draftsFolder = `${projectPathResolved}/Drafts`;
+    const newDraftFolder = `${draftsFolder}/${draftName}`;
+
+    // Create drafts and draft folders if needed
+    if (!this.app.vault.getAbstractFileByPath(draftsFolder)) {
+      await this.app.vault.createFolder(draftsFolder);
+    }
+    if (!this.app.vault.getAbstractFileByPath(newDraftFolder)) {
+      await this.app.vault.createFolder(newDraftFolder);
+    }
+
+    // Optionally copy from an existing draft
+    if (copyFromDraft) {
+      const sourceFolder = `${draftsFolder}/${copyFromDraft}`;
+      const files = this.app.vault
+        .getFiles()
+        .filter((file) => file.path.startsWith(sourceFolder));
+      for (const file of files) {
+        const relPath = file.path.substring(sourceFolder.length + 1);
+        const destPath = `${newDraftFolder}/${relPath}`;
+        const content = await this.app.vault.read(file);
+        await this.app.vault.create(destPath, content);
+      }
+    } else {
+      const draftOutlineTemplate = settings?.draftOutlineTemplate ?? '';
+      const outlineContent = await this.tpl.render(draftOutlineTemplate, { draftName });
+      await this.app.vault.create(`${newDraftFolder}/outline.md`, outlineContent);
+    }
+  }
+
+  listDrafts(projectPath?: string): string[] {
+    const project = this.resolveProjectPath(projectPath);
+    if (!project) return [];
+    const draftsFolder = `${project}/Drafts`;
+    const folder = this.app.vault.getAbstractFileByPath(draftsFolder);
+    if (folder && folder instanceof TFolder) {
+      return folder.children
+        .filter((child) => child instanceof TFolder)
+        .map((child: any) => child.name);
+    }
+    return [];
+  }
+
+  suggestNextDraftName(projectPath?: string): string {
+    const drafts = this.listDrafts(projectPath);
+    // find highest Draft N
+    let max = 0;
+    for (const d of drafts) {
+      const m = d.match(/^Draft\s*(\d+)$/i);
+      if (m) {
+        const n = parseInt(m[1], 10);
+        if (!isNaN(n) && n > max) max = n;
+      }
+    }
+    const next = max + 1 || 1;
+    return `Draft ${next}`;
+  }
+}

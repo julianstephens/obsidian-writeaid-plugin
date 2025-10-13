@@ -4,8 +4,11 @@
   "description": "A novel writing plugin for Obsidian supporting multiple drafts per project.",
   "main": "main.js",
   "scripts": {
-    "dev": "webpack --mode development --watch",
-    "build": "webpack --mode production"
+  "dev": "webpack --mode development --watch",
+  "build": "webpack --mode production && cp manifest.json dist/",
+  "dev:watch": "node ./scripts/dev-watch.js",
+  "dev:copy": "node ./scripts/dev-watch.js --once",
+  "test": "pnpm build && pnpm dev:copy"
   },
   "keywords": [
     "obsidian-plugin",
