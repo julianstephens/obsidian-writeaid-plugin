@@ -119,6 +119,11 @@ async function getActiveDraft(app: App, projectPath: string): Promise<string | n
   
   if (metaFile && metaFile instanceof TFile) {
     const content = await app.vault.read(metaFile);
+    // The expected format in meta.md is a YAML-like line:
+    // current_active_draft: "DraftName"
+    // or
+    // current_active_draft: DraftName
+    // This regex matches the value of current_active_draft, whether or not it is quoted.
     const match = content.match(/current_active_draft:\s*"?([^"\n]+)"?/);
     if (match && match[1]) {
       return match[1];
