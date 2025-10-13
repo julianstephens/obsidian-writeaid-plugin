@@ -1,7 +1,8 @@
 import { App, Notice, TFile, TFolder } from 'obsidian';
 import { WriteAidSettings } from '../types';
+import { updateMetaStats } from './meta';
 import { TemplateService } from './TemplateService';
-import { slugifyDraftName } from './utils';
+import { DEFAULT_TARGET_WORD_COUNT, DEFAULT_TOTAL_DRAFTS, slugifyDraftName } from './utils';
 
 export class ProjectService {
   app: App;
@@ -46,8 +47,11 @@ export class ProjectService {
     // Create a meta file at the project root (matches README example)
     const metaPath = `${projectPath}/meta.md`;
     if (!this.app.vault.getAbstractFileByPath(metaPath)) {
-      const metaContent = await this.tpl.render(projectFileTemplate, { projectName });
-      await this.app.vault.create(metaPath, metaContent);
+      // Initialize meta.md with proper statistics
+      await updateMetaStats(this.app, projectPath, draftName, {
+        total_drafts: DEFAULT_TOTAL_DRAFTS,
+        target_word_count: DEFAULT_TARGET_WORD_COUNT, // default target
+      });
     }
 
     if (singleFile) {

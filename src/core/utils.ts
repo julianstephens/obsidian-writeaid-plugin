@@ -14,3 +14,6 @@ export function slugifyDraftName(draftName: string, style: DraftSlugStyle = 'com
   // compact
   return trimmed.replace(/\s+/g, '').toLowerCase();
 }
+
+export const DEFAULT_TARGET_WORD_COUNT = 50000;
+export const DEFAULT_TOTAL_DRAFTS = 1;

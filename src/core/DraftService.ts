@@ -1,5 +1,6 @@
 import { App, Notice, TFolder } from 'obsidian';
 import { WriteAidSettings } from '../types';
+import { updateMetaStats } from './meta';
 import { TemplateService } from './TemplateService';
 import { slugifyDraftName } from './utils';
 
@@ -73,6 +74,9 @@ export class DraftService {
           }
         }
     }
+
+    // Update meta.md statistics after creating a draft
+    await updateMetaStats(this.app, projectPathResolved, draftName);
   }
 
   listDrafts(projectPath?: string): string[] {
