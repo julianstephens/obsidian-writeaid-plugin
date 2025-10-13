@@ -3,6 +3,7 @@ import { DraftService } from './core/DraftService';
 import { ProjectService } from './core/ProjectService';
 import { TemplateService } from './core/TemplateService';
 import { PluginLike, WriteAidSettings } from './types';
+import { updateMetaStats } from './core/meta';
 
 import { ConfirmExistingProjectModal } from './ui/modals/ConfirmExistingProjectModal';
 import { ConvertIndexModal } from './ui/modals/ConvertIndexModal';
@@ -172,9 +173,15 @@ export class WriteAidManager {
       new Notice("No drafts found in the current project.");
       return;
     }
-    new SwitchDraftModal(this.app, drafts, (draftName: string) => {
+    new SwitchDraftModal(this.app, drafts, async (draftName: string) => {
       this.activeDraft = draftName;
       new Notice(`Switched to draft: ${draftName}`);
+      
+      // Update meta.md with the new active draft
+      const projectPath = this.getCurrentProjectPath();
+      if (projectPath) {
+        await updateMetaStats(this.app, projectPath, draftName);
+      }
     }).open();
   }
 
