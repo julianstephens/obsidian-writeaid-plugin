@@ -178,7 +178,7 @@ export class ProjectService {
         // Dynamically import to avoid circular deps
         const { readMetaFile, VALID_PROJECT_TYPES } = await import("./meta");
         const meta = await readMetaFile(this.app, metaPath);
-        if (!meta || !VALID_PROJECT_TYPES.includes(meta.project_type as any)) {
+  if (!meta || !VALID_PROJECT_TYPES.includes(meta.project_type as import("./meta").ProjectType)) {
           return false;
         }
       } catch (e) {

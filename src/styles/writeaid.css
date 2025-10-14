@@ -17,7 +17,7 @@
   --list-background: var(--background-secondary, #f6f6f6);
   --list-border: var(--background-modifier-border, #e0e0e0);
   --list-border-radius: 6px;
-  --list-shadow: 0 2px 8px rgba(30,30,30,0.06);
+  --list-shadow: 0 2px 8px rgba(30, 30, 30, 0.06);
   --list-z-index: 1000;
   --list-max-height: 260px;
   /* Items */
@@ -334,7 +334,7 @@
 .wa-select:focus,
 .wa-select:focus-within {
   border-color: var(--select-border-focus);
-}  
+}
 .wa-select .select-placeholder {
   color: var(--select-placeholder);
 }
