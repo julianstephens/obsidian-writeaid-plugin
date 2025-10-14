@@ -15,8 +15,10 @@ export function slugifyDraftName(draftName: string, style: DraftSlugStyle = "com
   return trimmed.replace(/\s+/g, "").toLowerCase();
 }
 
-export const DEFAULT_TARGET_WORD_COUNT = 50000;
+export const DEFAULT_MULTI_TARGET_WORD_COUNT = 50000;
 export const DEFAULT_TOTAL_DRAFTS = 1;
+
+export const DEFAULT_SINGLE_TARGET_WORD_COUNT = 20000;
 
 /**
  * Async-aware filter: runs the async predicate across the array and returns items

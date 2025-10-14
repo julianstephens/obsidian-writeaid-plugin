@@ -204,6 +204,11 @@ export class WriteAidManager {
     // set as active project by default after successful creation
     if (path) {
       await this.setActiveProject(path as string);
+      // Set the first draft as active draft
+      const drafts = this.listDrafts(path as string);
+      if (drafts.length > 0) {
+        await this.setActiveDraft(drafts[0], path as string);
+      }
       // notify panels so UI can refresh
       try {
         this.notifyPanelRefresh();
@@ -385,10 +390,10 @@ export class WriteAidManager {
   /**
    * Set the active draft programmatically for the current project.
    */
-  async setActiveDraft(draftName: string, projectPath?: string) {
+  async setActiveDraft(draftName: string, projectPath?: string, showNotice = true) {
     const project = projectPath || this.activeProject || this.getCurrentProjectPath();
     if (!project) {
-      new Notice("No project selected to set active draft on.");
+      if (showNotice) new Notice("No project selected to set active draft on.");
       return false;
     }
     this.activeDraft = draftName;
@@ -398,18 +403,33 @@ export class WriteAidManager {
     } catch (e) {
       // Ignore errors in updateMetaStats
     }
-    new Notice(`Active draft set to ${draftName}`);
+    if (showNotice) new Notice(`Active draft set to ${draftName}`);
     return true;
   }
 
-  async renameDraft(oldName: string, newName: string, projectPath?: string) {
+  async renameDraft(
+    oldName: string,
+    newName: string,
+    projectPath?: string,
+    renameFile: boolean = false,
+  ) {
     const project = projectPath || this.activeProject || this.getCurrentProjectPath();
     if (!project) {
       new Notice("No project selected to rename draft.");
       return false;
     }
-    const ok = await this.draftService.renameDraft(project, oldName, newName);
+    const wasActive = this.activeDraft === oldName;
+    const ok = await this.draftService.renameDraft(
+      project,
+      oldName,
+      newName,
+      renameFile,
+      this.settings,
+    );
     if (ok) {
+      if (wasActive) {
+        this.activeDraft = newName;
+      }
       new Notice(`Renamed draft ${oldName} → ${newName}`);
       return true;
     }

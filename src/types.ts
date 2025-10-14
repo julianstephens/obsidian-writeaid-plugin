@@ -21,6 +21,9 @@ export interface WriteAidSettings {
   // logging via window.__WRITEAID_DEBUG__ so the sidepanel view and mount helper
   // can emit diagnostics useful during development.
   debug?: boolean;
+
+  // If true, create an outline.md file when creating a new draft
+  includeDraftOutline?: boolean;
 }
 
 // Minimal plugin-like interface used for typing in services

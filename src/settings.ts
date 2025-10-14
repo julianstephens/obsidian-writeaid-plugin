@@ -38,6 +38,19 @@ export class WriteAidSettingTab extends PluginSettingTab {
     // Templates group
     containerEl.createEl("h3", { text: "Templates" });
 
+    // Draft outline toggle
+    new Setting(containerEl)
+      .setName("Include outline file on draft creation")
+      .setDesc(
+        "If enabled, each new draft will include an outline.md file using the outline template.",
+      )
+      .addToggle((toggle) =>
+        toggle.setValue(!!plugin.settings.includeDraftOutline).onChange((v) => {
+          plugin.settings.includeDraftOutline = v;
+          plugin.saveSettings();
+        }),
+      );
+
     new Setting(containerEl)
       .setName("Project file template")
       .setDesc("Template for the main project file. Use {{projectName}}")

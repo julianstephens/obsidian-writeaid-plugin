@@ -1,6 +1,11 @@
 <script lang="ts">
   export let text: string = '';
-  export let accent: boolean = false;
+  export let color: string = '';
 </script>
 
-<span class={`wa-badge ${accent ? 'accent' : ''}`}>{text}</span>
+<span class="badge" style={color ? `background-color: ${color}` : ''}>
+  <slot>{text}</slot>
+</span>
+
+<style>
+</style>

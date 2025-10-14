@@ -1,6 +1,11 @@
 import { updateMetaStats } from "@/core/meta";
 import { TemplateService } from "@/core/TemplateService";
-import { DEFAULT_TARGET_WORD_COUNT, DEFAULT_TOTAL_DRAFTS, slugifyDraftName } from "@/core/utils";
+import {
+  DEFAULT_MULTI_TARGET_WORD_COUNT,
+  DEFAULT_SINGLE_TARGET_WORD_COUNT,
+  DEFAULT_TOTAL_DRAFTS,
+  slugifyDraftName,
+} from "@/core/utils";
 import type { WriteAidSettings } from "@/types";
 import { App, normalizePath, Notice, TFile, TFolder } from "obsidian";
 
@@ -54,25 +59,30 @@ export class ProjectService {
     // Create a meta file at the project root (matches README example)
     const metaPath = `${projectPath}/meta.md`;
     if (!this.app.vault.getAbstractFileByPath(metaPath)) {
-      // Initialize meta.md with proper statistics
+      // Use 20,000 as the default target word count for single-file projects
+      const targetWordCount = singleFile
+        ? DEFAULT_SINGLE_TARGET_WORD_COUNT
+        : DEFAULT_MULTI_TARGET_WORD_COUNT;
+      // Initialize meta.md with proper statistics and projectType
       await updateMetaStats(this.app, projectPath, draftName, {
         total_drafts: DEFAULT_TOTAL_DRAFTS,
-        target_word_count: DEFAULT_TARGET_WORD_COUNT, // default target
+        target_word_count: targetWordCount, // default target
+        project_type: singleFile ? "single-file" : "multi-file",
       });
     }
 
-    if (singleFile) {
-      // For single-file projects, create a canonical project file if desired
-      // but ensure each draft folder also gets its own draft file (e.g., draft1.md)
-      const projectFilePath = `${projectPath}/${projectName}.md`;
-      if (!this.app.vault.getAbstractFileByPath(projectFilePath)) {
-        const content = await this.tpl.render(projectFileTemplate, {
-          projectName,
-        });
-        await this.app.vault.create(projectFilePath, content);
+    // Optionally create outline.md in the initial draft folder if enabled (must be strictly true)
+    if (settings?.includeDraftOutline === true) {
+      const draftOutlineTemplate = settings?.draftOutlineTemplate ?? "";
+      const outlineContent = await this.tpl.render(draftOutlineTemplate, { draftName });
+      const outlinePath = `${newDraftFolder}/outline.md`;
+      if (!this.app.vault.getAbstractFileByPath(outlinePath)) {
+        await this.app.vault.create(outlinePath, outlineContent);
       }
+    }
 
-      // Create a draft file inside the draft folder with a slugified draft name (e.g. Draft 1 -> draft1.md)
+    if (singleFile) {
+      // For single-file projects, only create meta.md and a draft file inside the draft folder
       const slug = slugifyDraftName(
         draftName,
         settings?.slugStyle as import("@/core/utils").DraftSlugStyle,
@@ -89,16 +99,6 @@ export class ProjectService {
     } else {
       const chapters = ["Chapter 1.md", "Chapter 2.md"];
       for (const ch of chapters) {
-        const path = `${projectPath}/${ch}`;
-        if (!this.app.vault.getAbstractFileByPath(path)) {
-          await this.app.vault.create(
-            path,
-            await this.tpl.render(chapterTemplate, {
-              chapterTitle: ch.replace(".md", ""),
-            }),
-          );
-        }
-        // Also copy into draft folder as starting point
         const draftNotePath = `${newDraftFolder}/${ch}`;
         if (!this.app.vault.getAbstractFileByPath(draftNotePath)) {
           await this.app.vault.create(
@@ -116,6 +116,14 @@ export class ProjectService {
 
   /** Try to open a sensible file in the project. Returns true if opened. */
   async openProject(projectPath: string) {
+    // Always try meta.md first
+    const metaPath = `${projectPath}/meta.md`;
+    const metaFile = this.app.vault.getAbstractFileByPath(metaPath);
+    if (metaFile && metaFile instanceof TFile) {
+      const leaf = this.app.workspace.getLeaf();
+      await leaf.openFile(metaFile);
+      return true;
+    }
     const candidates = [
       `${projectPath}/${projectPath}.md`,
       `${projectPath}/Chapter 1.md`,
@@ -160,11 +168,25 @@ export class ProjectService {
     if (!path || typeof path !== "string") return false;
     const base = path.trim().replace(/\\/g, "/").replace(/\/+$/, "");
     try {
-      const hasMeta = await this.app.vault.adapter.exists(normalizePath(`${base}/meta.md`));
+      const metaPath = normalizePath(`${base}/meta.md`);
+      const hasMeta = await this.app.vault.adapter.exists(metaPath);
       const hasDrafts = await this.app.vault.adapter.exists(normalizePath(`${base}/Drafts`));
-      return Promise.resolve(hasMeta && hasDrafts);
+      if (!hasMeta || !hasDrafts) return false;
+
+      // Check meta.md for valid project_type
+      try {
+        // Dynamically import to avoid circular deps
+        const { readMetaFile, VALID_PROJECT_TYPES } = await import("./meta");
+        const meta = await readMetaFile(this.app, metaPath);
+        if (!meta || !VALID_PROJECT_TYPES.includes(meta.project_type as any)) {
+          return false;
+        }
+      } catch (e) {
+        return false;
+      }
+      return true;
     } catch (e) {
-      return Promise.resolve(false);
+      return false;
     }
   }
 }

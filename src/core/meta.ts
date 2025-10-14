@@ -1,3 +1,7 @@
+// Valid project types
+export const VALID_PROJECT_TYPES = ["single-file", "multi-file"];
+
+export type ProjectType = (typeof VALID_PROJECT_TYPES)[number];
 import { App, TFile, TFolder } from "obsidian";
 
 /**
@@ -10,6 +14,8 @@ export interface ProjectMetadata {
   active_draft_last_modified?: string; // ISO 8601 timestamp
   total_word_count?: number;
   average_draft_word_count?: number;
+  project_type?: ProjectType;
+  draft?: string; // for per-draft meta.md
 }
 
 /**
@@ -167,6 +173,9 @@ function formatMetaContent(metadata: ProjectMetadata): string {
   }
   if (metadata.average_draft_word_count !== undefined) {
     lines.push(`average_draft_word_count: ${metadata.average_draft_word_count}`);
+  }
+  if (metadata.project_type !== undefined) {
+    lines.push(`project_type: ${metadata.project_type}`);
   }
 
   lines.push("---");

@@ -37,6 +37,10 @@
       "id": "select-active-project",
       "name": "Select Active Project",
       "hotkeys": [{ "modifiers": ["Mod", "Alt"], "key": "A" }]
+    },
+    {
+      "id": "convert-single-to-multi-file-project",
+      "name": "Convert Single-File Project to Multi-File"
     }
   ]
 }

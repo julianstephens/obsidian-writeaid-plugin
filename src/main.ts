@@ -1,9 +1,11 @@
+import { convertSingleToMultiFileProject } from "@/core/convertSingleToMultiFile";
 import { ProjectService } from "@/core/ProjectService";
 import { asyncFilter } from "@/core/utils";
 import type { WriteAidSettings } from "@/types";
 import { Notice, Plugin } from "obsidian";
 import { WriteAidManager } from "./manager";
 import { WriteAidSettingTab } from "./settings";
+
 // Import the plugin CSS as inline text so we can inject it into the host
 // document at runtime. Vite supports '?inline' to return the file contents
 // as a string. This ensures the plugin styles are applied when the plugin
@@ -76,6 +78,20 @@ export default class WriteAidPlugin extends Plugin {
   }
 
   async onload() {
+    // ...existing code...
+
+    this.addCommand({
+      id: "convert-single-to-multi-file-project",
+      name: "Convert Single-File Project to Multi-File",
+      callback: async () => {
+        const projectPath = this.manager.activeProject || this.manager.getCurrentProjectPath?.();
+        if (!projectPath) {
+          new Notice("No active project selected.");
+          return;
+        }
+        await convertSingleToMultiFileProject(this.app, projectPath);
+      },
+    });
     // Defer verbose loading message until persisted debug setting is applied below
     // Inject plugin styles into the document head so the compiled CSS is
     // applied inside Obsidian. Keep a reference so we can remove it on unload.

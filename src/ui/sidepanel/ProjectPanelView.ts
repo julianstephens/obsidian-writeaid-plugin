@@ -13,6 +13,7 @@ import { DraftService } from "@/core/DraftService";
 import { ProjectService } from "@/core/ProjectService";
 import { ItemView, Notice, type App, type WorkspaceLeaf } from "obsidian";
 import { mount } from "svelte";
+import { WRITE_AID_ICON_NAME } from "../components/icons";
 import ProjectPanel from "./ProjectPanel.svelte";
 
 // window.__WRITEAID_DEBUG__ = true in the DevTools console at runtime.
@@ -66,7 +67,7 @@ export class ProjectPanelView extends ItemView {
 
   // Return the icon name for the workspace tab. Using 'book' to match the ribbon icon.
   getIcon(): string {
-    return "book";
+    return WRITE_AID_ICON_NAME;
   }
 
   async onOpen() {

@@ -1,3 +1,13 @@
+### Convert Single-File Project to Multi-File
+
+You can convert a single-file project to a multi-file project using the command palette:
+
+1. Open the command palette (Ctrl+P or Cmd+P).
+2. Search for "Convert Single-File Project to Multi-File".
+3. Run the command with your single-file project active.
+
+This will update the project type in `meta.md` and rename all draft files to `Chapter 1.md` in each draft folder.
+
 # Obsidian WriteAid Plugin
 
 A novel writing plugin for Obsidian supporting multiple drafts per project. Organize, compare, and manage different versions of your novel drafts with ease.

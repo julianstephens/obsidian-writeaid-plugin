@@ -55,11 +55,14 @@ export class DraftService {
         await this.app.vault.create(destPath, content);
       }
     } else {
-      const draftOutlineTemplate = settings?.draftOutlineTemplate ?? "";
-      const outlineContent = await this.tpl.render(draftOutlineTemplate, {
-        draftName,
-      });
-      await this.app.vault.create(`${newDraftFolder}/outline.md`, outlineContent);
+      // Only create outline.md if enabled in settings (must be strictly true)
+      if (settings?.includeDraftOutline === true) {
+        const draftOutlineTemplate = settings?.draftOutlineTemplate ?? "";
+        const outlineContent = await this.tpl.render(draftOutlineTemplate, {
+          draftName,
+        });
+        await this.app.vault.create(`${newDraftFolder}/outline.md`, outlineContent);
+      }
 
       // If the project is single-file (detected by presence of <projectName>.md or meta.md),
       // also create a main draft file inside the draft folder (e.g., draft1.md)
@@ -157,6 +160,8 @@ export class DraftService {
     projectPath: string | undefined,
     oldName: string,
     newName: string,
+    renameFile: boolean = false,
+    settings?: WriteAidSettings,
   ): Promise<boolean> {
     const project = this.resolveProjectPath(projectPath);
     if (!project) return false;
@@ -168,12 +173,63 @@ export class DraftService {
         await this.app.vault.createFolder(newFolder);
       }
       const files = this.app.vault.getFiles().filter((f) => f.path.startsWith(oldFolder));
+      // Compute old and new slug for main draft file
+      let oldSlug = "";
+      let newSlug = "";
+      if (renameFile) {
+        const slugStyle = settings?.slugStyle;
+        oldSlug = slugifyDraftName(oldName, slugStyle);
+        newSlug = slugifyDraftName(newName, slugStyle);
+      }
       for (const file of files) {
-        const rel = file.path.substring(oldFolder.length + 1);
-        const dest = `${newFolder}/${rel}`;
-        const content = await this.app.vault.read(file);
+        let rel = file.path.substring(oldFolder.length + 1);
+        let dest = `${newFolder}/${rel}`;
+        // Only rename the main draft file (oldSlug.md) if requested
+        if (renameFile && oldSlug && newSlug && rel === `${oldSlug}.md`) {
+          rel = `${newSlug}.md`;
+          dest = `${newFolder}/${rel}`;
+        }
+        let content = await this.app.vault.read(file);
+        // If this is a Markdown file, update its frontmatter draft property
+        if (file.extension === "md") {
+          // Replace or insert draft: <newName> in YAML frontmatter
+          content = content.replace(/^(---\s*\n[\s\S]*?\n)(draft:.*\n)?/m, (match, p1) => {
+            // Remove any existing draft: line
+            let fm = p1.replace(/^draft:.*\n/m, "");
+            // Insert new draft line after ---\n
+            // If there's already a draft: line, replace it; otherwise, insert after ---\n
+            return fm.replace(/^(---\s*\n)/, `$1draft: ${newName}\n`);
+          });
+        }
         await this.app.vault.create(dest, content);
         await this.app.vault.delete(file);
+      }
+      // Remove the old draft folder if it exists (force delete, even if not empty)
+      const oldFolderObj = this.app.vault.getAbstractFileByPath(oldFolder);
+      if (oldFolderObj && oldFolderObj instanceof TFolder) {
+        await this.app.vault.delete(oldFolderObj, true);
+      }
+      // Update meta.md in the project root
+      try {
+        await import("./meta").then((meta) => meta.updateMetaStats(this.app, project, newName));
+      } catch (e) {
+        // Ignore errors updating project meta
+      }
+      // Update meta.md in the renamed draft folder if it exists
+      const draftMetaPath = `${newFolder}/meta.md`;
+      const draftMetaFile = this.app.vault.getAbstractFileByPath(draftMetaPath);
+      if (draftMetaFile) {
+        try {
+          // Read, update the draft property, and write back
+          const { readMetaFile, writeMetaFile } = await import("./meta");
+          const meta = await readMetaFile(this.app, draftMetaPath);
+          if (meta) {
+            meta.draft = newName;
+            await writeMetaFile(this.app, draftMetaPath, meta);
+          }
+        } catch (e) {
+          // Ignore errors updating draft meta
+        }
       }
       return true;
     } catch (e) {
