@@ -10,9 +10,11 @@
     "moduleResolution": "node",
     "resolveJsonModule": true,
     "declaration": true,
-    "noImplicitAny": false
+    "verbatimModuleSyntax": true,
+    "noImplicitAny": false,
+    "paths": {
+      "@/*": ["./src/*"]
+    }
   },
-  "include": [
-    "src/**/*.ts"
-  ]
+  "include": ["src/**/*.ts", "src/**/*.svelte"]
 }

@@ -6,5 +6,37 @@
   "description": "A novel writing plugin for Obsidian supporting multiple drafts per project.",
   "author": "julianstephens",
   "authorUrl": "https://github.com/julianstephens",
-  "isDesktopOnly": false
+  "isDesktopOnly": false,
+  "commands": [
+    {
+      "id": "create-new-draft",
+      "name": "Create New Draft",
+      "hotkeys": [{ "modifiers": ["Mod", "Alt"], "key": "D" }]
+    },
+    {
+      "id": "create-new-project",
+      "name": "Create New Project",
+      "hotkeys": [{ "modifiers": ["Mod", "Shift"], "key": "P" }]
+    },
+    {
+      "id": "convert-index-to-planning",
+      "name": "Convert Index to Planning Document",
+      "hotkeys": [{ "modifiers": ["Mod", "Alt"], "key": "L" }]
+    },
+    {
+      "id": "switch-draft",
+      "name": "Switch Active Draft",
+      "hotkeys": [{ "modifiers": ["Mod", "Alt"], "key": "S" }]
+    },
+    {
+      "id": "update-project-metadata",
+      "name": "Update Project Metadata",
+      "hotkeys": [{ "modifiers": ["Mod", "Alt"], "key": "M" }]
+    },
+    {
+      "id": "select-active-project",
+      "name": "Select Active Project",
+      "hotkeys": [{ "modifiers": ["Mod", "Alt"], "key": "A" }]
+    }
+  ]
 }

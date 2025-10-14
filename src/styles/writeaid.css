@@ -1,0 +1,61 @@
+.writeaid-ribbon {
+  padding-left: 6px;
+}
+.writeaid-ribbon .wa-icon {
+  display: inline-block;
+  vertical-align: middle;
+}
+.writeaid-ribbon .wa-icon svg {
+  width: 16px;
+  height: 16px;
+  fill: currentColor;
+  display: block;
+}
+
+/* Slider and unit styling for panel debounce control */
+:root {
+  --wa-slider-track-height: 6px;
+  --wa-slider-thumb-size: 12px;
+  --wa-slider-accent: var(--interactive-accent, #7c5cff);
+  --wa-slider-background: var(--background-modifier-host, #eee);
+  --wa-slider-gap: 12px;
+}
+
+.wa-debounce-range {
+  margin-left: var(--wa-slider-gap);
+  vertical-align: middle;
+  appearance: none;
+  height: var(--wa-slider-track-height);
+  background: linear-gradient(
+    90deg,
+    var(--wa-slider-accent) 0%,
+    var(--wa-slider-accent) 50%,
+    var(--wa-slider-background) 50%,
+    var(--wa-slider-background) 100%
+  );
+  border-radius: 999px;
+  outline: none;
+}
+
+.wa-debounce-range::-webkit-slider-thumb {
+  appearance: none;
+  width: var(--wa-slider-thumb-size);
+  height: var(--wa-slider-thumb-size);
+  border-radius: 50%;
+  background: var(--wa-slider-accent);
+  box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.05);
+  cursor: pointer;
+}
+
+.wa-debounce-range::-moz-range-thumb {
+  width: var(--wa-slider-thumb-size);
+  height: var(--wa-slider-thumb-size);
+  border-radius: 50%;
+  background: var(--wa-slider-accent);
+  cursor: pointer;
+}
+
+.wa-unit {
+  color: var(--text-muted, #666);
+  margin-left: 6px;
+}

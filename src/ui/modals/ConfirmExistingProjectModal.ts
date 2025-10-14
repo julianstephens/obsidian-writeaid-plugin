@@ -1,4 +1,5 @@
-import { App, Modal, Setting } from 'obsidian';
+import type { App } from "obsidian";
+import { Modal, Setting } from "obsidian";
 
 export class ConfirmExistingProjectModal extends Modal {
   path: string;
@@ -20,7 +21,9 @@ export class ConfirmExistingProjectModal extends Modal {
   onOpen() {
     const { contentEl } = this;
     contentEl.createEl("h2", { text: "Project already exists" });
-    contentEl.createEl("p", { text: `A folder named '${this.path}' already exists in the vault.` });
+    contentEl.createEl("p", {
+      text: `A folder named '${this.path}' already exists in the vault.`,
+    });
 
     new Setting(contentEl).addButton((btn) =>
       btn.setButtonText("Open Existing").onClick(() => {
@@ -30,10 +33,13 @@ export class ConfirmExistingProjectModal extends Modal {
     );
 
     new Setting(contentEl).addButton((btn) =>
-      btn.setButtonText("Create Anyway").setCta().onClick(() => {
-        this.close();
-        this.onCreateAnyway(true);
-      }),
+      btn
+        .setButtonText("Create Anyway")
+        .setCta()
+        .onClick(() => {
+          this.close();
+          this.onCreateAnyway(true);
+        }),
     );
 
     new Setting(contentEl).addButton((btn) =>

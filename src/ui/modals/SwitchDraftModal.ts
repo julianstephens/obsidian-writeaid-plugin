@@ -1,4 +1,5 @@
-import { App, Modal, Setting } from 'obsidian';
+import type { App } from "obsidian";
+import { Modal, Setting } from "obsidian";
 
 export class SwitchDraftModal extends Modal {
   onSubmit: (draftName: string) => void;

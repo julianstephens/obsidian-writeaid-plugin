@@ -1,5 +1,6 @@
-import { App, Modal, Setting } from 'obsidian';
-import { SelectProjectModalProps } from './modalTypes';
+import type { SelectProjectModalProps } from "@/ui/modals/modalTypes";
+import type { App } from "obsidian";
+import { Modal, Setting } from "obsidian";
 
 export class SelectProjectModal extends Modal {
   props: SelectProjectModalProps;
@@ -11,21 +12,24 @@ export class SelectProjectModal extends Modal {
 
   onOpen() {
     const { contentEl } = this;
-    contentEl.createEl('h2', { text: 'Select Project for Draft' });
+    contentEl.createEl("h2", { text: "Select Project for Draft" });
 
-    let selected = '';
+    let selected = "";
     const folders = this.props.folders || [];
-    new Setting(contentEl).setName('Project folder').addDropdown((drop) => {
-      drop.addOption('', '(Vault root)');
-      for (const f of folders) drop.addOption(f, f || '(Vault root)');
+    new Setting(contentEl).setName("Project folder").addDropdown((drop) => {
+      drop.addOption("", "(Vault root)");
+      for (const f of folders) drop.addOption(f, f || "(Vault root)");
       drop.onChange((v) => (selected = v));
     });
 
     new Setting(contentEl).addButton((btn) =>
-      btn.setButtonText('Select').setCta().onClick(() => {
-        this.close();
-        this.props.onSubmit(selected || '');
-      }),
+      btn
+        .setButtonText("Select")
+        .setCta()
+        .onClick(() => {
+          this.close();
+          this.props.onSubmit(selected || "");
+        }),
     );
   }
 

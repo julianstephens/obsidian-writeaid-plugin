@@ -1,32 +1,140 @@
+import { DraftService } from "@/core/DraftService";
+import { updateMetaStats } from "@/core/meta";
+import { ProjectService } from "@/core/ProjectService";
+import { TemplateService } from "@/core/TemplateService";
+import { asyncFilter } from "@/core/utils";
+import type { PluginLike, WriteAidSettings } from "@/types";
 import { App, Notice, TFile } from "obsidian";
-import { DraftService } from './core/DraftService';
-import { updateMetaStats } from './core/meta';
-import { ProjectService } from './core/ProjectService';
-import { TemplateService } from './core/TemplateService';
-import { PluginLike, WriteAidSettings } from './types';
 
-import { ConfirmExistingProjectModal } from './ui/modals/ConfirmExistingProjectModal';
-import { ConvertIndexModal } from './ui/modals/ConvertIndexModal';
-import { CreateDraftModal } from './ui/modals/CreateDraftModal';
-import { CreateProjectModal } from './ui/modals/CreateProjectModal';
-import { PostCreateModal } from './ui/modals/PostCreateModal';
-import { SelectProjectModal } from './ui/modals/SelectProjectModal';
-import { SwitchDraftModal } from './ui/modals/SwitchDraftModal';
+import { ConfirmExistingProjectModal } from "@/ui/modals/ConfirmExistingProjectModal";
+import { ConvertIndexModal } from "@/ui/modals/ConvertIndexModal";
+import { CreateDraftModal } from "@/ui/modals/CreateDraftModal";
+import { CreateProjectModal } from "@/ui/modals/CreateProjectModal";
+import { PostCreateModal } from "@/ui/modals/PostCreateModal";
+import { SelectProjectModal } from "@/ui/modals/SelectProjectModal";
+import { SwitchDraftModal } from "@/ui/modals/SwitchDraftModal";
 
 export class WriteAidManager {
   app: App;
   activeDraft: string | null = null;
+  // track the currently selected active project path
+  activeProject: string | null = null;
+  private activeProjectListeners: Array<(p: string | null) => void> = [];
+  private panelRefreshListeners: Array<() => void> = [];
+  private _panelRefreshTimer: ReturnType<typeof setTimeout> | null = null;
+  private _panelRefreshDebounceMs: number = 250;
   plugin?: PluginLike;
   settings?: WriteAidSettings;
   projectService: ProjectService;
   draftService: DraftService;
 
-  constructor(app: App, plugin?: PluginLike) {
+  /**
+   * @param app Obsidian app instance
+   * @param plugin optional plugin-like object (for settings persistence)
+   * @param panelRefreshDebounceMs optional debounce timeout for panel refresh notifications (ms)
+   */
+  constructor(app: App, plugin?: PluginLike, panelRefreshDebounceMs?: number) {
     this.app = app;
     this.plugin = plugin;
     this.settings = plugin?.settings;
+    if (
+      typeof panelRefreshDebounceMs === "number" &&
+      Number.isFinite(panelRefreshDebounceMs)
+    ) {
+      this._panelRefreshDebounceMs = Math.max(
+        0,
+        Math.floor(panelRefreshDebounceMs),
+      );
+    }
+    // initialize activeProject from persisted settings if present
+  this.activeProject = (this.settings as WriteAidSettings | undefined)?.activeProject || null;
     this.projectService = new ProjectService(app);
     this.draftService = new DraftService(app);
+  }
+
+  /** Get the current panel refresh debounce timeout in milliseconds */
+  get panelRefreshDebounceMs(): number {
+    return this._panelRefreshDebounceMs;
+  }
+
+  /** Set the panel refresh debounce timeout in milliseconds. Passing 0 disables debouncing. */
+  set panelRefreshDebounceMs(ms: number) {
+    if (typeof ms === "number" && Number.isFinite(ms)) {
+      this._panelRefreshDebounceMs = Math.max(0, Math.floor(ms));
+    }
+  }
+
+  addActiveProjectListener(fn: (p: string | null) => void) {
+    this.activeProjectListeners.push(fn);
+  }
+
+  addPanelRefreshListener(fn: () => void) {
+    this.panelRefreshListeners.push(fn);
+  }
+
+  removePanelRefreshListener(fn: () => void) {
+    this.panelRefreshListeners = this.panelRefreshListeners.filter(
+      (f) => f !== fn,
+    );
+  }
+
+  notifyPanelRefresh() {
+    // Debounce multiple notifications into a single refresh
+    try {
+      if (this._panelRefreshTimer) {
+        clearTimeout(this._panelRefreshTimer);
+      }
+      this._panelRefreshTimer = setTimeout(() => {
+        for (const fn of this.panelRefreshListeners) {
+          try {
+            fn();
+          } catch (e) {
+            // Ignore errors in panel refresh listeners
+          }
+        }
+        this._panelRefreshTimer = null;
+      }, this._panelRefreshDebounceMs);
+    } catch (e) {
+      // fallback: immediate notify
+      for (const fn of this.panelRefreshListeners) {
+        try {
+          fn();
+        } catch (e) {
+          // Ignore errors in panel refresh listeners
+        }
+      }
+    }
+  }
+
+  removeActiveProjectListener(fn: (p: string | null) => void) {
+    this.activeProjectListeners = this.activeProjectListeners.filter(
+      (f) => f !== fn,
+    );
+  }
+
+  async setActiveProject(path: string | null) {
+    this.activeProject = path;
+    // Persist into plugin settings if available
+    try {
+      if (this.plugin) {
+        // Use type guard to check for settings property
+        const pluginWithSettings = this.plugin as { settings?: WriteAidSettings; saveSettings?: () => Promise<void> };
+        if (!pluginWithSettings.settings) pluginWithSettings.settings = {} as WriteAidSettings;
+  pluginWithSettings.settings.activeProject = path ?? undefined;
+        if (typeof pluginWithSettings.saveSettings === "function") {
+          await pluginWithSettings.saveSettings();
+        }
+      }
+    } catch (e) {
+      // Ignore save errors
+    }
+    for (const l of this.activeProjectListeners) {
+      try {
+        l(path);
+      } catch (e) {
+        // Ignore errors in active project listeners
+      }
+    }
   }
 
   async createNewProjectPrompt() {
@@ -43,7 +151,10 @@ export class WriteAidManager {
           return;
         }
 
-        const fullPath = parentFolder && parentFolder !== "" ? `${parentFolder}/${projectName}` : projectName;
+        const fullPath =
+          parentFolder && parentFolder !== ""
+            ? `${parentFolder}/${projectName}`
+            : projectName;
         const existing = this.app.vault.getAbstractFileByPath(fullPath);
         if (existing) {
           // Ask user what to do: open existing, create anyway, or cancel
@@ -52,8 +163,17 @@ export class WriteAidManager {
             fullPath,
             async (createAnyway: boolean) => {
               if (createAnyway) {
-                await this.createNewProject(projectName, singleFile, initialDraftName, parentFolder);
-                new PostCreateModal(this.app, fullPath, async () => await this.openProject(fullPath)).open();
+                await this.createNewProject(
+                  projectName,
+                  singleFile,
+                  initialDraftName,
+                  parentFolder,
+                );
+                new PostCreateModal(
+                  this.app,
+                  fullPath,
+                  async () => await this.openProject(fullPath),
+                ).open();
               }
             },
             async () => {
@@ -62,8 +182,17 @@ export class WriteAidManager {
             },
           ).open();
         } else {
-          await this.createNewProject(projectName, singleFile, initialDraftName, parentFolder);
-          new PostCreateModal(this.app, fullPath, async () => await this.openProject(fullPath)).open();
+          await this.createNewProject(
+            projectName,
+            singleFile,
+            initialDraftName,
+            parentFolder,
+          );
+          new PostCreateModal(
+            this.app,
+            fullPath,
+            async () => await this.openProject(fullPath),
+          ).open();
         }
       },
     ).open();
@@ -73,8 +202,30 @@ export class WriteAidManager {
     return await this.projectService.openProject(projectPath);
   }
 
-  async createNewProject(projectName: string, singleFile: boolean, initialDraftName?: string, parentFolder?: string) {
-    return await this.projectService.createProject(projectName, singleFile, initialDraftName, parentFolder, this.settings);
+  async createNewProject(
+    projectName: string,
+    singleFile: boolean,
+    initialDraftName?: string,
+    parentFolder?: string,
+  ) {
+    const path = await this.projectService.createProject(
+      projectName,
+      singleFile,
+      initialDraftName,
+      parentFolder,
+      this.settings,
+    );
+    // set as active project by default after successful creation
+    if (path) {
+      await this.setActiveProject(path as string);
+      // notify panels so UI can refresh
+      try {
+        this.notifyPanelRefresh();
+      } catch (e) {
+        // Ignore errors in notifyPanelRefresh
+      }
+    }
+    return path;
   }
 
   // Helper to list all folder paths in the vault for the parent-folder chooser
@@ -94,7 +245,7 @@ export class WriteAidManager {
 
   async convertIndexToPlanning(projectPath: string, asChecklist = true) {
     // Locate index file: projectName.md or outline.md
-    const projectName = projectPath.split('/').pop() || projectPath;
+    const projectName = projectPath.split("/").pop() || projectPath;
     const candidates = [
       `${projectPath}/${projectName}.md`,
       `${projectPath}/outline.md`,
@@ -109,7 +260,7 @@ export class WriteAidManager {
     }
 
     if (!sourceFile) {
-      new Notice('No index or outline file found for project ' + projectPath);
+      new Notice("No index or outline file found for project " + projectPath);
       return;
     }
 
@@ -119,7 +270,7 @@ export class WriteAidManager {
     const lines = content.split(/\r?\n/);
     const autoPlanLines: string[] = [];
     autoPlanLines.push(`# Planning: ${projectName}`);
-    autoPlanLines.push('');
+    autoPlanLines.push("");
 
     for (const line of lines) {
       const m = line.match(/^(#{1,3})\s+(.*)/);
@@ -131,18 +282,24 @@ export class WriteAidManager {
         } else if (level <= 2) {
           autoPlanLines.push(`## ${text}`);
         } else {
-          autoPlanLines.push(`${'  '.repeat(level-3)}- ${text}`);
+          autoPlanLines.push(`${"  ".repeat(level - 3)}- ${text}`);
         }
       }
     }
 
-  const planningTemplateSetting = this.settings?.planningTemplate || `{{content}}`;
-  const tplSvc = new TemplateService(this.app);
+    const planningTemplateSetting =
+      this.settings?.planningTemplate || `{{content}}`;
+    const tplSvc = new TemplateService(this.app);
 
     // If the template contains a {{content}} placeholder we'll inject the autoPlan
-    let finalContent = await tplSvc.render(planningTemplateSetting, { projectName });
-    if (finalContent.includes('{{content}}')) {
-      finalContent = finalContent.replace(/{{\s*content\s*}}/g, autoPlanLines.join('\n'));
+    let finalContent = await tplSvc.render(planningTemplateSetting, {
+      projectName,
+    });
+    if (finalContent.includes("{{content}}")) {
+      finalContent = finalContent.replace(
+        /{{\s*content\s*}}/g,
+        autoPlanLines.join("\n"),
+      );
     }
 
     const outPath = `${projectPath}/Planning.md`;
@@ -151,15 +308,24 @@ export class WriteAidManager {
 
   async createNewDraftPrompt() {
     // First ask the user which project to create the draft for
+    const all = this.listAllFolders();
+    const projects = await asyncFilter(all, (p) =>
+      this.projectService.isProjectFolder(p),
+    );
     new SelectProjectModal(this.app, {
-      folders: this.listAllFolders(),
+      folders: projects,
       onSubmit: async (projectPath: string) => {
         new CreateDraftModal(this.app, {
           suggestedName: this.suggestNextDraftName(projectPath),
           drafts: this.listDrafts(projectPath),
           projectPath,
           onSubmit: async (draftName: string, copyFrom?: string) => {
-            await this.draftService.createDraft(draftName, copyFrom, projectPath, this.settings);
+            await this.draftService.createDraft(
+              draftName,
+              copyFrom,
+              projectPath,
+              this.settings,
+            );
             new Notice(`Draft "${draftName}" created in ${projectPath}.`);
           },
         }).open();
@@ -176,7 +342,7 @@ export class WriteAidManager {
     new SwitchDraftModal(this.app, drafts, async (draftName: string) => {
       this.activeDraft = draftName;
       new Notice(`Switched to draft: ${draftName}`);
-      
+
       // Update meta.md with the new active draft
       const projectPath = this.getCurrentProjectPath();
       if (projectPath) {
@@ -185,19 +351,137 @@ export class WriteAidManager {
     }).open();
   }
 
-  async createNewDraft(draftName: string, copyFromDraft?: string, projectPath?: string) {
-    return await this.draftService.createDraft(draftName, copyFromDraft, projectPath, this.settings);
+  async updateProjectMetadataPrompt() {
+    // If we have an active project, operate on it immediately
+    if (this.activeProject) {
+      await updateMetaStats(this.app, this.activeProject);
+      new Notice(`Metadata updated for ${this.activeProject}`);
+      return;
+    }
+
+    // Otherwise ask the user to pick a project folder, then run updateMetaStats
+    // We need to filter asynchronously because isProjectFolder is async
+    (async () => {
+      const all = this.listAllFolders();
+      const projects = await asyncFilter(all, (p) =>
+        this.projectService.isProjectFolder(p),
+      );
+      new SelectProjectModal(this.app, {
+        folders: projects,
+        onSubmit: async (projectPath: string) => {
+          await updateMetaStats(this.app, projectPath);
+          new Notice(`Metadata updated for ${projectPath}`);
+        },
+      }).open();
+    })();
+  }
+
+  async selectActiveProjectPrompt() {
+    // Show only folders that look like WriteAid projects
+    const all = this.listAllFolders();
+    const projects = await asyncFilter(all, (p) =>
+      this.projectService.isProjectFolder(p),
+    );
+    if (projects.length === 0) {
+      new Notice("No WriteAid projects found in the vault.");
+      return;
+    }
+    new SelectProjectModal(this.app, {
+      folders: projects,
+      onSubmit: async (projectPath: string) => {
+        await this.setActiveProject(projectPath);
+        new Notice(`Active project set to ${projectPath}`);
+      },
+    }).open();
+  }
+
+  async createNewDraft(
+    draftName: string,
+    copyFromDraft?: string,
+    projectPath?: string,
+  ) {
+    const res = await this.draftService.createDraft(
+      draftName,
+      copyFromDraft,
+      projectPath,
+      this.settings,
+    );
+    try {
+      this.notifyPanelRefresh();
+    } catch (e) {
+      // Ignore errors in notifyPanelRefresh
+    }
+    return res;
   }
 
   listDrafts(projectPath?: string): string[] {
     return this.draftService.listDrafts(projectPath);
   }
 
+  /**
+   * Set the active draft programmatically for the current project.
+   */
+  async setActiveDraft(draftName: string, projectPath?: string) {
+    const project =
+      projectPath || this.activeProject || this.getCurrentProjectPath();
+    if (!project) {
+      new Notice("No project selected to set active draft on.");
+      return false;
+    }
+    this.activeDraft = draftName;
+    // Update meta.md with the new active draft
+    try {
+      await updateMetaStats(this.app, project, draftName);
+    } catch (e) {
+      // Ignore errors in updateMetaStats
+    }
+    new Notice(`Active draft set to ${draftName}`);
+    return true;
+  }
+
+  async renameDraft(oldName: string, newName: string, projectPath?: string) {
+    const project =
+      projectPath || this.activeProject || this.getCurrentProjectPath();
+    if (!project) {
+      new Notice("No project selected to rename draft.");
+      return false;
+    }
+    const ok = await this.draftService.renameDraft(project, oldName, newName);
+    if (ok) {
+      new Notice(`Renamed draft ${oldName} → ${newName}`);
+      return true;
+    }
+    new Notice("Failed to rename draft.");
+    return false;
+  }
+
+  async deleteDraft(
+    draftName: string,
+    projectPath?: string,
+    createBackup = true,
+  ) {
+    const project =
+      projectPath || this.activeProject || this.getCurrentProjectPath();
+    if (!project) {
+      new Notice("No project selected to delete draft.");
+      return false;
+    }
+    const ok = await this.draftService.deleteDraft(
+      project,
+      draftName,
+      createBackup,
+    );
+    if (ok) {
+      new Notice(`Deleted draft ${draftName}`);
+      return true;
+    }
+    new Notice("Failed to delete draft.");
+    return false;
+  }
+
   suggestNextDraftName(projectPath?: string): string {
     return this.draftService.suggestNextDraftName(projectPath);
   }
-
-  
 
   getCurrentProjectPath(): string | null {
     // Naive: Use the current active file's parent folder as the project folder
@@ -206,6 +490,4 @@ export class WriteAidManager {
     const folder = activeFile.parent;
     return folder ? folder.path : null;
   }
-
 }
-

@@ -1,4 +1,4 @@
-import { App, TFile, TFolder } from 'obsidian';
+import { App, TFile, TFolder } from "obsidian";
 
 /**
  * Project metadata tracked in meta.md
@@ -18,7 +18,10 @@ export interface ProjectMetadata {
  * @param filePath Path to the meta.md file
  * @returns Parsed metadata or null if file doesn't exist or parsing fails
  */
-export async function readMetaFile(app: App, filePath: string): Promise<ProjectMetadata | null> {
+export async function readMetaFile(
+  app: App,
+  filePath: string,
+): Promise<ProjectMetadata | null> {
   const file = app.vault.getAbstractFileByPath(filePath);
   if (!file || !(file instanceof TFile)) {
     return null;
@@ -29,7 +32,7 @@ export async function readMetaFile(app: App, filePath: string): Promise<ProjectM
     const metadata = parseFrontmatter(content);
     return metadata;
   } catch (error) {
-    console.error('Error reading meta file:', error);
+    console.error("Error reading meta file:", error);
     return null;
   }
 }
@@ -40,9 +43,13 @@ export async function readMetaFile(app: App, filePath: string): Promise<ProjectM
  * @param filePath Path to the meta.md file
  * @param metadata Metadata to write
  */
-export async function writeMetaFile(app: App, filePath: string, metadata: ProjectMetadata): Promise<void> {
+export async function writeMetaFile(
+  app: App,
+  filePath: string,
+  metadata: ProjectMetadata,
+): Promise<void> {
   const content = formatMetaContent(metadata);
-  
+
   const file = app.vault.getAbstractFileByPath(filePath);
   if (file && file instanceof TFile) {
     await app.vault.modify(file, content);
@@ -62,10 +69,10 @@ export async function updateMetaStats(
   app: App,
   projectPath: string,
   activeDraft?: string,
-  options?: Partial<ProjectMetadata>
+  options?: Partial<ProjectMetadata>,
 ): Promise<void> {
   const metaPath = `${projectPath}/meta.md`;
-  
+
   // Read existing metadata or create new
   let metadata = await readMetaFile(app, metaPath);
   if (!metadata) {
@@ -77,7 +84,9 @@ export async function updateMetaStats(
   // Count drafts in the Drafts folder
   const draftsFolder = app.vault.getAbstractFileByPath(`${projectPath}/Drafts`);
   if (draftsFolder && draftsFolder instanceof TFolder) {
-    const draftFolders = draftsFolder.children.filter((child) => child instanceof TFolder);
+    const draftFolders = draftsFolder.children.filter(
+      (child) => child instanceof TFolder,
+    );
     metadata.total_drafts = draftFolders.length;
   }
 
@@ -94,7 +103,9 @@ export async function updateMetaStats(
 
   // Calculate optional statistics
   if (metadata.total_drafts > 0 && metadata.total_word_count) {
-    metadata.average_draft_word_count = Math.round(metadata.total_word_count / metadata.total_drafts);
+    metadata.average_draft_word_count = Math.round(
+      metadata.total_word_count / metadata.total_drafts,
+    );
   }
 
   await writeMetaFile(app, metaPath, metadata);
@@ -112,24 +123,26 @@ function parseFrontmatter(content: string): ProjectMetadata | null {
   const yamlContent = fmMatch[1];
   const metadata: Partial<ProjectMetadata> = {};
 
-  const lines = yamlContent.split('\n');
+  const lines = yamlContent.split("\n");
   for (const line of lines) {
     const match = line.match(/^([a-zA-Z_][a-zA-Z0-9_-]*):\s*(.*)$/);
     if (match) {
       const key = match[1];
-      let value: any = match[2].trim();
-      
+  let value: string | number = match[2].trim();
+
       // Parse numbers
       // Only parse as number if the entire value is a valid number
       if (/^-?\d+(\.\d+)?$/.test(value)) {
         value = Number(value);
       }
       // Remove quotes from strings
-      else if ((value.startsWith('"') && value.endsWith('"')) || 
-               (value.startsWith("'") && value.endsWith("'"))) {
+      else if (
+        (value.startsWith('"') && value.endsWith('"')) ||
+        (value.startsWith("'") && value.endsWith("'"))
+      ) {
         value = value.slice(1, -1);
       }
-      
+
       metadata[key] = value;
     }
   }
@@ -141,8 +154,8 @@ function parseFrontmatter(content: string): ProjectMetadata | null {
  * Format metadata as markdown with YAML frontmatter and human-readable section
  */
 function formatMetaContent(metadata: ProjectMetadata): string {
-  const lines: string[] = ['---'];
-  
+  const lines: string[] = ["---"];
+
   // Write YAML frontmatter
   if (metadata.current_active_draft !== undefined) {
     lines.push(`current_active_draft: "${metadata.current_active_draft}"`);
@@ -152,39 +165,49 @@ function formatMetaContent(metadata: ProjectMetadata): string {
     lines.push(`target_word_count: ${metadata.target_word_count}`);
   }
   if (metadata.active_draft_last_modified !== undefined) {
-    lines.push(`active_draft_last_modified: "${metadata.active_draft_last_modified}"`);
+    lines.push(
+      `active_draft_last_modified: "${metadata.active_draft_last_modified}"`,
+    );
   }
   if (metadata.total_word_count !== undefined) {
     lines.push(`total_word_count: ${metadata.total_word_count}`);
   }
   if (metadata.average_draft_word_count !== undefined) {
-    lines.push(`average_draft_word_count: ${metadata.average_draft_word_count}`);
+    lines.push(
+      `average_draft_word_count: ${metadata.average_draft_word_count}`,
+    );
   }
-  
-  lines.push('---');
-  lines.push('');
-  
+
+  lines.push("---");
+  lines.push("");
+
   // Add human-readable section
-  lines.push('# Project Statistics');
-  lines.push('');
+  lines.push("# Project Statistics");
+  lines.push("");
   if (metadata.current_active_draft) {
     lines.push(`**Active Draft:** ${metadata.current_active_draft}`);
   }
   lines.push(`**Total Drafts:** ${metadata.total_drafts}`);
   if (metadata.target_word_count) {
-    lines.push(`**Target Word Count:** ${metadata.target_word_count.toLocaleString()}`);
+    lines.push(
+      `**Target Word Count:** ${metadata.target_word_count.toLocaleString()}`,
+    );
   }
   if (metadata.active_draft_last_modified) {
     const date = new Date(metadata.active_draft_last_modified);
     lines.push(`**Last Modified:** ${date.toLocaleString()}`);
   }
   if (metadata.total_word_count) {
-    lines.push(`**Total Word Count:** ${metadata.total_word_count.toLocaleString()}`);
+    lines.push(
+      `**Total Word Count:** ${metadata.total_word_count.toLocaleString()}`,
+    );
   }
   if (metadata.average_draft_word_count) {
-    lines.push(`**Average Draft Word Count:** ${metadata.average_draft_word_count.toLocaleString()}`);
+    lines.push(
+      `**Average Draft Word Count:** ${metadata.average_draft_word_count.toLocaleString()}`,
+    );
   }
-  lines.push('');
-  
-  return lines.join('\n');
+  lines.push("");
+
+  return lines.join("\n");
 }
