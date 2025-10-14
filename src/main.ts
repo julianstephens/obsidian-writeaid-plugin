@@ -1,8 +1,15 @@
-import { convertSingleToMultiFileProject } from "@/core/convertSingleToMultiFile";
 import { ProjectService } from "@/core/ProjectService";
 import { asyncFilter } from "@/core/utils";
 import type { WriteAidSettings } from "@/types";
 import { Notice, Plugin } from "obsidian";
+import { convertIndexToPlanningCommand } from "./commands/convertIndexToPlanningCommand";
+import { convertSingleToMultiFileProjectCommand } from "./commands/convertSingleToMultiFileProjectCommand";
+import { createNewDraftCommand } from "./commands/createNewDraftCommand";
+import { createNewProjectCommand } from "./commands/createNewProjectCommand";
+import { selectActiveProjectCommand } from "./commands/selectActiveProjectCommand";
+import { switchDraftCommand } from "./commands/switchDraftCommand";
+import { toggleProjectPanelCommand } from "./commands/toggleProjectPanelCommand";
+import { updateProjectMetadataCommand } from "./commands/updateProjectMetadataCommand";
 import { WriteAidManager } from "./manager";
 import { WriteAidSettingTab } from "./settings";
 
@@ -78,20 +85,6 @@ export default class WriteAidPlugin extends Plugin {
   }
 
   async onload() {
-    // ...existing code...
-
-    this.addCommand({
-      id: "convert-single-to-multi-file-project",
-      name: "Convert Single-File Project to Multi-File",
-      callback: async () => {
-        const projectPath = this.manager.activeProject || this.manager.getCurrentProjectPath?.();
-        if (!projectPath) {
-          new Notice("No active project selected.");
-          return;
-        }
-        await convertSingleToMultiFileProject(this.app, projectPath);
-      },
-    });
     // Defer verbose loading message until persisted debug setting is applied below
     // Inject plugin styles into the document head so the compiled CSS is
     // applied inside Obsidian. Keep a reference so we can remove it on unload.
@@ -262,61 +255,53 @@ export default class WriteAidPlugin extends Plugin {
     this.addCommand({
       id: "create-new-draft",
       name: "Create New Draft",
-      callback: () => this.manager.createNewDraftPrompt(),
+      callback: createNewDraftCommand(this.manager),
     });
 
     this.addCommand({
       id: "create-new-project",
       name: "Create New Project",
-      callback: () => this.manager.createNewProjectPrompt(),
+      callback: createNewProjectCommand(this.manager),
     });
 
     this.addCommand({
       id: "convert-index-to-planning",
       name: "Convert Index to Planning Document",
-      callback: () => this.manager.convertIndexToPlanningPrompt(),
+      callback: convertIndexToPlanningCommand(this.manager),
     });
 
     this.addCommand({
       id: "switch-draft",
       name: "Switch Active Draft",
-      callback: () => this.manager.switchDraftPrompt(),
+      callback: switchDraftCommand(this.manager),
     });
 
     this.addCommand({
       id: "update-project-metadata",
       name: "Update Project Metadata",
-      callback: () => this.manager.updateProjectMetadataPrompt(),
+      callback: updateProjectMetadataCommand(this.manager),
     });
 
     this.addCommand({
       id: "select-active-project",
       name: "Select Active Project",
-      callback: () => this.manager.selectActiveProjectPrompt(),
+      callback: selectActiveProjectCommand(this.manager),
     });
 
     this.addCommand({
       id: "toggle-project-panel",
       name: "Toggle WriteAid Project Panel",
-      callback: () => {
-        const viewState = {
-          type: VIEW_TYPE_PROJECT_PANEL,
-          active: true,
-        };
-        // try to find an existing leaf with our view
-        const existing = this.app.workspace.getLeavesOfType(VIEW_TYPE_PROJECT_PANEL);
-        if (existing.length > 0) {
-          const leaf = existing[0];
-          this.app.workspace.revealLeaf(leaf);
-        } else {
-          let leaf = this.app.workspace.getRightLeaf(false);
-          if (!leaf) leaf = this.app.workspace.getRightLeaf(true);
-          leaf!.setViewState(viewState);
-          this.app.workspace.revealLeaf(leaf!);
-        }
-      },
+      callback: toggleProjectPanelCommand(this.manager, this.app),
     });
-
+    this.addCommand({
+      id: "convert-single-to-multi-file-project",
+      name: "Convert Single-File Project to Multi-File",
+      callback: () =>
+        convertSingleToMultiFileProjectCommand(
+          this.app,
+          this.manager.activeProject || this.manager.getCurrentProjectPath?.() || undefined,
+        ),
+    });
     this.addSettingTab(new WriteAidSettingTab(this.app, this));
   }
 

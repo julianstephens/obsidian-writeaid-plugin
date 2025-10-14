@@ -16,8 +16,6 @@ export function slugifyDraftName(draftName: string, style: DraftSlugStyle = "com
 }
 
 export const DEFAULT_MULTI_TARGET_WORD_COUNT = 50000;
-export const DEFAULT_TOTAL_DRAFTS = 1;
-
 export const DEFAULT_SINGLE_TARGET_WORD_COUNT = 20000;
 
 /**

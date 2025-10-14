@@ -37,11 +37,56 @@
   let copyFromSelected: any = undefined;
   let copyFrom: string = '';
 
+
   let draftMeta: Record<string, { created: number }> = {};
   let sortAsc = true;
 
+  // Chapter management state
+  let chapters: Array<{ chapterName: string; order: number }> = [];
+  let loadingChapters = false;
+  let showCreateChapter = false;
+  let newChapterName = '';
+  let newChapterNameValue = '';
+  let editingChapterIndex: number | null = null;
+  let editingChapterNameValue = '';
+  let editingName = '';
+  let isMultiFileProject = false;
 
-  async function refresh(showNotifications = false) {
+  // Load chapters for the active draft (multi-file only)
+  async function refreshChapters() {
+    loadingChapters = true;
+    chapters = [];
+    isMultiFileProject = false;
+    if (!selectedValue || !manager?.activeDraft) {
+      loadingChapters = false;
+      return;
+    }
+    // Read meta.md to check project_type
+    try {
+      const app = (window as any).app as App;
+      const metaPath = `${selectedValue}/meta.md`;
+      const meta = await readMetaFile(app, metaPath);
+      isMultiFileProject = !!(meta && meta.project_type === 'multi-file');
+    } catch (e) {
+      isMultiFileProject = false;
+    }
+    if (!isMultiFileProject) {
+      loadingChapters = false;
+      return;
+    }
+    // Use manager API to list chapters
+    try {
+      chapters = await manager.listChapters(selectedValue, manager.activeDraft);
+    } catch (e) {
+      chapters = [];
+    }
+    loadingChapters = false;
+  }
+
+  // Do not call refreshChapters reactively; call it only after explicit user actions (project creation, draft change, project selection)
+
+
+  async function refresh(showNotifications = false): Promise<string[]> {
     loadingProjects = true;
     const minSpin = new Promise((resolve) => setTimeout(resolve, 400));
     const prevProjects = [...projects];
@@ -98,6 +143,7 @@
     loadingProjects = false;
     // load drafts for the selected project (uses selectedValue)
     refreshDrafts();
+    return newProjects;
   }
 
   function sortDrafts() {
@@ -172,10 +218,7 @@
   // derive copyFrom primitive
   $: copyFrom = typeof copyFromSelected === 'string' ? copyFromSelected : copyFromSelected ? copyFromSelected.value : '';
 
-  // update drafts when selected project value changes
-  $: if (selectedValue !== undefined) {
-    refreshDrafts();
-  }
+  // update drafts only when a project is selected by user action (see setActiveProject and activate)
 
   // reactive options mapping for BaseSelect
   $: projectOptions = projects.map((p) => ({ value: p, label: p }));
@@ -188,12 +231,14 @@
     if (!project) return;
     // If there is exactly one draft, always set it as active
     if (drafts.length === 1) {
-      await manager.setActiveDraft(drafts[0], project, false);
-      manager.activeDraft = drafts[0]; // Force Svelte update
+      if (manager.activeDraft !== drafts[0]) {
+        await manager.setActiveDraft(drafts[0], project, false);
+        manager.activeDraft = drafts[0]; // Force Svelte update
+      }
     } else if (!manager.activeDraft && drafts.length > 0) {
       // Otherwise, if no active draft, set the latest
       const latestDraft = drafts[drafts.length - 1];
-      if (latestDraft) {
+      if (latestDraft && manager.activeDraft !== latestDraft) {
         await manager.setActiveDraft(latestDraft, project, false);
         manager.activeDraft = latestDraft; // Force Svelte update
       }
@@ -333,22 +378,52 @@
 
   <div class="wa-row" style="margin: 18px 0 10px 0;">
     <BaseButton onclick={async () => {
-      const before = projects.length;
-      await manager.createNewProjectPrompt();
-      // After project creation, refresh and auto-select if it was the first
-      await refresh();
-      if (before === 0 && projects.length === 1) {
-        // Set the new project as active
-        activeProject = projects[0];
-        selected = { value: projects[0], label: projects[0] };
-        selectedValue = projects[0];
-        refreshDrafts();
-      }
-    }} variant="primary">New Project</BaseButton>
+      const beforeProjects = [...projects];
+      const app = (window as any).app || manager.app;
+      const { CreateProjectModal } = await import('@/ui/modals/CreateProjectModal');
+      const initialDraftName = 'Draft 1';
+      let projectPath: string | null = null;
+      const modal = new CreateProjectModal(app, async (projectName: string, singleFile: boolean, initialDraftName?: string) => {
+        if (!projectName) return;
+        projectPath = await projectService.createProject(
+          projectName,
+          singleFile,
+          initialDraftName || initialDraftName,
+          undefined,
+          manager.settings
+        );
+        if (!projectPath) return;
+        // Wait for the new project to appear in the list
+        let newProjects: string[] = [];
+        let newProject: string | null = null;
+        for (let i = 0; i < 20; i++) {
+          await new Promise(res => setTimeout(res, 100));
+          newProjects = await refresh();
+          const found = newProjects.find(p => p === projectPath);
+          newProject = typeof found === 'string' ? found : null;
+          if (newProject) break;
+        }
+        if (typeof newProject === 'string' && newProject) {
+          activeProject = newProject;
+          selected = { value: newProject, label: newProject };
+          selectedValue = newProject;
+          // Set the new draft as active
+          if (manager.setActiveDraft) {
+            await manager.setActiveDraft(newProject, initialDraftName);
+          } else {
+            manager.activeDraft = initialDraftName;
+          }
+          await refreshDrafts();
+          await refreshChapters();
+        }
+      });
+      modal.open();
+      return;
+    }} variant="primary" style="width: 40%; margin: 0 auto;">New Project</BaseButton>
   </div>
 
   {#if projects.length === 0}
-    <div class="wa-muted">No projects found.</div>
+    <div class="wa-muted" style="margin: 4rem auto 0; font-size: 18px; width: fit-content;">No projects found.</div>
   {/if}
   {#if projects.length > 0}
     <div style="margin:20px 0;">
@@ -433,6 +508,101 @@
                 <BaseButton onclick={() => deleteDraftHandler(d)}>Delete</BaseButton>
               </div>
             </div>
+          {/each}
+        </div>
+      {/if}
+    </div>
+  {/if}
+
+  {#if selectedValue && manager?.activeDraft && isMultiFileProject}
+    <div class="chapter-controls" style="margin-top:18px;">
+      <div class="wa-panel-header">
+        <div class="wa-row justify-between">
+          <div class="wa-title">Chapters</div>
+          <div class="wa-button-group">
+            <BaseButton onclick={() => showCreateChapter = !showCreateChapter} variant="primary">New Chapter</BaseButton>
+          </div>
+        </div>
+      </div>
+      {#if showCreateChapter}
+        <div class="create-inline wa-row">
+          <input
+            class="wa-create-draft-input"
+            type="text"
+            placeholder="Chapter name"
+            value={newChapterName}
+            on:input={(e) => { const t = e.target as HTMLInputElement | null; if (t) newChapterName = t.value; }}
+          />
+          <!-- No separate short name field; use newChapterNameValue for display name if desired -->
+          <BaseButton onclick={async () => {
+            if (!selectedValue || !manager?.activeDraft || !newChapterName.trim()) return;
+            await manager.createChapter(selectedValue, manager.activeDraft, newChapterName.trim(), newChapterNameValue.trim() || undefined);
+            newChapterName = '';
+            newChapterNameValue = '';
+            showCreateChapter = false;
+            await refreshChapters();
+          }} variant="primary">Create</BaseButton>
+        </div>
+      {/if}
+      {#if loadingChapters}
+        <div>Loading chapters...</div>
+      {:else if chapters.length === 0}
+        <div>No chapters found.</div>
+      {:else}
+        <div class="wa-draft-list">
+          {#each chapters as ch, i}
+            <div class="wa-draft-item">
+              <div class="wa-draft-name">
+                {ch.chapterName}
+              </div>
+              <div class="wa-draft-actions">
+                <BaseButton onclick={async () => {
+                  if (i === 0) return;
+                  // Move chapter up
+                  const newOrder = chapters.slice();
+                  [newOrder[i - 1], newOrder[i]] = [newOrder[i], newOrder[i - 1]];
+                  await manager.reorderChapters(selectedValue, manager.activeDraft, newOrder);
+                  await refreshChapters();
+                }} disabled={i === 0}>↑</BaseButton>
+                <BaseButton onclick={async () => {
+                  if (i === chapters.length - 1) return;
+                  // Move chapter down
+                  const newOrder = chapters.slice();
+                  [newOrder[i], newOrder[i + 1]] = [newOrder[i + 1], newOrder[i]];
+                  await manager.reorderChapters(selectedValue, manager.activeDraft, newOrder);
+                  await refreshChapters();
+                }} disabled={i === chapters.length - 1}>↓</BaseButton>
+                <BaseButton onclick={() => {
+                  editingChapterIndex = i;
+                  editingName = ch.chapterName;
+                  editingChapterNameValue = ch.chapterName || '';
+                }}>Rename</BaseButton>
+                <BaseButton onclick={async () => {
+                  if (!selectedValue || !manager?.activeDraft) return;
+                  await manager.deleteChapter(selectedValue, manager.activeDraft, ch.chapterName);
+                  await refreshChapters();
+                }}>Delete</BaseButton>
+              </div>
+            </div>
+            {#if editingChapterIndex === i}
+              <div class="create-inline wa-row">
+                <input
+                  class="wa-create-draft-input"
+                  type="text"
+                  placeholder="Chapter name"
+                  value={editingName}
+                  on:input={(e) => { const t = e.target as HTMLInputElement | null; if (t) editingName = t.value; }}
+                />
+                <!-- No separate short name field; use editingChapterNameValue for display name if desired -->
+                <BaseButton onclick={async () => {
+                  if (!selectedValue || !manager?.activeDraft) return;
+                  await manager.renameChapter(selectedValue, manager.activeDraft, ch.chapterName, editingName.trim(), editingChapterNameValue.trim() || undefined);
+                  editingChapterIndex = null;
+                  await refreshChapters();
+                }} variant="primary">Save</BaseButton>
+                <BaseButton onclick={() => { editingChapterIndex = null; }}>Cancel</BaseButton>
+              </div>
+            {/if}
           {/each}
         </div>
       {/if}

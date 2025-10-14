@@ -13,6 +13,168 @@ export class DraftService {
     this.tpl = new TemplateService(app);
   }
 
+  /**
+   * List chapters for a draft in a multi-file project. Returns array of { name, chapterName? }
+   */
+  async listChapters(
+    projectPath: string,
+    draftName: string,
+  ): Promise<Array<{ name: string; chapterName?: string }>> {
+    const project = this.resolveProjectPath(projectPath);
+    if (!project) return [];
+    const draftFolder = `${project}/Drafts/${draftName}`;
+    const folder = this.app.vault.getAbstractFileByPath(draftFolder);
+    const chapters: Array<{ name: string; chapterName?: string; order: number }> = [];
+    if (folder && folder instanceof TFolder) {
+      for (const file of folder.children) {
+        if (file instanceof TFile && file.extension === "md") {
+          try {
+            const content = await this.app.vault.read(file);
+            // Parse frontmatter for 'order' and 'chapter_name'
+            const fmMatch = content.match(/^---\n([\s\S]*?)\n---/);
+            let order: number | undefined = undefined;
+            let chapterName: string | undefined = undefined;
+            if (fmMatch) {
+              const lines = fmMatch[1].split(/\r?\n/);
+              for (const line of lines) {
+                const mOrder = line.match(/^order:\s*(\d+)/i);
+                if (mOrder) order = parseInt(mOrder[1], 10);
+                const mChapterName = line.match(/^chapter_name:\s*(.*)$/i);
+                if (mChapterName) {
+                  // Remove quotes if present
+                  let val = mChapterName[1].trim();
+                  if (
+                    (val.startsWith('"') && val.endsWith('"')) ||
+                    (val.startsWith("'") && val.endsWith("'"))
+                  ) {
+                    val = val.slice(1, -1);
+                  }
+                  if (val.length > 0) chapterName = val;
+                }
+              }
+            }
+            if (
+              typeof order === "number" &&
+              !isNaN(order) &&
+              chapterName &&
+              chapterName.length > 0
+            ) {
+              chapters.push({ name: file.name.replace(/\.md$/, ""), chapterName, order });
+            }
+          } catch (e) {
+            // ignore error
+          }
+        }
+      }
+    }
+    chapters.sort((a, b) => a.order - b.order);
+    return chapters.map(({ name, chapterName }) => ({ name, chapterName }));
+  }
+
+  /** Create a new chapter file in a draft folder. */
+  async createChapter(
+    projectPath: string,
+    draftName: string,
+    chapterName: string,
+    chapterNameValue?: string,
+  ) {
+    const project = this.resolveProjectPath(projectPath);
+    if (!project) return false;
+    const draftFolder = `${project}/Drafts/${draftName}`;
+    const fileName = `${chapterName}.md`;
+    const filePath = `${draftFolder}/${fileName}`;
+    if (this.app.vault.getAbstractFileByPath(filePath)) return false;
+    // Find max order among existing chapters
+    let maxOrder = 0;
+    const folder = this.app.vault.getAbstractFileByPath(draftFolder);
+    if (folder && folder instanceof TFolder) {
+      for (const file of folder.children) {
+        if (file instanceof TFile && file.extension === "md") {
+          try {
+            const content = await this.app.vault.read(file);
+            const fmMatch = content.match(/^---\n([\s\S]*?)\n---/);
+            if (fmMatch) {
+              const lines = fmMatch[1].split(/\r?\n/);
+              for (const line of lines) {
+                const m = line.match(/^order:\s*(\d+)/i);
+                if (m) {
+                  const ord = parseInt(m[1], 10);
+                  if (!isNaN(ord) && ord > maxOrder) maxOrder = ord;
+                }
+              }
+            }
+          } catch (e) {
+            /* ignore */
+          }
+        }
+      }
+    }
+    const order = maxOrder + 1;
+    let effectiveChapterName =
+      chapterNameValue && chapterNameValue.trim() ? chapterNameValue.trim() : `Chapter ${order}`;
+    let title = `# ${chapterName}`;
+    const frontmatter = `---\norder: ${order}\nchapter_name: ${JSON.stringify(effectiveChapterName)}\n---\n`;
+    await this.app.vault.create(filePath, `${frontmatter}\n${title}\n\n`);
+    return true;
+  }
+
+  /** Delete a chapter file from a draft folder. */
+  async deleteChapter(projectPath: string, draftName: string, chapterName: string) {
+    const project = this.resolveProjectPath(projectPath);
+    if (!project) return false;
+    const draftFolder = `${project}/Drafts/${draftName}`;
+    const fileName = `${chapterName}.md`;
+    const filePath = `${draftFolder}/${fileName}`;
+    const file = this.app.vault.getAbstractFileByPath(filePath);
+    if (file && file instanceof TFile) {
+      await this.app.vault.delete(file);
+      return true;
+    }
+    return false;
+  }
+
+  /** Rename a chapter file and/or update its short name. */
+  async renameChapter(
+    projectPath: string,
+    draftName: string,
+    oldName: string,
+    newName: string,
+    newChapterNameValue?: string,
+  ) {
+    const project = this.resolveProjectPath(projectPath);
+    if (!project) return false;
+    const draftFolder = `${project}/Drafts/${draftName}`;
+    const oldFile = `${draftFolder}/${oldName}.md`;
+    const newFile = `${draftFolder}/${newName}.md`;
+    const file = this.app.vault.getAbstractFileByPath(oldFile);
+    if (!file || !(file instanceof TFile)) return false;
+    let content = await this.app.vault.read(file);
+    // Update first line with new name/short name
+    let title = `# ${newName}`;
+    let effectiveChapterName =
+      newChapterNameValue && newChapterNameValue.trim() ? newChapterNameValue.trim() : undefined;
+    if (effectiveChapterName) title += `: ${effectiveChapterName}`;
+    // Update chapter_name in frontmatter if present, else add it
+    if (content.match(/^---\n([\s\S]*?)\n---/)) {
+      content = content.replace(/^(---\n[\s\S]*?)(chapter_name:.*\n)?/m, (match, p1) => {
+        // Remove any existing chapter_name line
+        let newFm = p1.replace(/^chapter_name:.*\n?/m, "");
+        if (effectiveChapterName) {
+          newFm += `chapter_name: ${JSON.stringify(effectiveChapterName)}\n`;
+        }
+        return newFm;
+      });
+    }
+    content = content.replace(/^#.*$/m, title);
+    if (oldName !== newName) {
+      await this.app.vault.create(newFile, content);
+      await this.app.vault.delete(file);
+    } else {
+      await this.app.vault.modify(file, content);
+    }
+    return true;
+  }
+
   private resolveProjectPath(projectPath?: string): string | null {
     if (projectPath && projectPath !== "") return projectPath;
     const activeFile = this.app.workspace.getActiveFile();
@@ -64,14 +226,37 @@ export class DraftService {
         await this.app.vault.create(`${newDraftFolder}/outline.md`, outlineContent);
       }
 
-      // If the project is single-file (detected by presence of <projectName>.md or meta.md),
-      // also create a main draft file inside the draft folder (e.g., draft1.md)
+      // Determine project type from meta.md frontmatter
       const projectName = projectPathResolved.split("/").pop() || projectPathResolved;
-      const singleFileCandidate = `${projectPathResolved}/${projectName}.md`;
       const metaCandidate = `${projectPathResolved}/meta.md`;
-      const isSingleFileProject =
-        !!this.app.vault.getAbstractFileByPath(singleFileCandidate) ||
-        !!this.app.vault.getAbstractFileByPath(metaCandidate);
+      let isSingleFileProject = false;
+      if (this.app.vault.getAbstractFileByPath(metaCandidate)) {
+        try {
+          const metaFile = this.app.vault.getAbstractFileByPath(metaCandidate);
+          if (metaFile instanceof TFile) {
+            const metaContent = await this.app.vault.read(metaFile);
+            const fmMatch = metaContent.match(/^---\n([\s\S]*?)\n---/);
+            if (fmMatch) {
+              const lines = fmMatch[1].split(/\r?\n/);
+              for (const line of lines) {
+                const mType = line.match(/^project_type:\s*(.*)$/i);
+                if (mType) {
+                  const val = mType[1].trim();
+                  if (val === "single-file") isSingleFileProject = true;
+                  if (val === "multi-file") isSingleFileProject = false;
+                  break;
+                }
+              }
+            }
+          }
+        } catch (e) {
+          // fallback: treat as multi-file
+        }
+      } else {
+        // fallback: old heuristic
+        const singleFileCandidate = `${projectPathResolved}/${projectName}.md`;
+        isSingleFileProject = !!this.app.vault.getAbstractFileByPath(singleFileCandidate);
+      }
 
       if (isSingleFileProject) {
         const slug = slugifyDraftName(
@@ -86,6 +271,37 @@ export class DraftService {
             projectName,
           });
           await this.app.vault.create(draftMainPath, fm + projectContent);
+        }
+      } else {
+        // Multi-file project: ensure at least one chapter exists
+        const folder = this.app.vault.getAbstractFileByPath(newDraftFolder);
+        let hasChapter = false;
+        if (folder && folder instanceof TFolder) {
+          for (const file of folder.children) {
+            if (file instanceof TFile && file.extension === "md") {
+              try {
+                const content = await this.app.vault.read(file);
+                const fmMatch = content.match(/^---\n([\s\S]*?)\n---/);
+                if (fmMatch) {
+                  const lines = fmMatch[1].split(/\r?\n/);
+                  for (const line of lines) {
+                    const m = line.match(/^order:\s*(\d+)/i);
+                    if (m && !isNaN(parseInt(m[1], 10))) {
+                      hasChapter = true;
+                      break;
+                    }
+                  }
+                }
+              } catch (e) {
+                /* ignore */
+              }
+              if (hasChapter) break;
+            }
+          }
+        }
+        if (!hasChapter) {
+          // Create Chapter 1
+          await this.createChapter(projectPathResolved, draftName, "Chapter 1");
         }
       }
     }

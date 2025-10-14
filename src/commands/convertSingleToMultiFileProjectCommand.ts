@@ -1,13 +1,8 @@
 import { readMetaFile, writeMetaFile } from "@/core/meta";
 import { slugifyDraftName } from "@/core/utils";
-import { App, Notice, TFile, TFolder } from "obsidian";
+import { Notice, TFile, TFolder, type App } from "obsidian";
 
-/**
- * Converts a single-file project to a multi-file project.
- * - Updates meta.md projectType to 'multi-file'.
- * - Renames the main draft file in each Drafts/[DraftName]/ folder to 'Chapter 1.md'.
- */
-export async function convertSingleToMultiFileProject(app: App, projectPath: string) {
+async function convertSingleToMultiFileProject(app: App, projectPath: string) {
   const metaPath = `${projectPath}/meta.md`;
   const meta = await readMetaFile(app, metaPath);
   if (!meta || meta.project_type !== "single-file") {
@@ -50,4 +45,16 @@ export async function convertSingleToMultiFileProject(app: App, projectPath: str
     new Notice("Converted to multi-file project. No draft files needed renaming.");
   }
   return true;
+}
+
+export async function convertSingleToMultiFileProjectCommand(
+  app: App,
+  projectPath: string | undefined,
+) {
+  if (!projectPath) {
+    // @ts-ignore
+    new window.Notice("No active project selected.");
+    return;
+  }
+  await convertSingleToMultiFileProject(app, projectPath);
 }

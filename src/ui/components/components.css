@@ -62,10 +62,11 @@
 
 .wa-button {
   background: transparent;
-  padding: 6px 10px;
+  padding: 10px;
   border-radius: 6px;
   cursor: pointer;
   color: var(--wa-text);
+  font-size: var(--font-size, 1em);
 }
 .wa-button.primary {
   background: linear-gradient(

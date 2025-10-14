@@ -47,6 +47,44 @@ export class WriteAidManager {
   }
 
   /** Get the current panel refresh debounce timeout in milliseconds */
+
+  // Chapter management API
+  async listChapters(projectPath: string, draftName: string) {
+    // Now returns Array<{ chapterName: string, order: number }>
+    return await this.draftService.listChapters(projectPath, draftName);
+  }
+  async createChapter(
+    projectPath: string,
+    draftName: string,
+    chapterName: string,
+    chapterNameValue?: string,
+  ) {
+    return await this.draftService.createChapter(
+      projectPath,
+      draftName,
+      chapterName,
+      chapterNameValue,
+    );
+  }
+  async deleteChapter(projectPath: string, draftName: string, chapterName: string) {
+    return await this.draftService.deleteChapter(projectPath, draftName, chapterName);
+  }
+  async renameChapter(
+    projectPath: string,
+    draftName: string,
+    oldName: string,
+    newName: string,
+    newChapterNameValue?: string,
+  ) {
+    return await this.draftService.renameChapter(
+      projectPath,
+      draftName,
+      oldName,
+      newName,
+      newChapterNameValue,
+    );
+  }
+
   get panelRefreshDebounceMs(): number {
     return this._panelRefreshDebounceMs;
   }
