@@ -4,7 +4,7 @@ import { Modal, Setting } from "obsidian";
 export class ConvertIndexModal extends Modal {
   props: ConvertIndexModalProps;
 
-  constructor(app: import('obsidian').App, props: ConvertIndexModalProps) {
+  constructor(app: import("obsidian").App, props: ConvertIndexModalProps) {
     super(app);
     this.props = props;
   }

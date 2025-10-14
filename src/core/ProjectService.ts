@@ -1,10 +1,6 @@
 import { updateMetaStats } from "@/core/meta";
 import { TemplateService } from "@/core/TemplateService";
-import {
-  DEFAULT_TARGET_WORD_COUNT,
-  DEFAULT_TOTAL_DRAFTS,
-  slugifyDraftName,
-} from "@/core/utils";
+import { DEFAULT_TARGET_WORD_COUNT, DEFAULT_TOTAL_DRAFTS, slugifyDraftName } from "@/core/utils";
 import type { WriteAidSettings } from "@/types";
 import { App, normalizePath, Notice, TFile, TFolder } from "obsidian";
 
@@ -31,9 +27,7 @@ export class ProjectService {
     }
 
     const projectPath =
-      parentFolder && parentFolder !== ""
-        ? `${parentFolder}/${projectName}`
-        : projectName;
+      parentFolder && parentFolder !== "" ? `${parentFolder}/${projectName}` : projectName;
     const draftsFolder = `${projectPath}/Drafts`;
 
     // Create project folder if it doesn't exist
@@ -79,7 +73,10 @@ export class ProjectService {
       }
 
       // Create a draft file inside the draft folder with a slugified draft name (e.g. Draft 1 -> draft1.md)
-  const slug = slugifyDraftName(draftName, settings?.slugStyle as import("@/core/utils").DraftSlugStyle);
+      const slug = slugifyDraftName(
+        draftName,
+        settings?.slugStyle as import("@/core/utils").DraftSlugStyle,
+      );
       const draftFileName = `${slug}.md`;
       const notePath = `${newDraftFolder}/${draftFileName}`;
       if (!this.app.vault.getAbstractFileByPath(notePath)) {
@@ -163,12 +160,8 @@ export class ProjectService {
     if (!path || typeof path !== "string") return false;
     const base = path.trim().replace(/\\/g, "/").replace(/\/+$/, "");
     try {
-      const hasMeta = await this.app.vault.adapter.exists(
-        normalizePath(`${base}/meta.md`),
-      );
-      const hasDrafts = await this.app.vault.adapter.exists(
-        normalizePath(`${base}/Drafts`),
-      );
+      const hasMeta = await this.app.vault.adapter.exists(normalizePath(`${base}/meta.md`));
+      const hasDrafts = await this.app.vault.adapter.exists(normalizePath(`${base}/Drafts`));
       return Promise.resolve(hasMeta && hasDrafts);
     } catch (e) {
       return Promise.resolve(false);

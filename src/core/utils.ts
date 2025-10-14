@@ -5,10 +5,7 @@ export type DraftSlugStyle = "compact" | "kebab";
  * - 'compact': remove whitespace and lowercase (default) -> "Draft 1" => "draft1"
  * - 'kebab': replace whitespace with dashes and lowercase -> "Draft 1" => "draft-1"
  */
-export function slugifyDraftName(
-  draftName: string,
-  style: DraftSlugStyle = "compact",
-): string {
+export function slugifyDraftName(draftName: string, style: DraftSlugStyle = "compact"): string {
   if (!draftName) return "";
   const trimmed = draftName.trim();
   if (style === "kebab") {
@@ -29,8 +26,6 @@ export async function asyncFilter<T>(
   arr: T[],
   predicate: (item: T) => Promise<boolean> | boolean,
 ): Promise<T[]> {
-  const results = await Promise.all(
-    arr.map((it) => Promise.resolve(predicate(it))),
-  );
+  const results = await Promise.all(arr.map((it) => Promise.resolve(predicate(it))));
   return arr.filter((_, i) => results[i]);
 }

@@ -11,10 +11,7 @@ import { WriteAidSettingTab } from "./settings";
 // @ts-expect-error - import CSS as raw text via Vite
 import stylesText from "./styles/writeaid.css?inline";
 import { WRITE_AID_ICON_NAME } from "./ui/components/icons";
-import {
-  ProjectPanelView,
-  VIEW_TYPE_PROJECT_PANEL,
-} from "./ui/sidepanel/ProjectPanelView";
+import { ProjectPanelView, VIEW_TYPE_PROJECT_PANEL } from "./ui/sidepanel/ProjectPanelView";
 
 // Local debug helper for plugin-level logs. Uses the same runtime flag as the
 // panel mount helper: window.__WRITEAID_DEBUG__
@@ -68,10 +65,10 @@ export default class WriteAidPlugin extends Plugin {
   async saveSettings() {
     // Normalize before saving to ensure all expected keys are present
     try {
-  const toSave = normalizeSettings(this.settings);
-  await this.saveData(toSave);
-  // keep the in-memory settings object in sync with what we saved
-  this.settings = toSave;
+      const toSave = normalizeSettings(this.settings);
+      await this.saveData(toSave);
+      // keep the in-memory settings object in sync with what we saved
+      this.settings = toSave;
     } catch (e) {
       // fallback to direct save if normalization fails
       await this.saveData(this.settings);
@@ -120,18 +117,11 @@ export default class WriteAidPlugin extends Plugin {
     );
 
     // register side panel view
-    this.registerView(
-      VIEW_TYPE_PROJECT_PANEL,
-      (leaf) => new ProjectPanelView(leaf, this.app),
-    );
+    this.registerView(VIEW_TYPE_PROJECT_PANEL, (leaf) => new ProjectPanelView(leaf, this.app));
 
     // Add a ribbon icon (SVG) to open the project panel, placement and visibility controlled by settings
     const projectService = new ProjectService(this.app);
-    const ribbonEl = this.addRibbonIcon(
-      WRITE_AID_ICON_NAME,
-      "WriteAid Projects",
-      () => {},
-    );
+    const ribbonEl = this.addRibbonIcon(WRITE_AID_ICON_NAME, "WriteAid Projects", () => {});
 
     ribbonEl.classList.add("writeaid-ribbon");
     this.ribbonEl = ribbonEl;
@@ -139,9 +129,7 @@ export default class WriteAidPlugin extends Plugin {
 
     // click behavior: reveal or create left panel
     ribbonEl.onclick = (evt: MouseEvent) => {
-      const existing = this.app.workspace.getLeavesOfType(
-        VIEW_TYPE_PROJECT_PANEL,
-      );
+      const existing = this.app.workspace.getLeavesOfType(VIEW_TYPE_PROJECT_PANEL);
       if (existing.length > 0) {
         const leaf = existing[0];
         this.app.workspace.revealLeaf(leaf);
@@ -165,9 +153,7 @@ export default class WriteAidPlugin extends Plugin {
           return;
         }
         const all = projectService.listAllFolders();
-        const projects = await asyncFilter(all, (p) =>
-          projectService.isProjectFolder(p),
-        );
+        const projects = await asyncFilter(all, (p) => projectService.isProjectFolder(p));
         if (projects.length > 0) {
           ribbonEl.style.display = "";
         } else {
@@ -178,7 +164,8 @@ export default class WriteAidPlugin extends Plugin {
       }
     };
     // expose a refresh method on the plugin instance
-  (this as unknown as { refreshRibbonVisibility?: () => void }).refreshRibbonVisibility = updateRibbonVisibility;
+    (this as unknown as { refreshRibbonVisibility?: () => void }).refreshRibbonVisibility =
+      updateRibbonVisibility;
 
     // initial visibility and placement (run async)
     updateRibbonVisibility().catch(() => {});
@@ -187,7 +174,7 @@ export default class WriteAidPlugin extends Plugin {
 
     // If we have a persisted activeProject, ensure manager knows about it and open the panel so the UI shows it
     try {
-  const persisted = this.settings?.activeProject;
+      const persisted = this.settings?.activeProject;
       if (persisted) {
         // validate the path still points to a WriteAid project
         const isProject = await projectService.isProjectFolder(persisted);
@@ -215,9 +202,7 @@ export default class WriteAidPlugin extends Plugin {
           }
           // open the panel only if user has enabled auto-open
           if (this.settings.autoOpenPanelOnStartup) {
-            const existing = this.app.workspace.getLeavesOfType(
-              VIEW_TYPE_PROJECT_PANEL,
-            );
+            const existing = this.app.workspace.getLeavesOfType(VIEW_TYPE_PROJECT_PANEL);
             if (existing.length > 0) {
               this.app.workspace.revealLeaf(existing[0]);
             } else {
@@ -303,22 +288,20 @@ export default class WriteAidPlugin extends Plugin {
           active: true,
         };
         // try to find an existing leaf with our view
-        const existing = this.app.workspace.getLeavesOfType(
-          VIEW_TYPE_PROJECT_PANEL,
-        );
+        const existing = this.app.workspace.getLeavesOfType(VIEW_TYPE_PROJECT_PANEL);
         if (existing.length > 0) {
           const leaf = existing[0];
           this.app.workspace.revealLeaf(leaf);
         } else {
-    let leaf = this.app.workspace.getRightLeaf(false);
-    if (!leaf) leaf = this.app.workspace.getRightLeaf(true);
-    leaf!.setViewState(viewState);
-    this.app.workspace.revealLeaf(leaf!);
+          let leaf = this.app.workspace.getRightLeaf(false);
+          if (!leaf) leaf = this.app.workspace.getRightLeaf(true);
+          leaf!.setViewState(viewState);
+          this.app.workspace.revealLeaf(leaf!);
         }
       },
     });
 
-  this.addSettingTab(new WriteAidSettingTab(this.app, this));
+    this.addSettingTab(new WriteAidSettingTab(this.app, this));
   }
 
   moveRibbon(to: "left" | "right") {

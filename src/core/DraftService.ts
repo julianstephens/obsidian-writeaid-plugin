@@ -29,9 +29,7 @@ export class DraftService {
   ) {
     const projectPathResolved = this.resolveProjectPath(projectPath);
     if (!projectPathResolved) {
-      new Notice(
-        "No project folder detected. Please open a folder named after your project.",
-      );
+      new Notice("No project folder detected. Please open a folder named after your project.");
       return;
     }
 
@@ -49,9 +47,7 @@ export class DraftService {
     // Optionally copy from an existing draft
     if (copyFromDraft) {
       const sourceFolder = `${draftsFolder}/${copyFromDraft}`;
-      const files = this.app.vault
-        .getFiles()
-        .filter((file) => file.path.startsWith(sourceFolder));
+      const files = this.app.vault.getFiles().filter((file) => file.path.startsWith(sourceFolder));
       for (const file of files) {
         const relPath = file.path.substring(sourceFolder.length + 1);
         const destPath = `${newDraftFolder}/${relPath}`;
@@ -63,15 +59,11 @@ export class DraftService {
       const outlineContent = await this.tpl.render(draftOutlineTemplate, {
         draftName,
       });
-      await this.app.vault.create(
-        `${newDraftFolder}/outline.md`,
-        outlineContent,
-      );
+      await this.app.vault.create(`${newDraftFolder}/outline.md`, outlineContent);
 
       // If the project is single-file (detected by presence of <projectName>.md or meta.md),
       // also create a main draft file inside the draft folder (e.g., draft1.md)
-      const projectName =
-        projectPathResolved.split("/").pop() || projectPathResolved;
+      const projectName = projectPathResolved.split("/").pop() || projectPathResolved;
       const singleFileCandidate = `${projectPathResolved}/${projectName}.md`;
       const metaCandidate = `${projectPathResolved}/meta.md`;
       const isSingleFileProject =
@@ -79,15 +71,17 @@ export class DraftService {
         !!this.app.vault.getAbstractFileByPath(metaCandidate);
 
       if (isSingleFileProject) {
-  const slug = slugifyDraftName(draftName, settings?.slugStyle as import("@/core/utils").DraftSlugStyle);
+        const slug = slugifyDraftName(
+          draftName,
+          settings?.slugStyle as import("@/core/utils").DraftSlugStyle,
+        );
         const draftFileName = `${slug}.md`;
         const draftMainPath = `${newDraftFolder}/${draftFileName}`;
         if (!this.app.vault.getAbstractFileByPath(draftMainPath)) {
           const fm = `---\ndraft: ${draftName}\nproject: ${projectName}\ncreated: ${new Date().toISOString()}\n---\n\n`;
-          const projectContent = await this.tpl.render(
-            settings?.projectFileTemplate ?? "",
-            { projectName },
-          );
+          const projectContent = await this.tpl.render(settings?.projectFileTemplate ?? "", {
+            projectName,
+          });
           await this.app.vault.create(draftMainPath, fm + projectContent);
         }
       }
@@ -104,8 +98,8 @@ export class DraftService {
     const folder = this.app.vault.getAbstractFileByPath(draftsFolder);
     if (folder && folder instanceof TFolder) {
       return folder.children
-            .filter((child): child is TFolder => child instanceof TFolder)
-            .map((child) => child.name);
+        .filter((child): child is TFolder => child instanceof TFolder)
+        .map((child) => child.name);
     }
     return [];
   }
@@ -129,10 +123,7 @@ export class DraftService {
    * Open a draft in the workspace. Tries outline.md first, then falls back to the first file in the draft folder.
    * Returns true if a file was opened.
    */
-  async openDraft(
-    projectPath: string | undefined,
-    draftName: string,
-  ): Promise<boolean> {
+  async openDraft(projectPath: string | undefined, draftName: string): Promise<boolean> {
     const project = this.resolveProjectPath(projectPath);
     if (!project) return false;
     const outlinePath = `${project}/Drafts/${draftName}/outline.md`;
@@ -149,9 +140,7 @@ export class DraftService {
 
     // fallback: open first file inside the draft folder
     const folderPath = `${project}/Drafts/${draftName}`;
-    const files = this.app.vault
-      .getFiles()
-      .filter((f) => f.path.startsWith(folderPath));
+    const files = this.app.vault.getFiles().filter((f) => f.path.startsWith(folderPath));
     if (files.length > 0) {
       const leaf = this.app.workspace.getLeaf();
       await leaf.openFile(files[0]);
@@ -178,9 +167,7 @@ export class DraftService {
       if (!this.app.vault.getAbstractFileByPath(newFolder)) {
         await this.app.vault.createFolder(newFolder);
       }
-      const files = this.app.vault
-        .getFiles()
-        .filter((f) => f.path.startsWith(oldFolder));
+      const files = this.app.vault.getFiles().filter((f) => f.path.startsWith(oldFolder));
       for (const file of files) {
         const rel = file.path.substring(oldFolder.length + 1);
         const dest = `${newFolder}/${rel}`;
@@ -208,9 +195,7 @@ export class DraftService {
     const ts = Date.now();
     const backupBase = `${project}/.writeaid-backups/${ts}`;
     try {
-      const files = this.app.vault
-        .getFiles()
-        .filter((f) => f.path.startsWith(draftFolder));
+      const files = this.app.vault.getFiles().filter((f) => f.path.startsWith(draftFolder));
       if (createBackup) {
         for (const file of files) {
           const rel = file.path.substring(draftFolder.length + 1);

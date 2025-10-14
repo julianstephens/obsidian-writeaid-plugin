@@ -44,7 +44,7 @@ export class ProjectPanelView extends ItemView {
         refreshPanel?: (() => void) | Promise<void>;
         setActiveProject?: ((active: unknown) => void) | ((p: string | null) => void);
         activeProject?: unknown;
-  $on?: (event: string, callback: (...args: unknown[]) => void) => void;
+        $on?: (event: string, callback: (...args: unknown[]) => void) => void;
       }
     | HTMLElement
     | null = null;
@@ -81,12 +81,12 @@ export class ProjectPanelView extends ItemView {
         new Notice("WriteAid: failed to load project panel component.");
         return;
       }
-  // dynamic constructor: Svelte component or custom element
+      // dynamic constructor: Svelte component or custom element
       const props = {
         app: this.app,
-        manager: (this.app as unknown as { plugins: { getPlugin?: (id: string) => { manager?: unknown } } }).plugins.getPlugin?.(
-          "obsidian-writeaid-plugin",
-        )?.manager,
+        manager: (
+          this.app as unknown as { plugins: { getPlugin?: (id: string) => { manager?: unknown } } }
+        ).plugins.getPlugin?.("obsidian-writeaid-plugin")?.manager,
         projectService: this.projectService,
         draftService: this.draftService,
       };
@@ -104,21 +104,35 @@ export class ProjectPanelView extends ItemView {
           // set props directly on the element instance
           try {
             (el as { projectService?: ProjectService }).projectService = this.projectService;
-          } catch (e) { /* ignore error */ }
+          } catch (e) {
+            /* ignore error */
+          }
           try {
-            (el as { manager?: unknown }).manager = (this.app as unknown as { plugins: { getPlugin?: (id: string) => { manager?: unknown } } }).plugins.getPlugin?.(
-              "obsidian-writeaid-plugin",
-            )?.manager;
-          } catch (e) { /* ignore error */ }
+            (el as { manager?: unknown }).manager = (
+              this.app as unknown as {
+                plugins: { getPlugin?: (id: string) => { manager?: unknown } };
+              }
+            ).plugins.getPlugin?.("obsidian-writeaid-plugin")?.manager;
+          } catch (e) {
+            /* ignore error */
+          }
           try {
             (el as { draftService?: DraftService }).draftService = this.draftService;
-          } catch (e) { /* ignore error */ }
+          } catch (e) {
+            /* ignore error */
+          }
           try {
             (el as { activeProject?: unknown }).activeProject =
-              (this.app as unknown as { plugins: { getPlugin?: (id: string) => { manager?: { activeProject?: unknown } } } }).plugins.getPlugin?.(
-                "obsidian-writeaid-plugin",
-              )?.manager?.activeProject ?? null;
-          } catch (e) { /* ignore error */ }
+              (
+                this.app as unknown as {
+                  plugins: {
+                    getPlugin?: (id: string) => { manager?: { activeProject?: unknown } };
+                  };
+                }
+              ).plugins.getPlugin?.("obsidian-writeaid-plugin")?.manager?.activeProject ?? null;
+          } catch (e) {
+            /* ignore error */
+          }
           this.svelteComponent = el;
           mounted = true;
         } catch (elErr) {
@@ -139,21 +153,35 @@ export class ProjectPanelView extends ItemView {
             };
             try {
               el.projectService = this.projectService;
-            } catch (e) { /* ignore error */ }
+            } catch (e) {
+              /* ignore error */
+            }
             try {
-              el.manager = (this.app as unknown as { plugins: { getPlugin?: (id: string) => { manager?: unknown } } }).plugins.getPlugin?.(
-                "obsidian-writeaid-plugin",
-              )?.manager;
-            } catch (e) { /* ignore error */ }
+              el.manager = (
+                this.app as unknown as {
+                  plugins: { getPlugin?: (id: string) => { manager?: unknown } };
+                }
+              ).plugins.getPlugin?.("obsidian-writeaid-plugin")?.manager;
+            } catch (e) {
+              /* ignore error */
+            }
             try {
               el.draftService = this.draftService;
-            } catch (e) { /* ignore error */ }
+            } catch (e) {
+              /* ignore error */
+            }
             try {
               el.activeProject =
-                (this.app as unknown as { plugins: { getPlugin?: (id: string) => { manager?: { activeProject?: unknown } } } }).plugins.getPlugin?.(
-                  "obsidian-writeaid-plugin",
-                )?.manager?.activeProject ?? null;
-            } catch (e) { /* ignore error */ }
+                (
+                  this.app as unknown as {
+                    plugins: {
+                      getPlugin?: (id: string) => { manager?: { activeProject?: unknown } };
+                    };
+                  }
+                ).plugins.getPlugin?.("obsidian-writeaid-plugin")?.manager?.activeProject ?? null;
+            } catch (e) {
+              /* ignore error */
+            }
             this.svelteComponent = el;
             mounted = true;
           }
@@ -174,16 +202,23 @@ export class ProjectPanelView extends ItemView {
         } catch (mountErr) {
           console.warn("WriteAid: svelte.mount failed; trying constructor:", mountErr);
           try {
-            this.svelteComponent = new (Component as { new (args: { target: HTMLElement; props: object }): unknown })({
+            this.svelteComponent = new (Component as {
+              new (args: { target: HTMLElement; props: object }): unknown;
+            })({
               target: this.containerElInner,
               props,
             }) as typeof this.svelteComponent;
             mounted = true;
           } catch (ctorErr) {
-            console.error("WriteAid: failed to mount ProjectPanel (mount + constructor failed)", ctorErr);
+            console.error(
+              "WriteAid: failed to mount ProjectPanel (mount + constructor failed)",
+              ctorErr,
+            );
             try {
               console.error("WriteAid: component snapshot:", Component);
-            } catch (e) { /* ignore error */ }
+            } catch (e) {
+              /* ignore error */
+            }
             new Notice("WriteAid: error mounting project panel component. See console.");
             return;
           }
@@ -201,46 +236,70 @@ export class ProjectPanelView extends ItemView {
           ).destroy?.bind(this.svelteComponent);
         }
         if (typeof (this.svelteComponent as { set?: (props: object) => void }).set === "function") {
-          (this.svelteComponent as { $set?: (props: object) => void; set?: (props: object) => void }).$set = (
-            this.svelteComponent as { set?: (props: object) => void }
-          ).set?.bind(this.svelteComponent);
+          (
+            this.svelteComponent as {
+              $set?: (props: object) => void;
+              set?: (props: object) => void;
+            }
+          ).$set = (this.svelteComponent as { set?: (props: object) => void }).set?.bind(
+            this.svelteComponent,
+          );
         }
         // Some factories return an object with `refreshPanel` directly, others
         // expose methods on the component instance — no change needed.
       }
       // Ensure the component receives the current active project initially
       try {
-  const plugin = (this.app as App & { plugins?: { getPlugin?: (id: string) => WriteAidPlugin } }).plugins?.getPlugin?.("obsidian-writeaid-plugin");
+        const plugin = (
+          this.app as App & { plugins?: { getPlugin?: (id: string) => WriteAidPlugin } }
+        ).plugins?.getPlugin?.("obsidian-writeaid-plugin");
         const initialActive = plugin?.manager?.activeProject ?? null;
         if (initialActive !== null && this.svelteComponent) {
           // If it's a Svelte instance, prefer $set
-          if (typeof (this.svelteComponent as { $set?: (props: object) => void }).$set === "function") {
+          if (
+            typeof (this.svelteComponent as { $set?: (props: object) => void }).$set === "function"
+          ) {
             try {
               (this.svelteComponent as { $set: (props: { activeProject: unknown }) => void }).$set({
                 activeProject: initialActive,
               });
-            } catch (e) { /* ignore error */ }
+            } catch (e) {
+              /* ignore error */
+            }
           } else if (this.svelteComponent instanceof HTMLElement) {
             try {
               (this.svelteComponent as { activeProject?: unknown }).activeProject = initialActive;
-            } catch (e) { /* ignore error */ }
-          } else if (typeof (this.svelteComponent as { set?: (props: object) => void }).set === "function") {
+            } catch (e) {
+              /* ignore error */
+            }
+          } else if (
+            typeof (this.svelteComponent as { set?: (props: object) => void }).set === "function"
+          ) {
             try {
               (this.svelteComponent as { set: (props: { activeProject: unknown }) => void }).set({
                 activeProject: initialActive,
               });
-            } catch (e) { /* ignore error */ }
+            } catch (e) {
+              /* ignore error */
+            }
           }
           // If the component exposes a setActiveProject helper, call it as a stronger hook
           if (
-            typeof (this.svelteComponent as { setActiveProject?: (active: unknown) => void }).setActiveProject === "function"
+            typeof (this.svelteComponent as { setActiveProject?: (active: unknown) => void })
+              .setActiveProject === "function"
           ) {
             try {
-              (this.svelteComponent as { setActiveProject: (active: unknown) => void }).setActiveProject(initialActive);
-            } catch (e) { /* ignore error */ }
+              (
+                this.svelteComponent as { setActiveProject: (active: unknown) => void }
+              ).setActiveProject(initialActive);
+            } catch (e) {
+              /* ignore error */
+            }
           }
         }
-      } catch (e) { /* ignore error */ }
+      } catch (e) {
+        /* ignore error */
+      }
 
       try {
         if (
@@ -249,45 +308,74 @@ export class ProjectPanelView extends ItemView {
         ) {
           try {
             (this.svelteComponent as { refreshPanel: () => void }).refreshPanel();
-          } catch (e) { /* ignore error */ }
+          } catch (e) {
+            /* ignore error */
+          }
         }
         // Some hosts may set the manager.activeProject slightly after the view mounts.
         // Re-apply the active project on the next tick to handle that timing window.
         setTimeout(() => {
           try {
-            const plugin = (this.app as App & { plugins?: { getPlugin?: (id: string) => WriteAidPlugin } }).plugins?.getPlugin?.("obsidian-writeaid-plugin");
+            const plugin = (
+              this.app as App & { plugins?: { getPlugin?: (id: string) => WriteAidPlugin } }
+            ).plugins?.getPlugin?.("obsidian-writeaid-plugin");
             const deferredActive = plugin?.manager?.activeProject ?? null;
             if (deferredActive && this.svelteComponent) {
-              if (typeof (this.svelteComponent as { $set?: (props: object) => void }).$set === "function") {
+              if (
+                typeof (this.svelteComponent as { $set?: (props: object) => void }).$set ===
+                "function"
+              ) {
                 try {
-                  (this.svelteComponent as { $set: (props: { activeProject: unknown }) => void }).$set({
+                  (
+                    this.svelteComponent as { $set: (props: { activeProject: unknown }) => void }
+                  ).$set({
                     activeProject: deferredActive,
                   });
-                } catch (e) { /* ignore error */ }
+                } catch (e) {
+                  /* ignore error */
+                }
               } else if (this.svelteComponent instanceof HTMLElement) {
                 try {
-                  (this.svelteComponent as { activeProject?: unknown }).activeProject = deferredActive;
-                } catch (e) { /* ignore error */ }
-              } else if (typeof (this.svelteComponent as { set?: (props: object) => void }).set === "function") {
+                  (this.svelteComponent as { activeProject?: unknown }).activeProject =
+                    deferredActive;
+                } catch (e) {
+                  /* ignore error */
+                }
+              } else if (
+                typeof (this.svelteComponent as { set?: (props: object) => void }).set ===
+                "function"
+              ) {
                 try {
-                  (this.svelteComponent as { set: (props: { activeProject: unknown }) => void }).set({
+                  (
+                    this.svelteComponent as { set: (props: { activeProject: unknown }) => void }
+                  ).set({
                     activeProject: deferredActive,
                   });
-                } catch (e) { /* ignore error */ }
+                } catch (e) {
+                  /* ignore error */
+                }
               }
               try {
                 if ((this.svelteComponent as { refreshPanel?: () => void }).refreshPanel) {
                   (this.svelteComponent as { refreshPanel: () => void }).refreshPanel();
                 }
-              } catch (e) { /* ignore error */ }
+              } catch (e) {
+                /* ignore error */
+              }
             }
-          } catch (e) { /* ignore error */ }
+          } catch (e) {
+            /* ignore error */
+          }
         }, 0);
-      } catch (e) { /* ignore error */ }
+      } catch (e) {
+        /* ignore error */
+      }
 
       // Register listener to refresh when active project changes
       try {
-  const plugin = (this.app as App & { plugins?: { getPlugin?: (id: string) => WriteAidPlugin } }).plugins?.getPlugin?.("obsidian-writeaid-plugin");
+        const plugin = (
+          this.app as App & { plugins?: { getPlugin?: (id: string) => WriteAidPlugin } }
+        ).plugins?.getPlugin?.("obsidian-writeaid-plugin");
         if (
           plugin &&
           plugin.manager &&
@@ -295,7 +383,9 @@ export class ProjectPanelView extends ItemView {
         ) {
           plugin.manager.addActiveProjectListener(this.onActiveProjectChanged.bind(this));
         }
-      } catch (e) { /* ignore error */ }
+      } catch (e) {
+        /* ignore error */
+      }
     } catch (e) {
       // Ignore errors in onOpen
     }

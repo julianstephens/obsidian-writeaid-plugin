@@ -2,19 +2,11 @@ import type { App } from "obsidian";
 import { Modal, Setting } from "obsidian";
 
 export class CreateProjectModal extends Modal {
-  onSubmit: (
-    projectName: string,
-    singleFile: boolean,
-    initialDraftName?: string,
-  ) => void;
+  onSubmit: (projectName: string, singleFile: boolean, initialDraftName?: string) => void;
 
   constructor(
     app: App,
-    onSubmit: (
-      projectName: string,
-      singleFile: boolean,
-      initialDraftName?: string,
-    ) => void,
+    onSubmit: (projectName: string, singleFile: boolean, initialDraftName?: string) => void,
   ) {
     super(app);
     this.onSubmit = onSubmit;
@@ -41,9 +33,7 @@ export class CreateProjectModal extends Modal {
     new Setting(contentEl)
       .setName("Initial draft name (optional)")
       .addText((text) =>
-        text
-          .setPlaceholder("Draft 1")
-          .onChange((v) => (initialDraftName = v || "Draft 1")),
+        text.setPlaceholder("Draft 1").onChange((v) => (initialDraftName = v || "Draft 1")),
       );
 
     new Setting(contentEl).addButton((btn) =>

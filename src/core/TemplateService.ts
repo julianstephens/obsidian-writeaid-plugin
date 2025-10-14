@@ -11,10 +11,7 @@ export class TemplateService {
    * Render a template which may be either an inline template string
    * or a vault path to a markdown file. Performs simple {{key}} substitutions.
    */
-  async render(
-    templateOrPath: string,
-    vars: Record<string, string> = {},
-  ): Promise<string> {
+  async render(templateOrPath: string, vars: Record<string, string> = {}): Promise<string> {
     let tpl = templateOrPath || "";
     try {
       const f = this.app.vault.getAbstractFileByPath(tpl);

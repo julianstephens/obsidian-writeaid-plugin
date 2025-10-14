@@ -5,11 +5,7 @@ export class PostCreateModal extends Modal {
   projectPath: string;
   onOpenProject?: () => Promise<unknown>;
 
-  constructor(
-    app: App,
-    projectPath: string,
-  onOpenProject?: () => Promise<unknown>,
-  ) {
+  constructor(app: App, projectPath: string, onOpenProject?: () => Promise<unknown>) {
     super(app);
     this.projectPath = projectPath;
     this.onOpenProject = onOpenProject;

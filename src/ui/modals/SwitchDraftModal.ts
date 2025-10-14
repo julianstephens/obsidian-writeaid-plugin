@@ -5,11 +5,7 @@ export class SwitchDraftModal extends Modal {
   onSubmit: (draftName: string) => void;
   drafts: string[];
 
-  constructor(
-    app: App,
-    drafts: string[],
-    onSubmit: (draftName: string) => void,
-  ) {
+  constructor(app: App, drafts: string[], onSubmit: (draftName: string) => void) {
     super(app);
     this.drafts = drafts;
     this.onSubmit = onSubmit;

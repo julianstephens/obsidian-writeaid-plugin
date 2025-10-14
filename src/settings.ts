@@ -1,14 +1,6 @@
 import { slugifyDraftName } from "@/core/utils";
 import type { WriteAidSettings } from "@/types";
-import {
-  App,
-  Modal,
-  Notice,
-  PluginSettingTab,
-  Setting,
-  TFile,
-  TFolder,
-} from "obsidian";
+import { App, Modal, Notice, PluginSettingTab, Setting, TFile, TFolder } from "obsidian";
 
 // Keep the settings module decoupled from the full plugin implementation by
 // describing only the small interface we need here. This avoids circular
@@ -32,7 +24,7 @@ export class WriteAidSettingTab extends PluginSettingTab {
 
   constructor(app: App, plugin: MinimalPlugin) {
     //@ts-expect-error 2345
-  super(app, plugin as unknown as Plugin);
+    super(app, plugin as unknown as Plugin);
     this.plugin = plugin;
   }
 
@@ -69,12 +61,10 @@ export class WriteAidSettingTab extends PluginSettingTab {
       .setName("Draft outline template")
       .setDesc("Template for new draft outline files. Use {{draftName}}")
       .addTextArea((ta) =>
-        ta
-          .setValue(plugin.settings.draftOutlineTemplate || "")
-          .onChange((v) => {
-            plugin.settings.draftOutlineTemplate = v;
-            plugin.saveSettings();
-          }),
+        ta.setValue(plugin.settings.draftOutlineTemplate || "").onChange((v) => {
+          plugin.settings.draftOutlineTemplate = v;
+          plugin.saveSettings();
+        }),
       )
       .addButton((btn) =>
         btn.setButtonText("Pick file...").onClick(() => {
@@ -168,8 +158,8 @@ export class WriteAidSettingTab extends PluginSettingTab {
 
     const previewEl = containerEl.createDiv({ cls: "wat-slug-preview" });
     const initialSlug = slugifyDraftName(
-  sampleName,
-  plugin.settings.slugStyle as WriteAidSettings["slugStyle"],
+      sampleName,
+      plugin.settings.slugStyle as WriteAidSettings["slugStyle"],
     );
     previewEl.setText(`Example: ${sampleName} → ${initialSlug}.md`);
 
@@ -216,12 +206,10 @@ export class WriteAidSettingTab extends PluginSettingTab {
         "If enabled, the WriteAid project panel will open on plugin load when an active project is saved",
       )
       .addToggle((t) =>
-        t
-          .setValue(Boolean(plugin.settings.autoOpenPanelOnStartup))
-          .onChange((v) => {
-            plugin.settings.autoOpenPanelOnStartup = v;
-            plugin.saveSettings();
-          }),
+        t.setValue(Boolean(plugin.settings.autoOpenPanelOnStartup)).onChange((v) => {
+          plugin.settings.autoOpenPanelOnStartup = v;
+          plugin.saveSettings();
+        }),
       );
 
     new Setting(containerEl)
@@ -230,12 +218,10 @@ export class WriteAidSettingTab extends PluginSettingTab {
         "If enabled, the persisted active project will be selected as the plugin's active project on load without opening the panel",
       )
       .addToggle((t) =>
-        t
-          .setValue(Boolean(plugin.settings.autoSelectProjectOnStartup))
-          .onChange((v) => {
-            plugin.settings.autoSelectProjectOnStartup = v;
-            plugin.saveSettings();
-          }),
+        t.setValue(Boolean(plugin.settings.autoSelectProjectOnStartup)).onChange((v) => {
+          plugin.settings.autoSelectProjectOnStartup = v;
+          plugin.saveSettings();
+        }),
       );
 
     // Developer / debug
@@ -273,13 +259,13 @@ export class WriteAidSettingTab extends PluginSettingTab {
     // Add a numeric text input, a synchronized range slider, and a Reset button
     debounceSetting
       .addText((t) => {
-  const current = plugin.settings.panelRefreshDebounceMs;
+        const current = plugin.settings.panelRefreshDebounceMs;
         const initial = Number(current ?? PANEL_DEBOUNCE_DEFAULT);
         t.setPlaceholder(String(PANEL_DEBOUNCE_DEFAULT));
         t.setValue(String(initial));
 
         // range element (declared here so closures can access it)
-  let rangeEl: HTMLInputElement | null = null;
+        let rangeEl: HTMLInputElement | null = null;
 
         // helper to apply a numeric value: clamp, persist, update manager and UI
         const applyValue = (raw: number) => {
@@ -305,7 +291,8 @@ export class WriteAidSettingTab extends PluginSettingTab {
             typeof this.plugin.manager === "object" &&
             "panelRefreshDebounceMs" in this.plugin.manager
           ) {
-            (this.plugin.manager as { panelRefreshDebounceMs: number }).panelRefreshDebounceMs = clamped;
+            (this.plugin.manager as { panelRefreshDebounceMs: number }).panelRefreshDebounceMs =
+              clamped;
           }
 
           // update visible inputs
@@ -315,21 +302,15 @@ export class WriteAidSettingTab extends PluginSettingTab {
 
         // make the native input a number field for better UX and accessibility
         try {
-          const inputEl = (t.inputEl as HTMLInputElement);
+          const inputEl = t.inputEl as HTMLInputElement;
           inputEl.setAttribute("type", "number");
           inputEl.setAttribute("min", String(PANEL_DEBOUNCE_MIN));
           inputEl.setAttribute("max", String(PANEL_DEBOUNCE_MAX));
           inputEl.setAttribute("step", "50");
-          inputEl.setAttribute(
-            "aria-label",
-            "Panel refresh debounce in milliseconds",
-          );
+          inputEl.setAttribute("aria-label", "Panel refresh debounce in milliseconds");
           // append a small unit suffix after the input for clarity (CSS handles spacing)
           try {
-            inputEl.insertAdjacentHTML(
-              "afterend",
-              '<span class="wa-unit">ms</span>',
-            );
+            inputEl.insertAdjacentHTML("afterend", '<span class="wa-unit">ms</span>');
           } catch (e) {
             // Ignore errors in saveSettings
           }
@@ -353,7 +334,7 @@ export class WriteAidSettingTab extends PluginSettingTab {
           } catch (e) {
             // fallback: append to the Setting's container element
             // Find the closest .setting-item container
-            let settingItem = t.inputEl.closest('.setting-item');
+            let settingItem = t.inputEl.closest(".setting-item");
             if (settingItem) {
               settingItem.appendChild(rangeEl);
             } else {
@@ -378,9 +359,7 @@ export class WriteAidSettingTab extends PluginSettingTab {
           t.onChange((v: string) => {
             const n = Number(v);
             if (!Number.isFinite(n) || n < PANEL_DEBOUNCE_MIN) {
-              new Notice(
-                `Please enter a valid number ≥ ${PANEL_DEBOUNCE_MIN}.`,
-              );
+              new Notice(`Please enter a valid number ≥ ${PANEL_DEBOUNCE_MIN}.`);
               return;
             }
             const clamped = Math.min(Math.floor(n), PANEL_DEBOUNCE_MAX);
@@ -391,7 +370,8 @@ export class WriteAidSettingTab extends PluginSettingTab {
               typeof this.plugin.manager === "object" &&
               "panelRefreshDebounceMs" in this.plugin.manager
             ) {
-              (this.plugin.manager as { panelRefreshDebounceMs: number }).panelRefreshDebounceMs = clamped;
+              (this.plugin.manager as { panelRefreshDebounceMs: number }).panelRefreshDebounceMs =
+                clamped;
             }
           });
         }
@@ -410,7 +390,8 @@ export class WriteAidSettingTab extends PluginSettingTab {
               typeof this.plugin.manager === "object" &&
               "panelRefreshDebounceMs" in this.plugin.manager
             ) {
-              (this.plugin.manager as { panelRefreshDebounceMs: number }).panelRefreshDebounceMs = def;
+              (this.plugin.manager as { panelRefreshDebounceMs: number }).panelRefreshDebounceMs =
+                def;
             }
             // refresh the settings display to update the input value
             this.display();
@@ -444,9 +425,7 @@ export class FilePickerModal extends Modal {
     if (!this.currentFolder) return;
 
     // Breadcrumbs
-    const parts = this.currentFolder.path
-      ? this.currentFolder.path.split("/")
-      : [];
+    const parts = this.currentFolder.path ? this.currentFolder.path.split("/") : [];
     const bc = contentEl.createDiv({ cls: "wat-breadcrumbs" });
     const rootLink = bc.createEl("a", { text: "(Vault root)", href: "#" });
     rootLink.onclick = (e) => {

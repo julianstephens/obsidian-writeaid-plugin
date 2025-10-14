@@ -13,10 +13,7 @@ function debug() {
 }
 
 function readManifest() {
-  const m = fs.readFileSync(
-    path.join(__dirname, "..", "manifest.json"),
-    "utf8",
-  );
+  const m = fs.readFileSync(path.join(__dirname, "..", "manifest.json"), "utf8");
   try {
     return JSON.parse(m);
   } catch (e) {
