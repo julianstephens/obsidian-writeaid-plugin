@@ -1,5 +1,5 @@
-import { updateMetaStats } from "@/core/meta";
 import { TemplateService } from "@/core/TemplateService";
+import { readMetaFile, updateMetaStats } from "@/core/meta";
 import { slugifyDraftName } from "@/core/utils";
 import type { WriteAidSettings } from "@/types";
 import { App, Notice, TFile, TFolder } from "obsidian";
@@ -11,6 +11,58 @@ export class DraftService {
   constructor(app: App) {
     this.app = app;
     this.tpl = new TemplateService(app);
+  }
+
+  /**
+   * Reorder chapters in a draft. Accepts an array of chapter objects in the new order.
+   * Each object must have { chapterName, order }.
+   */
+  async reorderChapters(
+    projectPath: string,
+    draftName: string,
+    newOrder: Array<{ chapterName: string; order: number }>,
+  ) {
+    const project = this.resolveProjectPath(projectPath);
+    if (!project) return false;
+    const draftFolder = `${project}/Drafts/${draftName}`;
+    for (let i = 0; i < newOrder.length; i++) {
+      const { chapterName } = newOrder[i];
+      const filePath = `${draftFolder}/${chapterName}.md`;
+      const file = this.app.vault.getAbstractFileByPath(filePath);
+      if (file && file instanceof TFile) {
+        let content = await this.app.vault.read(file);
+        // Replace order in frontmatter
+        if (content.match(/^---\n([\s\S]*?)\n---/)) {
+          content = content.replace(/^---\n([\s\S]*?)\n---/, (match, fm) => {
+            let cleanedFm = fm.replace(/^order:.*\n?/gm, "");
+            if (!cleanedFm.endsWith("\n")) cleanedFm += "\n";
+            cleanedFm += `order: ${i + 1}\n`;
+            return `---\n${cleanedFm}---`;
+          });
+          await this.app.vault.modify(file, content);
+        }
+      }
+    }
+    return true;
+  }
+
+  /**
+   * Suggest the next draft name as 'Draft ${meta.total_drafts+1}' using meta.md.
+   */
+  async suggestNextDraftName(projectPath?: string): Promise<string> {
+    const project = this.resolveProjectPath(projectPath);
+    if (!project) return "Draft 1";
+    const metaPath = `${project}/meta.md`;
+    let totalDrafts = 0;
+    try {
+      const meta = await readMetaFile(this.app, metaPath);
+      if (meta && typeof meta.total_drafts === "number") {
+        totalDrafts = meta.total_drafts;
+      }
+    } catch (e) {
+      // ignore error
+    }
+    return `Draft ${totalDrafts + 1}`;
   }
 
   /**
@@ -76,7 +128,7 @@ export class DraftService {
     projectPath: string,
     draftName: string,
     chapterName: string,
-    chapterNameValue?: string,
+    // chapterNameValue?: string,
   ) {
     const project = this.resolveProjectPath(projectPath);
     if (!project) return false;
@@ -110,10 +162,8 @@ export class DraftService {
       }
     }
     const order = maxOrder + 1;
-    let effectiveChapterName =
-      chapterNameValue && chapterNameValue.trim() ? chapterNameValue.trim() : `Chapter ${order}`;
     let title = `# ${chapterName}`;
-    const frontmatter = `---\norder: ${order}\nchapter_name: ${JSON.stringify(effectiveChapterName)}\n---\n`;
+    const frontmatter = `---\norder: ${order}\nchapter_name: ${JSON.stringify(chapterName)}\n---\n`;
     await this.app.vault.create(filePath, `${frontmatter}\n${title}\n\n`);
     return true;
   }
@@ -128,19 +178,33 @@ export class DraftService {
     const file = this.app.vault.getAbstractFileByPath(filePath);
     if (file && file instanceof TFile) {
       await this.app.vault.delete(file);
+      // After deletion, reassign order for all remaining chapters using listChapters
+      const chapters = await this.listChapters(projectPath, draftName);
+      for (let i = 0; i < chapters.length; i++) {
+        const { name } = chapters[i];
+        const chapterFilePath = `${draftFolder}/${name}.md`;
+        const chapterFile = this.app.vault.getAbstractFileByPath(chapterFilePath);
+        if (chapterFile && chapterFile instanceof TFile) {
+          let content = await this.app.vault.read(chapterFile);
+          // Replace order in frontmatter
+          if (content.match(/^---\n([\s\S]*?)\n---/)) {
+            content = content.replace(/^---\n([\s\S]*?)\n---/, (match, fm) => {
+              let cleanedFm = fm.replace(/^order:.*\n?/gm, "");
+              if (!cleanedFm.endsWith("\n")) cleanedFm += "\n";
+              cleanedFm += `order: ${i + 1}\n`;
+              return `---\n${cleanedFm}---`;
+            });
+            await this.app.vault.modify(chapterFile, content);
+          }
+        }
+      }
       return true;
     }
     return false;
   }
 
   /** Rename a chapter file and/or update its short name. */
-  async renameChapter(
-    projectPath: string,
-    draftName: string,
-    oldName: string,
-    newName: string,
-    newChapterNameValue?: string,
-  ) {
+  async renameChapter(projectPath: string, draftName: string, oldName: string, newName: string) {
     const project = this.resolveProjectPath(projectPath);
     if (!project) return false;
     const draftFolder = `${project}/Drafts/${draftName}`;
@@ -149,20 +213,17 @@ export class DraftService {
     const file = this.app.vault.getAbstractFileByPath(oldFile);
     if (!file || !(file instanceof TFile)) return false;
     let content = await this.app.vault.read(file);
-    // Update first line with new name/short name
     let title = `# ${newName}`;
-    let effectiveChapterName =
-      newChapterNameValue && newChapterNameValue.trim() ? newChapterNameValue.trim() : undefined;
-    if (effectiveChapterName) title += `: ${effectiveChapterName}`;
-    // Update chapter_name in frontmatter if present, else add it
+
     if (content.match(/^---\n([\s\S]*?)\n---/)) {
-      content = content.replace(/^(---\n[\s\S]*?)(chapter_name:.*\n)?/m, (match, p1) => {
-        // Remove any existing chapter_name line
-        let newFm = p1.replace(/^chapter_name:.*\n?/m, "");
-        if (effectiveChapterName) {
-          newFm += `chapter_name: ${JSON.stringify(effectiveChapterName)}\n`;
-        }
-        return newFm;
+      content = content.replace(/^---\n([\s\S]*?)\n---/, (match, fm) => {
+        // Remove all chapter_name lines
+        let cleanedFm = fm.replace(/^chapter_name:.*\n?/gm, "");
+        // Ensure cleanedFm ends with a newline
+        if (!cleanedFm.endsWith("\n")) cleanedFm += "\n";
+        // Add the new chapter_name at the end
+        cleanedFm += `chapter_name: ${JSON.stringify(newName)}\n`;
+        return `---\n${cleanedFm}---`;
       });
     }
     content = content.replace(/^#.*$/m, title);
@@ -321,21 +382,6 @@ export class DraftService {
         .map((child) => child.name);
     }
     return [];
-  }
-
-  suggestNextDraftName(projectPath?: string): string {
-    const drafts = this.listDrafts(projectPath);
-    // find highest Draft N
-    let max = 0;
-    for (const d of drafts) {
-      const m = d.match(/^Draft\s*(\d+)$/i);
-      if (m) {
-        const n = parseInt(m[1], 10);
-        if (!isNaN(n) && n > max) max = n;
-      }
-    }
-    const next = max + 1 || 1;
-    return `Draft ${next}`;
   }
 
   /**

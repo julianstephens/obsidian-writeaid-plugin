@@ -1,7 +1,7 @@
 <script lang="ts">
-  export let value: string | number = '';
-  export let placeholder = '';
-  export let type: string = 'text';
+  export let value: string | number = "";
+  export let placeholder = "";
+  export let type: string = "text";
   export let oninput: ((event: InputEvent) => void) | undefined;
 
   function handleInput(e: Event) {
@@ -11,10 +11,4 @@
   }
 </script>
 
-<input
-  class="base-input"
-  {placeholder}
-  bind:value
-  oninput={handleInput}
-  type={type}
-/>
+<input class="base-input" {placeholder} bind:value oninput={handleInput} {type} />

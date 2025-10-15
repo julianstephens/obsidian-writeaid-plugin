@@ -1,111 +1,80 @@
-<script lang="ts">
+<script>
   // Compile this Svelte component as a custom element so it can be mounted
   // reliably inside the Obsidian ItemView using DOM APIs.
   // The tag name chosen is <wa-project-panel>.
   // Note: the Vite/Svelte build must enable customElement or svelte config.
-  import { readMetaFile } from '@/core/meta';
-  import type { ProjectService } from '@/core/ProjectService';
-  import { asyncFilter } from '@/core/utils';
+  import { readMetaFile } from "@/core/meta";
   import BaseButton from "@/ui/components/BaseButton.svelte";
   import "@/ui/components/components.css";
-  import IconButton from '@/ui/components/IconButton.svelte';
-  import { ConfirmDeleteModal } from '@/ui/modals/ConfirmDeleteModal';
-  import { RenameDraftModal } from '@/ui/modals/RenameDraftModal';
-  import { ArrowDown, ArrowUp, RotateCcw } from '@lucide/svelte';
-  import { App, Notice } from 'obsidian';
-  import { onMount } from 'svelte';
-  import Select from 'svelte-select';
+  import IconButton from "@/ui/components/IconButton.svelte";
+  import { ConfirmDeleteModal } from "@/ui/modals/ConfirmDeleteModal";
+  import { ArrowDown, ArrowUp, BookOpenCheck, Eye, Pencil, RotateCcw, Trash } from "@lucide/svelte";
+  import { onDestroy, onMount } from "svelte";
+  import Select from "svelte-select";
+  import { flip } from "svelte/animate";
+  import { cubicOut } from "svelte/easing";
 
-  export let projectService: ProjectService;
-  export let manager: any;
-  export let activeProject: string | null = null;
-  export let draftService: any;
+  export let draftService;
+  export let projectService;
+  export let manager;
+  export let activeProject = null;
 
-  let projects: string[] = [];
-  // with svelte-select we may receive either the item object ({value,label}) or a primitive value
-  let selected: any = undefined;
-  // derived primitive value used by services and manager
-  let selectedValue: string | undefined = undefined;
-  let drafts: string[] = [];
+  // Local UI state
+  let projects = [];
+  let selected = undefined; // bind target for svelte-select
+  let selectedValue = undefined; // primitive project path
+  let drafts = [];
   let loadingProjects = false;
-  let projectOptions = [] as Array<{ value: string; label: string }>;
+  let projectOptions = [];
   let disabled = false;
   let loadingDrafts = false;
   let showCreateInline = false;
-  let newDraftName = '';
-  // copy-from select: may bind to an object; keep primitive copyFrom for service calls
-  let copyFromSelected: any = undefined;
-  let copyFrom: string = '';
-
-
-  let draftMeta: Record<string, { created: number }> = {};
+  let newDraftName = "";
+  let copyFromSelected = undefined;
+  let copyFrom = "";
+  let draftMeta = {};
   let sortAsc = true;
+  // Local reactive copy of manager.activeDraft for Svelte reactivity
+  let activeDraft = manager?.activeDraft ?? null;
+  let activeProjectListener = null;
 
   // Chapter management state
-  let chapters: Array<{ chapterName: string; order: number }> = [];
+  let chapters = [];
   let loadingChapters = false;
   let showCreateChapter = false;
-  let newChapterName = '';
-  let newChapterNameValue = '';
-  let editingChapterIndex: number | null = null;
-  let editingChapterNameValue = '';
-  let editingName = '';
+  let newChapterName = "";
+  let newChapterNameValue = "";
+  let editingChapterIndex = null;
+  let editingChapterNameValue = "";
+  let editingName = "";
   let isMultiFileProject = false;
 
-  // Load chapters for the active draft (multi-file only)
-  async function refreshChapters() {
-    loadingChapters = true;
-    chapters = [];
-    isMultiFileProject = false;
-    if (!selectedValue || !manager?.activeDraft) {
-      loadingChapters = false;
-      return;
-    }
-    // Read meta.md to check project_type
-    try {
-      const app = (window as any).app as App;
-      const metaPath = `${selectedValue}/meta.md`;
-      const meta = await readMetaFile(app, metaPath);
-      isMultiFileProject = !!(meta && meta.project_type === 'multi-file');
-    } catch (e) {
-      isMultiFileProject = false;
-    }
-    if (!isMultiFileProject) {
-      loadingChapters = false;
-      return;
-    }
-    // Use manager API to list chapters
-    try {
-      chapters = await manager.listChapters(selectedValue, manager.activeDraft);
-    } catch (e) {
-      chapters = [];
-    }
-    loadingChapters = false;
-  }
-
-  // Do not call refreshChapters reactively; call it only after explicit user actions (project creation, draft change, project selection)
-
-
-  async function refresh(showNotifications = false): Promise<string[]> {
+  // Load all projects and update UI
+  async function refresh(showNotifications = false) {
     loadingProjects = true;
     const minSpin = new Promise((resolve) => setTimeout(resolve, 400));
     const prevProjects = [...projects];
     const prevActive = activeProject;
-    const allFolders: string[] = projectService.listAllFolders();
-    let newProjects: string[] = [];
+    let allFolders = [];
+    let newProjects = [];
     try {
-      newProjects = await asyncFilter(allFolders.filter((p) => !!p), (p) => projectService.isProjectFolder(p));
+      allFolders = projectService.listAllFolders();
+      // Filter only valid project folders
+      newProjects = [];
+      for (const p of allFolders) {
+        if (await projectService.isProjectFolder(p)) newProjects.push(p);
+      }
     } catch (e) {
       newProjects = [];
     }
     // Notify if projects were added or removed (only if showNotifications)
-    const added = newProjects.filter(p => !prevProjects.includes(p));
-    const removed = prevProjects.filter(p => !newProjects.includes(p));
+    const added = newProjects.filter((p) => !prevProjects.includes(p));
+    const removed = prevProjects.filter((p) => !newProjects.includes(p));
     if (showNotifications && added.length > 0) {
-      new Notice(`${added.length} new project${added.length > 1 ? 's' : ''} discovered.`);
+      new window.Notice(`${added.length} new project${added.length > 1 ? "s" : ""} discovered.`);
     }
     if (showNotifications && removed.length > 0) {
-      new Notice(`${removed.length} project${removed.length > 1 ? 's' : ''} removed.`);
+      new window.Notice(`${removed.length} project${removed.length > 1 ? "s" : ""} removed.`);
     }
     projects = newProjects;
     projectOptions = newProjects.map((p) => ({ value: p, label: p }));
@@ -120,11 +89,29 @@
       activeProject = newProjects[0];
       selected = projectOptions[0];
       selectedValue = newProjects[0];
+      // Debug: log project selection
+      try {
+        if (manager && manager.settings && manager.settings.debug) {
+          console.debug(`WriteAid debug: panel refresh selected single project '${selectedValue}'`);
+        }
+      } catch (e) {
+        // ignore
+      }
     } else if (prevActive && !newProjects.includes(prevActive)) {
       // If the active project was removed, set the next available project as active
       activeProject = newProjects[0];
       selected = projectOptions[0];
       selectedValue = newProjects[0];
+      // Debug: log fallback selection
+      try {
+        if (manager && manager.settings && manager.settings.debug) {
+          console.debug(
+            `WriteAid debug: panel refresh selected fallback project '${selectedValue}'`,
+          );
+        }
+      } catch (e) {
+        // ignore
+      }
     } else {
       // Otherwise, keep the current selection ONLY if it still exists
       const found = projectOptions.find((o) => o.value === prevActive);
@@ -132,6 +119,14 @@
         activeProject = prevActive;
         selected = found;
         selectedValue = found.value;
+        // Debug: log kept selection
+        try {
+          if (manager && manager.settings && manager.settings.debug) {
+            console.debug(`WriteAid debug: panel refresh kept project '${selectedValue}'`);
+          }
+        } catch (e) {
+          // ignore
+        }
       } else {
         activeProject = null;
         selected = undefined;
@@ -141,261 +136,313 @@
 
     await minSpin;
     loadingProjects = false;
-    // load drafts for the selected project (uses selectedValue)
-    refreshDrafts();
+    // Optionally, refresh drafts for the selected project
+    if (selectedValue) await refreshDrafts();
     return newProjects;
   }
 
-  function sortDrafts() {
-    let sorted;
-    if (Object.keys(draftMeta).length > 0) {
-      sorted = drafts.slice().sort((a, b) => {
-        const ca = draftMeta[a]?.created || 0;
-        const cb = draftMeta[b]?.created || 0;
-        return sortAsc ? ca - cb : cb - ca;
-      });
-    } else {
-      sorted = drafts.slice().sort(sortAsc ? undefined : (a, b) => b.localeCompare(a));
-    }
-    drafts = sorted;
-  }
-
+  // Refresh drafts list for the selected project
   async function refreshDrafts() {
     loadingDrafts = true;
-    const minSpin = new Promise((resolve) => setTimeout(resolve, 400));
     try {
-      const draftList = draftService.listDrafts(selectedValue || undefined) || [];
-      drafts = draftList;
-      if (draftService.getDraftMeta) {
-        draftMeta = {};
-        for (const d of draftList) {
-          draftMeta[d] = draftService.getDraftMeta(selectedValue, d) || { created: 0 };
-        }
-      } else {
-        draftMeta = {};
+      if (!selectedValue) {
+        drafts = [];
+        return;
       }
-      sortDrafts();
-      ensureDefaultDraftSelected(selectedValue ?? null);
+      // Prefer draftService for listing drafts to avoid duplicating logic
+      if (draftService && typeof draftService.listDrafts === "function") {
+        drafts = draftService.listDrafts(selectedValue) || [];
+      } else {
+        // fallback to manager API
+        drafts = manager?.listDrafts ? manager.listDrafts(selectedValue) || [] : [];
+      }
+      // apply sort
+      drafts = Array.from(drafts);
+      drafts.sort((a, b) => (a > b ? 1 : a < b ? -1 : 0));
+      if (!sortAsc) drafts.reverse();
+      // set active draft UI state if manager has one
+      // isMultiFileProject detection can be deferred
     } catch (e) {
       drafts = [];
-      draftMeta = {};
+    } finally {
+      loadingDrafts = false;
     }
-    await minSpin;
-    loadingDrafts = false;
   }
 
-  onMount(async () => {
-    console.debug('ProjectPanel.svelte mounted');
-    await refresh(false);
-  });
-
-
-  // Expose a refresh method on the component instance so external code can request a refresh
-  export function refreshPanel() {
-    return refresh();
-  }
-
-  // Allow the host to programmatically set the active project after mount.
-  // This is useful for cases where the manager's activeProject is restored
-  // after the view has already mounted.
-  export function setActiveProject(p: string | null) {
+  // Refresh chapters (multi-file projects)
+  async function refreshChapters() {
+    loadingChapters = true;
     try {
-      activeProject = p;
-      // Ensure selected reflects the newly-set activeProject
-      selected = projectOptions.find((o) => o.value === p) ?? (p ? { value: p, label: p } : undefined);
-      selectedValue = typeof selected === 'string' ? selected : selected ? selected.value : undefined;
-      // refresh drafts for the selected project
-      refreshDrafts();
-      ensureDefaultDraftSelected(p);
-    } catch (e) {}
-  }
-
-
-
-  // derive the primitive selectedValue used by services
-  $: selectedValue = typeof selected === 'string' ? selected : selected ? selected.value : undefined;
-
-  // derive copyFrom primitive
-  $: copyFrom = typeof copyFromSelected === 'string' ? copyFromSelected : copyFromSelected ? copyFromSelected.value : '';
-
-  // update drafts only when a project is selected by user action (see setActiveProject and activate)
-
-  // reactive options mapping for BaseSelect
-  $: projectOptions = projects.map((p) => ({ value: p, label: p }));
-
-  $: if (typeof sortAsc !== 'undefined') {
-    sortDrafts();
-  }
-
-  async function ensureDefaultDraftSelected(project: string | null) {
-    if (!project) return;
-    // If there is exactly one draft, always set it as active
-    if (drafts.length === 1) {
-      if (manager.activeDraft !== drafts[0]) {
-        await manager.setActiveDraft(drafts[0], project, false);
-        manager.activeDraft = drafts[0]; // Force Svelte update
+      if (!selectedValue) {
+        chapters = [];
+        isMultiFileProject = false;
+        return;
       }
-    } else if (!manager.activeDraft && drafts.length > 0) {
-      // Otherwise, if no active draft, set the latest
-      const latestDraft = drafts[drafts.length - 1];
-      if (latestDraft && manager.activeDraft !== latestDraft) {
-        await manager.setActiveDraft(latestDraft, project, false);
-        manager.activeDraft = latestDraft; // Force Svelte update
+      // Check project type
+      const metaPath = `${selectedValue}/meta.md`;
+      const meta = await readMetaFile(app, metaPath);
+      isMultiFileProject = meta?.project_type === "multi-file";
+      if (!isMultiFileProject) {
+        chapters = [];
+        return;
       }
+      if (!manager?.activeDraft) {
+        chapters = [];
+        return;
+      }
+      // Prefer draftService for chapter listing
+      let ch = [];
+      if (draftService && typeof draftService.listChapters === "function") {
+        ch = await draftService.listChapters(selectedValue, manager.activeDraft);
+      } else if (manager && typeof manager.listChapters === "function") {
+        ch = await manager.listChapters(selectedValue, manager.activeDraft);
+      }
+      chapters = Array.isArray(ch) ? ch : [];
+    } catch (e) {
+      chapters = [];
+      isMultiFileProject = false;
+    } finally {
+      loadingChapters = false;
     }
   }
 
-  async function activate(p: string | null) {
-    if (!p) return;
-    new Notice(`Activating project ${p}`);
-    await manager.setActiveProject(p);
-    await ensureDefaultDraftSelected(p);
+  // Minimal action handlers used by the template
+  async function createInlineDraft() {
+    if (!selectedValue || !newDraftName.trim()) return;
+    try {
+      // Prefer manager for creating drafts to ensure notifications and panel updates
+      if (manager && typeof manager.createNewDraft === "function") {
+        await manager.createNewDraft(newDraftName.trim(), copyFrom || undefined, selectedValue);
+      } else if (draftService && typeof draftService.createDraft === "function") {
+        await draftService.createDraft(newDraftName.trim(), copyFrom || undefined, selectedValue);
+      }
+    } catch (e) {
+      // ignore
+    }
+    newDraftName = "";
+    showCreateInline = false;
+    await refreshDrafts();
   }
 
   async function createDraft() {
-    // Show inline draft creation for the active project
-    if (!selectedValue) {
-      new Notice('No active project selected.');
-      return;
+    // open full modal - keep simple fallback to inline creation
+    showCreateInline = true;
+  }
+
+  async function openDraft(draftName) {
+    // Prefer manager.setActiveDraft to change active draft
+    if (!selectedValue) return;
+    // If draftService can open drafts, use it (opens files). Otherwise, fall back to manager.setActiveDraft.
+    let opened = false;
+    if (draftService && typeof draftService.openDraft === "function") {
+      try {
+        opened = await draftService.openDraft(selectedValue, draftName);
+      } catch (e) {
+        opened = false;
+      }
+    }
+    if (!opened) {
+      if (manager?.setActiveDraft) await manager.setActiveDraft(draftName, selectedValue);
     }
     await refreshDrafts();
-    showCreateInline = true;
-    // Optionally focus the input after next tick
-    setTimeout(() => {
-      const input = document.querySelector('.create-inline input');
-      if (input) (input as HTMLInputElement).focus();
-    }, 0);
+    await refreshChapters();
   }
 
-  function switchDraft() {
-    try { manager.switchDraftPrompt(); } catch (e) {}
-  }
-
-  async function createInlineDraft() {
-    if (!selectedValue) return;
-    const name = newDraftName && newDraftName.trim() ? newDraftName.trim() : draftService.suggestNextDraftName(selectedValue);
+  async function renameDraft(draftName) {
+    // For now, prompt simple rename via browser prompt (modal would be better)
+    const newName = window?.prompt
+      ? window.prompt(`Rename draft '${draftName}' to:`, draftName)
+      : null;
+    if (!newName || !selectedValue) return;
     try {
-      // use manager wrapper so manager can notify panels to refresh
-      await manager.createNewDraft(name, copyFrom || undefined, selectedValue);
-      newDraftName = '';
-      copyFrom = '';
-      showCreateInline = false;
-      refreshDrafts();
-  new Notice(`Draft "${name}" created in ${selectedValue}.`);
-    } catch (e) {
-      new Notice('Failed to create draft');
-    }
-  }
-
-  async function openDraft(draftName: string) {
-    if (!selectedValue) return;
-    try {
-      await draftService.openDraft(selectedValue, draftName);
+      await manager.renameDraft(draftName, newName, selectedValue, false);
+      await refreshDrafts();
     } catch (e) {
       // ignore
     }
   }
 
-  async function setActiveDraft(draftName: string) {
-    try {
-      await manager.setActiveDraft(draftName, selectedValue);
-      // Force Svelte to update the UI by reassigning manager.activeDraft
-      manager.activeDraft = draftName;
-    } catch (e) {
-      new Notice('Failed to set active draft');
-    }
-  }
-
-  async function renameDraft(oldName: string) {
-    const app = (window as any).app as App;
-    let isSingleFile = false;
-    if (selectedValue) {
-      const metaPath = `${selectedValue}/meta.md`;
-      const meta = await readMetaFile(app, metaPath);
-      if (meta && meta.project_type === 'single-file') {
-        isSingleFile = true;
-      }
-    }
-    const modal = new RenameDraftModal(app, oldName, async (newName: string, renameFile: boolean) => {
-      if (!newName || !newName.trim()) return;
-      try {
-        const ok = await manager.renameDraft(oldName, newName.trim(), selectedValue, renameFile);
-        if (ok) refreshDrafts();
-      } catch (e) {
-        new Notice('Failed to rename draft');
-      }
-    }, isSingleFile);
+  async function deleteDraftHandler(draftName) {
+    if (!selectedValue) return;
+    const app = window && window.app ? window.app : manager?.app;
+    const modal = new ConfirmDeleteModal(
+      app,
+      draftName,
+      async () => {
+        await manager.deleteDraft(draftName, selectedValue);
+        await refreshDrafts();
+      },
+      "draft",
+    );
     modal.open();
   }
 
-  async function deleteDraftHandler(draftName: string) {
-    return new Promise<void>((resolve) => {
-      const app = (window as any).app as App;
-      const modal = new ConfirmDeleteModal(app, draftName, async () => {
-        try {
-          const res = await manager.deleteDraft(draftName, selectedValue, true);
-          if (res) refreshDrafts();
-        } catch (e) {
-          new Notice('Failed to delete draft');
+  // Ensure project activation always updates manager and UI
+  async function activate(projectPath) {
+    if (!projectPath) return;
+    if (manager?.setActiveProject) await manager.setActiveProject(projectPath);
+    activeProject = projectPath;
+    selectedValue = projectPath;
+    activeDraft = manager?.activeDraft ?? null;
+    await refreshDrafts();
+    await refreshChapters();
+  }
+
+  // Ensure the manager's activeProject matches the given path (used on startup)
+  async function ensureManagerActive(projectPath) {
+    if (!projectPath || !manager) return;
+    try {
+      if (manager.activeProject !== projectPath && typeof manager.setActiveProject === "function") {
+        await manager.setActiveProject(projectPath);
+      }
+      // keep local state in sync
+      activeProject = projectPath;
+      selectedValue = projectPath;
+      activeDraft = manager?.activeDraft ?? null;
+      await refreshDrafts();
+      await refreshChapters();
+    } catch (e) {
+      // ignore
+    }
+  }
+
+  // Ensure draft activation always updates manager and UI
+  async function setActiveDraft(draftName) {
+    if (!selectedValue) return;
+    if (manager?.setActiveDraft) await manager.setActiveDraft(draftName, selectedValue);
+    activeDraft = manager?.activeDraft ?? null;
+    await refreshDrafts();
+    await refreshChapters();
+  }
+  // activeDraft listener placeholder (populated in onMount)
+  let activeDraftListener = null;
+
+  onMount(async () => {
+    // Initial refresh to populate projects and drafts
+    await refresh(false);
+
+    // Activate the selected project to ensure manager state is synced
+    if (selectedValue) {
+      await activate(selectedValue);
+    }
+
+    // Retry once after a short delay to handle timing issues where the
+    // manager may not have finished initializing when the panel mounted.
+    // This is a single-shot re-sync only.
+    setTimeout(async () => {
+      try {
+        if (selectedValue && manager && manager.activeProject !== selectedValue) {
+          await ensureManagerActive(selectedValue);
         }
-        resolve();
-      });
-      modal.open();
-    });
-  }
+      } catch (e) {
+        // ignore
+      }
+    }, 200);
+
+    // Subscribe to manager activeDraft changes so we can update the UI indicator
+    try {
+      if (manager && typeof manager.addActiveDraftListener === "function") {
+        activeDraftListener = (d) => {
+          activeDraft = d;
+          refreshDrafts().catch(() => {});
+          refreshChapters().catch(() => {});
+        };
+        manager.addActiveDraftListener(activeDraftListener);
+        // Also set initial value
+        activeDraft = manager.activeDraft ?? null;
+      }
+    } catch (e) {
+      // ignore
+    }
+
+    // Subscribe to manager activeProject changes so we can update the UI
+    try {
+      if (manager && typeof manager.addActiveProjectListener === "function") {
+        activeProjectListener = (p) => {
+          activeProject = p;
+          selectedValue = p;
+          refresh().catch(() => {});
+          refreshDrafts().catch(() => {});
+          // Update selected to the option object
+          selected = projectOptions.find((o) => o.value === p) || undefined;
+        };
+        manager.addActiveProjectListener(activeProjectListener);
+        // Also set initial value
+        activeProject = manager.activeProject ?? null;
+        selectedValue = activeProject;
+        refreshDrafts().catch(() => {});
+        // Update selected to the option object
+        selected = projectOptions.find((o) => o.value === activeProject) || undefined;
+        refreshChapters().catch(() => {});
+      }
+    } catch (e) {
+      // ignore
+    }
+  });
+
+  // Cleanup on destroy — must be called at component init time, not inside onMount
+  onDestroy(() => {
+    try {
+      if (
+        manager &&
+        typeof manager.removeActiveDraftListener === "function" &&
+        activeDraftListener
+      ) {
+        manager.removeActiveDraftListener(activeDraftListener);
+      }
+    } catch (e) {
+      // ignore
+    }
+    try {
+      if (
+        manager &&
+        typeof manager.removeActiveProjectListener === "function" &&
+        activeProjectListener
+      ) {
+        manager.removeActiveProjectListener(activeProjectListener);
+      }
+    } catch (e) {
+      // ignore
+    }
+  });
 </script>
-
-<style>
-  .project-list { padding: 8px; }
-  .project-select-row { display:flex; gap:8px; align-items:center; }
-  .create-inline { display:flex; gap:8px; margin-bottom:8px; align-items:center; }
-  .wa-panel { padding:8px; height: 100%; border-radius: 0; }
-  .wa-panel-header { display:flex; flex-direction: column;}
-  .wa-draft-item.active .wa-draft-name {
-    font-weight: bold;
-    color: var(--color-accent, #3b82f6);
-  }
-  .wa-draft-active-indicator {
-    color: var(--color-accent, #3b82f6);
-    font-size: 1em;
-    vertical-align: middle;
-  }
-  @keyframes spin {
-    100% { transform: rotate(360deg); }
-  }
-</style>
-
 
 <div class="project-list wa-panel">
   <div class="wa-row justify-between">
     <div class="wa-title">WriteAid Projects</div>
     <div>
-      <IconButton ariaLabel="Refresh projects" onclick={() => refresh(true)} title={undefined} spinning={loadingProjects}>
+      <IconButton
+        ariaLabel="Refresh projects"
+        onclick={() => refresh(true)}
+        title={undefined}
+        spinning={loadingProjects}
+      >
         <RotateCcw />
       </IconButton>
     </div>
   </div>
 
   <div class="wa-row" style="margin: 18px 0 10px 0;">
-    <BaseButton onclick={async () => {
+    <BaseButton
+      onclick={async () => {
       const beforeProjects = [...projects];
-      const app = (window as any).app || manager.app;
+      const app = (window && window.app) ? window.app : manager.app;
       const { CreateProjectModal } = await import('@/ui/modals/CreateProjectModal');
       const initialDraftName = 'Draft 1';
-      let projectPath: string | null = null;
-      const modal = new CreateProjectModal(app, async (projectName: string, singleFile: boolean, initialDraftName?: string) => {
+      let projectPath = null;
+      const modal = new CreateProjectModal(app, async (projectName, singleFile, initialDraftName) => {
         if (!projectName) return;
         projectPath = await projectService.createProject(
           projectName,
           singleFile,
-          initialDraftName || initialDraftName,
+          initialDraftName,
           undefined,
           manager.settings
         );
         if (!projectPath) return;
         // Wait for the new project to appear in the list
-        let newProjects: string[] = [];
-        let newProject: string | null = null;
+  let newProjects = [];
+  let newProject = null;
         for (let i = 0; i < 20; i++) {
           await new Promise(res => setTimeout(res, 100));
           newProjects = await refresh();
@@ -419,11 +466,16 @@
       });
       modal.open();
       return;
-    }} variant="primary" style="width: 40%; margin: 0 auto;">New Project</BaseButton>
+    }}
+      variant="primary"
+      style="width: 40%; margin: 0 auto;">New Project</BaseButton
+    >
   </div>
 
   {#if projects.length === 0}
-    <div class="wa-muted" style="margin: 4rem auto 0; font-size: 18px; width: fit-content;">No projects found.</div>
+    <div class="wa-muted" style="margin: 4rem auto 0; font-size: 18px; width: fit-content;">
+      No projects found.
+    </div>
   {/if}
   {#if projects.length > 0}
     <div style="margin:20px 0;">
@@ -434,7 +486,7 @@
           class="wa-select"
           items={projectOptions}
           showChevron={true}
-          disabled={disabled}
+          {disabled}
           clearable={false}
           searchable={false}
           placeholder="Choose a project..."
@@ -443,7 +495,7 @@
           on:select={(e) => {
             const item = e.detail;
             selected = item;
-            selectedValue = typeof item === 'string' ? item : item ? item.value : undefined;
+            selectedValue = typeof item === "string" ? item : item ? item.value : undefined;
             activeProject = selectedValue ?? null;
             activate(selectedValue ?? null);
           }}
@@ -458,17 +510,30 @@
         <div class="wa-row justify-between">
           <div class="wa-button-group">
             <div class="wa-title">Drafts</div>
-            <IconButton ariaLabel="Toggle draft sort order" title={undefined} onclick={() => { sortAsc = !sortAsc; }}>
+            <IconButton
+              ariaLabel="Toggle draft sort order"
+              title={undefined}
+              onclick={() => {
+                sortAsc = !sortAsc;
+                refreshDrafts();
+              }}
+            >
               {#if sortAsc}
                 <ArrowUp />
               {:else}
                 <ArrowDown />
               {/if}
             </IconButton>
-          </div> 
+          </div>
           <div class="wa-button-group">
             <BaseButton onclick={createDraft} variant="primary">New</BaseButton>
-            <IconButton ariaLabel="Refresh drafts" title={undefined} onclick={refreshDrafts} disabled={loadingDrafts} spinning={loadingDrafts}>
+            <IconButton
+              ariaLabel="Refresh drafts"
+              title={undefined}
+              onclick={refreshDrafts}
+              disabled={loadingDrafts}
+              spinning={loadingDrafts}
+            >
               <RotateCcw />
             </IconButton>
           </div>
@@ -481,9 +546,18 @@
             type="text"
             placeholder="Draft name"
             value={newDraftName}
-            on:input={(e) => { const t = e.target as HTMLInputElement | null; if (t) newDraftName = t.value; }}
+            on:input={(e) => {
+              const t = e.target;
+              if (t) newDraftName = t.value;
+            }}
           />
           <BaseButton onclick={createInlineDraft} variant="primary">Create</BaseButton>
+          <BaseButton
+            onclick={() => {
+              showCreateInline = false;
+              newDraftName = "";
+            }}>Cancel</BaseButton
+          >
         </div>
       {/if}
       {#if drafts.length === 0}
@@ -492,20 +566,40 @@
       {#if drafts.length > 0}
         <div class="wa-draft-list">
           {#each drafts as d}
-            <div class="wa-draft-item {manager?.activeDraft === d ? 'active' : ''}">
-              <div class="wa-draft-name">
-                {#if manager?.activeDraft === d}
+            <div class="wa-draft-item {activeDraft === d ? 'active' : ''}">
+              <div class="wa-draft-name wa-row">
+                {#if activeDraft === d}
                   <span class="wa-draft-active-indicator" title="Active draft">●</span>
                 {/if}
                 {d}
               </div>
               <div class="wa-draft-actions">
-                <BaseButton onclick={() => openDraft(d)}>Open</BaseButton>
-                {#if manager?.activeDraft !== d}
-                  <BaseButton onclick={() => setActiveDraft(d)}>Set Active</BaseButton>
+                <IconButton ariaLabel="Open draft" title={undefined} onclick={() => openDraft(d)}>
+                  <Eye size={18} />
+                </IconButton>
+                {#if activeDraft !== d}
+                  <IconButton
+                    ariaLabel="Set active draft"
+                    title={undefined}
+                    onclick={() => setActiveDraft(d)}
+                  >
+                    <BookOpenCheck size={18} />
+                  </IconButton>
                 {/if}
-                <BaseButton onclick={() => renameDraft(d)}>Rename</BaseButton>
-                <BaseButton onclick={() => deleteDraftHandler(d)}>Delete</BaseButton>
+                <IconButton
+                  ariaLabel="Rename draft"
+                  title={undefined}
+                  onclick={() => renameDraft(d)}
+                >
+                  <Pencil size={18} />
+                </IconButton>
+                <IconButton
+                  ariaLabel="Delete draft"
+                  title={undefined}
+                  onclick={() => deleteDraftHandler(d)}
+                >
+                  <Trash size={18} />
+                </IconButton>
               </div>
             </div>
           {/each}
@@ -520,7 +614,9 @@
         <div class="wa-row justify-between">
           <div class="wa-title">Chapters</div>
           <div class="wa-button-group">
-            <BaseButton onclick={() => showCreateChapter = !showCreateChapter} variant="primary">New Chapter</BaseButton>
+            <BaseButton onclick={() => (showCreateChapter = !showCreateChapter)} variant="primary"
+              >New Chapter</BaseButton
+            >
           </div>
         </div>
       </div>
@@ -531,81 +627,205 @@
             type="text"
             placeholder="Chapter name"
             value={newChapterName}
-            on:input={(e) => { const t = e.target as HTMLInputElement | null; if (t) newChapterName = t.value; }}
+            on:input={(e) => {
+              const t = e.target;
+              if (t) newChapterName = t.value;
+            }}
           />
-          <!-- No separate short name field; use newChapterNameValue for display name if desired -->
-          <BaseButton onclick={async () => {
-            if (!selectedValue || !manager?.activeDraft || !newChapterName.trim()) return;
-            await manager.createChapter(selectedValue, manager.activeDraft, newChapterName.trim(), newChapterNameValue.trim() || undefined);
-            newChapterName = '';
-            newChapterNameValue = '';
-            showCreateChapter = false;
-            await refreshChapters();
-          }} variant="primary">Create</BaseButton>
+          <BaseButton
+            onclick={async () => {
+              if (!selectedValue || !manager?.activeDraft || !newChapterName.trim()) return;
+              await manager.createChapter(
+                selectedValue,
+                manager.activeDraft,
+                newChapterName.trim(),
+                newChapterNameValue.trim() || undefined,
+              );
+              newChapterName = "";
+              newChapterNameValue = "";
+              showCreateChapter = false;
+              await refreshChapters();
+            }}
+            variant="primary">Create</BaseButton
+          >
+          <BaseButton
+            onclick={() => {
+              showCreateChapter = false;
+              newChapterName = "";
+              newChapterNameValue = "";
+            }}>Cancel</BaseButton
+          >
         </div>
       {/if}
       {#if loadingChapters}
         <div>Loading chapters...</div>
       {:else if chapters.length === 0}
-        <div>No chapters found.</div>
+        <div style="margin-top: 1em;">No chapters found.</div>
       {:else}
         <div class="wa-draft-list">
-          {#each chapters as ch, i}
-            <div class="wa-draft-item">
+          {#each chapters as ch, i (ch.chapterName)}
+            <div class="wa-draft-item" animate:flip={{ duration: 500, easing: cubicOut }}>
               <div class="wa-draft-name">
                 {ch.chapterName}
               </div>
               <div class="wa-draft-actions">
-                <BaseButton onclick={async () => {
-                  if (i === 0) return;
-                  // Move chapter up
-                  const newOrder = chapters.slice();
-                  [newOrder[i - 1], newOrder[i]] = [newOrder[i], newOrder[i - 1]];
-                  await manager.reorderChapters(selectedValue, manager.activeDraft, newOrder);
-                  await refreshChapters();
-                }} disabled={i === 0}>↑</BaseButton>
-                <BaseButton onclick={async () => {
-                  if (i === chapters.length - 1) return;
-                  // Move chapter down
-                  const newOrder = chapters.slice();
-                  [newOrder[i], newOrder[i + 1]] = [newOrder[i + 1], newOrder[i]];
-                  await manager.reorderChapters(selectedValue, manager.activeDraft, newOrder);
-                  await refreshChapters();
-                }} disabled={i === chapters.length - 1}>↓</BaseButton>
-                <BaseButton onclick={() => {
-                  editingChapterIndex = i;
-                  editingName = ch.chapterName;
-                  editingChapterNameValue = ch.chapterName || '';
-                }}>Rename</BaseButton>
-                <BaseButton onclick={async () => {
-                  if (!selectedValue || !manager?.activeDraft) return;
-                  await manager.deleteChapter(selectedValue, manager.activeDraft, ch.chapterName);
-                  await refreshChapters();
-                }}>Delete</BaseButton>
+                <BaseButton
+                  onclick={async () => {
+                    if (i === 0) return;
+                    // Move chapter up
+                    const newOrder = chapters.slice();
+                    [newOrder[i - 1], newOrder[i]] = [newOrder[i], newOrder[i - 1]];
+                    // Ensure order property is correct
+                    const ordered = newOrder.map((ch, idx) => ({ ...ch, order: idx + 1 }));
+                    await manager.reorderChapters(selectedValue, manager.activeDraft, ordered);
+                    await refreshChapters();
+                  }}
+                  disabled={i === 0}>↑</BaseButton
+                >
+                <BaseButton
+                  onclick={async () => {
+                    if (i === chapters.length - 1) return;
+                    // Move chapter down
+                    const newOrder = chapters.slice();
+                    [newOrder[i], newOrder[i + 1]] = [newOrder[i + 1], newOrder[i]];
+                    // Ensure order property is correct
+                    const ordered = newOrder.map((ch, idx) => ({ ...ch, order: idx + 1 }));
+                    await manager.reorderChapters(selectedValue, manager.activeDraft, ordered);
+                    await refreshChapters();
+                  }}
+                  disabled={i === chapters.length - 1}>↓</BaseButton
+                >
+                <IconButton
+                  ariaLabel="Rename chapter"
+                  title="Rename chapter"
+                  onclick={() => {
+                    editingChapterIndex = i;
+                    editingName = ch.chapterName;
+                    editingChapterNameValue = ch.chapterName || "";
+                  }}
+                >
+                  <Pencil size={18} />
+                </IconButton>
+                <IconButton
+                  ariaLabel="Delete chapter"
+                  title="Delete chapter"
+                  onclick={async () => {
+                    if (!selectedValue || !manager?.activeDraft) return;
+                    const app = window && window.app ? window.app : manager.app;
+                    const modal = new ConfirmDeleteModal(
+                      app,
+                      ch.chapterName,
+                      async () => {
+                        await manager.deleteChapter(
+                          selectedValue,
+                          manager.activeDraft,
+                          ch.chapterName,
+                        );
+                        await refreshChapters();
+                      },
+                      "chapter",
+                    );
+                    modal.open();
+                  }}
+                >
+                  <Trash size={18} />
+                </IconButton>
               </div>
+              {#if editingChapterIndex === i}
+                <div class="create-inline wa-row">
+                  <input
+                    class="wa-chapter-rename-input"
+                    type="text"
+                    placeholder="Chapter name"
+                    value={editingName}
+                    on:input={(e) => {
+                      const t = e.target;
+                      if (t) editingName = t.value;
+                    }}
+                  />
+                  <BaseButton
+                    onclick={async () => {
+                      if (!selectedValue || !manager?.activeDraft) return;
+                      await manager.renameChapter(
+                        selectedValue,
+                        manager.activeDraft,
+                        ch.chapterName,
+                        editingName.trim(),
+                        editingChapterNameValue.trim() || undefined,
+                      );
+                      editingChapterIndex = null;
+                      await refreshChapters();
+                    }}
+                    variant="primary">Save</BaseButton
+                  >
+                  <BaseButton
+                    onclick={() => {
+                      editingChapterIndex = null;
+                    }}>Cancel</BaseButton
+                  >
+                </div>
+              {/if}
             </div>
-            {#if editingChapterIndex === i}
-              <div class="create-inline wa-row">
-                <input
-                  class="wa-create-draft-input"
-                  type="text"
-                  placeholder="Chapter name"
-                  value={editingName}
-                  on:input={(e) => { const t = e.target as HTMLInputElement | null; if (t) editingName = t.value; }}
-                />
-                <!-- No separate short name field; use editingChapterNameValue for display name if desired -->
-                <BaseButton onclick={async () => {
-                  if (!selectedValue || !manager?.activeDraft) return;
-                  await manager.renameChapter(selectedValue, manager.activeDraft, ch.chapterName, editingName.trim(), editingChapterNameValue.trim() || undefined);
-                  editingChapterIndex = null;
-                  await refreshChapters();
-                }} variant="primary">Save</BaseButton>
-                <BaseButton onclick={() => { editingChapterIndex = null; }}>Cancel</BaseButton>
-              </div>
-            {/if}
           {/each}
         </div>
       {/if}
     </div>
   {/if}
 </div>
+
+<style>
+  .project-list {
+    padding: 8px;
+  }
+  .project-select-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+  .create-inline {
+    margin-top: 8px;
+    justify-content: center;
+  }
+  .wa-panel {
+    padding: 8px;
+    height: 100%;
+    border-radius: 0;
+  }
+  .wa-panel-header {
+    display: flex;
+    flex-direction: column;
+  }
+  .wa-draft-item.active .wa-draft-name {
+    font-weight: bold;
+    color: var(--color-accent, #3b82f6);
+  }
+  .wa-draft-active-indicator {
+    color: var(--color-accent, #3b82f6);
+    font-size: 1em;
+    vertical-align: middle;
+  }
+  @keyframes spin {
+    100% {
+      transform: rotate(360deg);
+    }
+  }
+  .wa-chapter-rename-input {
+    padding: 6px 12px;
+    font-size: 1em;
+    border: 2px solid var(--color-accent, #3b82f6);
+    border-radius: 6px;
+    outline: none;
+    background: var(--background-secondary, #f8fafc);
+    color: var(--text-normal, #222);
+    transition:
+      border 0.2s,
+      box-shadow 0.2s;
+    box-shadow: 0 1px 4px rgba(60, 120, 240, 0.07);
+    margin-right: 8px;
+  }
+  .wa-chapter-rename-input:focus {
+    border-color: var(--color-accent, #2563eb);
+    box-shadow: 0 0 0 2px var(--color-accent, #2563eb33);
+    background: var(--background-modifier-hover, #e0e7ef);
+  }
+</style>

@@ -1,7 +1,7 @@
 import { ProjectService } from "@/core/ProjectService";
 import { asyncFilter } from "@/core/utils";
 import type { WriteAidSettings } from "@/types";
-import { Notice, Plugin } from "obsidian";
+import { Plugin } from "obsidian";
 import { convertIndexToPlanningCommand } from "./commands/convertIndexToPlanningCommand";
 import { convertSingleToMultiFileProjectCommand } from "./commands/convertSingleToMultiFileProjectCommand";
 import { createNewDraftCommand } from "./commands/createNewDraftCommand";
@@ -57,6 +57,7 @@ function normalizeSettings(data?: Partial<WriteAidSettings>): WriteAidSettings {
 }
 
 export default class WriteAidPlugin extends Plugin {
+  private statusBarEl?: HTMLElement;
   manager!: WriteAidManager;
   settings: WriteAidSettings = DEFAULT_SETTINGS;
   private waStyleEl?: HTMLStyleElement;
@@ -85,6 +86,120 @@ export default class WriteAidPlugin extends Plugin {
   }
 
   async onload() {
+    await this.loadSettings();
+    // instantiate manager, passing configured debounce value from settings
+    this.manager = new WriteAidManager(
+      this.app,
+      this,
+      typeof this.settings.panelRefreshDebounceMs === "number"
+        ? this.settings.panelRefreshDebounceMs
+        : undefined,
+    );
+
+    // Only instantiate ProjectService once
+    const projectService = new ProjectService(this.app);
+
+    // Wait for layout to be ready before checking for projects
+    this.app.workspace.onLayoutReady(async () => {
+      // Ensure an active project is always selected on startup if projects exist
+      const allFolders: string[] = projectService.listAllFolders();
+      const filteredFolders = allFolders.filter((p) => !!p);
+      const projects = await asyncFilter(filteredFolders, (p) => projectService.isProjectFolder(p));
+      try {
+        if ((this.settings as WriteAidSettings).debug) {
+          console.debug(`WriteAid debug: allFolders:`, allFolders);
+          console.debug(`WriteAid debug: filteredFolders:`, filteredFolders);
+          console.debug(
+            `WriteAid debug: found ${filteredFolders.length} folders, ${projects.length} projects:`,
+            projects,
+          );
+        }
+      } catch (e) {
+        // ignore
+      }
+      let toActivate: string | null = null;
+      if (projects.length === 1) {
+        toActivate = projects[0];
+      } else if (projects.length > 1) {
+        // Use last active if it exists in the list, else first
+        const lastActiveRaw = this.settings.activeProject;
+        const lastActive = lastActiveRaw?.trim().replace(/^\/+/, "").replace(/\/+$/, "");
+        try {
+          if ((this.settings as WriteAidSettings).debug) {
+            console.debug(
+              `WriteAid debug: lastActiveRaw='${lastActiveRaw}', normalized='${lastActive}', includes=${lastActive && projects.includes(lastActive)}`,
+            );
+          }
+        } catch (e) {
+          // ignore
+        }
+        if (lastActive && projects.includes(lastActive)) {
+          toActivate = lastActive;
+        } else {
+          toActivate = projects[0];
+        }
+      } else if (projects.length === 0) {
+        // No valid projects found, but check if saved active project exists and has meta.md
+        const lastActiveRaw = this.settings.activeProject;
+        const lastActive = lastActiveRaw?.trim().replace(/^\/+/, "").replace(/\/+$/, "");
+        if (lastActive && (await this.app.vault.adapter.exists(lastActive))) {
+          const metaPath = `${lastActive}/meta.md`;
+          if (await this.app.vault.adapter.exists(metaPath)) {
+            try {
+              if ((this.settings as WriteAidSettings).debug) {
+                console.debug(
+                  `WriteAid debug: activating saved project '${lastActive}' as it exists and has meta.md`,
+                );
+              }
+            } catch (e) {
+              // ignore
+            }
+            toActivate = lastActive;
+          }
+        }
+      }
+      try {
+        if ((this.settings as WriteAidSettings).debug) {
+          console.debug(`WriteAid debug: toActivate='${toActivate}'`);
+        }
+      } catch (e) {
+        // ignore
+      }
+      if (toActivate) {
+        await this.manager.setActiveProject(toActivate);
+        this.settings.activeProject = toActivate;
+        await this.saveSettings();
+        // open the panel only if user has enabled auto-open
+        if (this.settings.autoOpenPanelOnStartup) {
+          const existing = this.app.workspace.getLeavesOfType(VIEW_TYPE_PROJECT_PANEL);
+          if (existing.length > 0) {
+            this.app.workspace.revealLeaf(existing[0]);
+          } else {
+            let leaf: ReturnType<typeof this.app.workspace.getLeftLeaf> | null = null;
+            if (this.settings.ribbonPlacement === "right") {
+              leaf = this.app.workspace.getRightLeaf(true);
+            } else {
+              leaf = this.app.workspace.getLeftLeaf(true);
+            }
+            const viewState = {
+              type: VIEW_TYPE_PROJECT_PANEL,
+              active: true,
+            };
+            leaf!.setViewState(viewState);
+            this.app.workspace.revealLeaf(leaf!);
+          }
+        }
+      } else {
+        // No project to activate, clear any invalid active project
+        await this.manager.setActiveProject(null);
+        this.settings.activeProject = undefined;
+        await this.saveSettings();
+      }
+    });
+    // Add status bar item for active project
+    this.statusBarEl = this.addStatusBarItem();
+    this.statusBarEl.setText("WriteAid: No active project");
+
     // Defer verbose loading message until persisted debug setting is applied below
     // Inject plugin styles into the document head so the compiled CSS is
     // applied inside Obsidian. Keep a reference so we can remove it on unload.
@@ -116,22 +231,34 @@ export default class WriteAidPlugin extends Plugin {
     } catch (e) {
       // Ignore errors in debug logging
     }
-    // instantiate manager, passing configured debounce value from settings
-    this.manager = new WriteAidManager(
-      this.app,
-      this,
-      typeof this.settings.panelRefreshDebounceMs === "number"
-        ? this.settings.panelRefreshDebounceMs
-        : undefined,
-    );
+
+    // Listen for active project changes to update status bar
+    this.manager.addActiveProjectListener((project) => {
+      if (this.statusBarEl) {
+        if (project) {
+          this.statusBarEl.setText(`WriteAid: ${project}`);
+          try {
+            if (this.settings && (this.settings as WriteAidSettings).debug) {
+              console.debug(`WriteAid debug: active project updated -> ${project}`);
+            }
+          } catch (e) {
+            // ignore
+          }
+        } else {
+          this.statusBarEl.setText("WriteAid: No active project");
+        }
+      }
+    });
+
+    // Set initial status bar text if a project is already active
+    if (this.manager.activeProject) {
+      this.statusBarEl.setText(`WriteAid: ${this.manager.activeProject}`);
+    }
 
     // register side panel view
     this.registerView(VIEW_TYPE_PROJECT_PANEL, (leaf) => new ProjectPanelView(leaf, this.app));
 
-    // Add a ribbon icon (SVG) to open the project panel, placement and visibility controlled by settings
-    const projectService = new ProjectService(this.app);
     const ribbonEl = this.addRibbonIcon(WRITE_AID_ICON_NAME, "WriteAid Projects", () => {});
-
     ribbonEl.classList.add("writeaid-ribbon");
     this.ribbonEl = ribbonEl;
     ribbonEl.setAttr("aria-label", "WriteAid Projects");
@@ -180,60 +307,6 @@ export default class WriteAidPlugin extends Plugin {
     updateRibbonVisibility().catch(() => {});
     // move to right ribbon if requested
     if (this.settings.ribbonPlacement === "right") this.moveRibbon("right");
-
-    // If we have a persisted activeProject, ensure manager knows about it and open the panel so the UI shows it
-    try {
-      const persisted = this.settings?.activeProject;
-      if (persisted) {
-        // validate the path still points to a WriteAid project
-        const isProject = await projectService.isProjectFolder(persisted);
-        if (!isProject) {
-          // clear persisted setting and notify the user
-          (this.settings as WriteAidSettings).activeProject = undefined;
-          try {
-            await this.saveSettings();
-          } catch (e) {
-            // Ignore errors in settings save
-          }
-          new Notice(
-            `Saved active project '${persisted}' not found. Clearing saved active project.`,
-          );
-        } else {
-          // Ensure manager state and persistence are consistent
-          // Set the active project in the manager if the user enabled auto-select on startup
-          if (this.settings.autoSelectProjectOnStartup) {
-            await this.manager.setActiveProject(persisted);
-            try {
-              new Notice(`WriteAid: active project restored: ${persisted}`);
-            } catch (e) {
-              // Ignore errors in Notice creation
-            }
-          }
-          // open the panel only if user has enabled auto-open
-          if (this.settings.autoOpenPanelOnStartup) {
-            const existing = this.app.workspace.getLeavesOfType(VIEW_TYPE_PROJECT_PANEL);
-            if (existing.length > 0) {
-              this.app.workspace.revealLeaf(existing[0]);
-            } else {
-              let leaf: ReturnType<typeof this.app.workspace.getLeftLeaf> | null = null;
-              if (this.settings.ribbonPlacement === "right") {
-                leaf = this.app.workspace.getRightLeaf(true);
-              } else {
-                leaf = this.app.workspace.getLeftLeaf(true);
-              }
-              const viewState = {
-                type: VIEW_TYPE_PROJECT_PANEL,
-                active: true,
-              };
-              leaf!.setViewState(viewState);
-              this.app.workspace.revealLeaf(leaf!);
-            }
-          }
-        }
-      }
-    } catch (e) {
-      // Ignore errors in event registration
-    }
 
     // refresh when vault changes (files/folders created or deleted)
     this.registerEvent(
@@ -326,6 +399,9 @@ export default class WriteAidPlugin extends Plugin {
   }
 
   onunload() {
+    if (this.statusBarEl && this.statusBarEl.parentElement) {
+      this.statusBarEl.parentElement.removeChild(this.statusBarEl);
+    }
     try {
       debug("Unloading WriteAid Novel Multi-Draft Plugin");
     } catch (e) {

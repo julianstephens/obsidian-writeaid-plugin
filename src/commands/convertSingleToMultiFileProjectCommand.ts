@@ -52,8 +52,7 @@ export async function convertSingleToMultiFileProjectCommand(
   projectPath: string | undefined,
 ) {
   if (!projectPath) {
-    // @ts-ignore
-    new window.Notice("No active project selected.");
+    new Notice("No active project selected.");
     return;
   }
   await convertSingleToMultiFileProject(app, projectPath);

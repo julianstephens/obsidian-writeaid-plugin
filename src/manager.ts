@@ -1,5 +1,6 @@
+// ...existing code...
 import { DraftService } from "@/core/DraftService";
-import { updateMetaStats } from "@/core/meta";
+import { readMetaFile, updateMetaStats } from "@/core/meta";
 import { ProjectService } from "@/core/ProjectService";
 import { TemplateService } from "@/core/TemplateService";
 import { asyncFilter } from "@/core/utils";
@@ -20,6 +21,7 @@ export class WriteAidManager {
   // track the currently selected active project path
   activeProject: string | null = null;
   private activeProjectListeners: Array<(p: string | null) => void> = [];
+  private activeDraftListeners: Array<(d: string | null) => void> = [];
   private panelRefreshListeners: Array<() => void> = [];
   private _panelRefreshTimer: ReturnType<typeof setTimeout> | null = null;
   private _panelRefreshDebounceMs: number = 250;
@@ -46,43 +48,34 @@ export class WriteAidManager {
     this.draftService = new DraftService(app);
   }
 
+  /**
+   * Reorder chapters in a draft.
+   * @param projectPath Project folder path
+   * @param draftName Draft name
+   * @param newOrder Array of chapter objects in new order
+   */
+  async reorderChapters(
+    projectPath: string,
+    draftName: string,
+    newOrder: Array<{ chapterName: string; order: number }>,
+  ) {
+    return await this.draftService.reorderChapters(projectPath, draftName, newOrder);
+  }
+
   /** Get the current panel refresh debounce timeout in milliseconds */
 
   // Chapter management API
   async listChapters(projectPath: string, draftName: string) {
-    // Now returns Array<{ chapterName: string, order: number }>
     return await this.draftService.listChapters(projectPath, draftName);
   }
-  async createChapter(
-    projectPath: string,
-    draftName: string,
-    chapterName: string,
-    chapterNameValue?: string,
-  ) {
-    return await this.draftService.createChapter(
-      projectPath,
-      draftName,
-      chapterName,
-      chapterNameValue,
-    );
+  async createChapter(projectPath: string, draftName: string, chapterName: string) {
+    return await this.draftService.createChapter(projectPath, draftName, chapterName);
   }
   async deleteChapter(projectPath: string, draftName: string, chapterName: string) {
     return await this.draftService.deleteChapter(projectPath, draftName, chapterName);
   }
-  async renameChapter(
-    projectPath: string,
-    draftName: string,
-    oldName: string,
-    newName: string,
-    newChapterNameValue?: string,
-  ) {
-    return await this.draftService.renameChapter(
-      projectPath,
-      draftName,
-      oldName,
-      newName,
-      newChapterNameValue,
-    );
+  async renameChapter(projectPath: string, draftName: string, oldName: string, newName: string) {
+    return await this.draftService.renameChapter(projectPath, draftName, oldName, newName);
   }
 
   get panelRefreshDebounceMs(): number {
@@ -98,6 +91,24 @@ export class WriteAidManager {
 
   addActiveProjectListener(fn: (p: string | null) => void) {
     this.activeProjectListeners.push(fn);
+  }
+
+  addActiveDraftListener(fn: (d: string | null) => void) {
+    this.activeDraftListeners.push(fn);
+  }
+
+  removeActiveDraftListener(fn: (d: string | null) => void) {
+    this.activeDraftListeners = this.activeDraftListeners.filter((f) => f !== fn);
+  }
+
+  private notifyActiveDraftListeners(draft: string | null) {
+    for (const fn of this.activeDraftListeners) {
+      try {
+        fn(draft);
+      } catch (e) {
+        // ignore
+      }
+    }
   }
 
   addPanelRefreshListener(fn: () => void) {
@@ -141,6 +152,19 @@ export class WriteAidManager {
   }
 
   async setActiveProject(path: string | null) {
+    // Normalize path: trim and remove leading/trailing slashes
+    if (path) {
+      path = path.trim().replace(/^\/+/, "").replace(/\/+$/, "");
+    }
+    // Debug: log when setActiveProject is called
+    try {
+      const dbg = (this.settings as WriteAidSettings | undefined)?.debug || false;
+      if (dbg) {
+        console.debug(`WriteAid debug: setActiveProject called with '${path}'`);
+      }
+    } catch (e) {
+      // ignore
+    }
     this.activeProject = path;
     // Persist into plugin settings if available
     try {
@@ -165,6 +189,96 @@ export class WriteAidManager {
       } catch (e) {
         // Ignore errors in active project listeners
       }
+    }
+
+    // Ensure an active draft is set for the newly activated project.
+    try {
+      if (!path) {
+        this.activeDraft = null;
+        // notify listeners that active draft cleared
+        try {
+          this.notifyActiveDraftListeners(null);
+        } catch (e) {
+          // ignore
+        }
+        return;
+      }
+      const drafts = this.listDrafts(path);
+      if (!drafts || drafts.length === 0) {
+        this.activeDraft = null;
+        return;
+      }
+      if (drafts.length === 1) {
+        await this.setActiveDraft(drafts[0], path, false);
+        // Debug: log single draft selection
+        try {
+          const dbg = (this.settings as WriteAidSettings | undefined)?.debug || false;
+          if (dbg) {
+            console.debug(
+              `WriteAid debug: auto-selected single draft '${drafts[0]}' for project '${path}'`,
+            );
+          }
+        } catch (e) {
+          // ignore
+        }
+        return;
+      }
+
+      // Multiple drafts: prefer meta.md's current_active_draft when valid
+      try {
+        const meta = await readMetaFile(this.app, `${path}/meta.md`);
+        if (meta && meta.current_active_draft && drafts.includes(meta.current_active_draft)) {
+          await this.setActiveDraft(meta.current_active_draft, path, false);
+          // Debug: log meta draft selection
+          try {
+            const dbg = (this.settings as WriteAidSettings | undefined)?.debug || false;
+            if (dbg) {
+              console.debug(
+                `WriteAid debug: auto-selected meta draft '${meta.current_active_draft}' for project '${path}'`,
+              );
+            }
+          } catch (e) {
+            // ignore
+          }
+          return;
+        }
+      } catch (e) {
+        // ignore and fall back
+      }
+
+      // Fallback: choose the draft with the most recently modified file inside it
+      let bestDraft: string | null = null;
+      let bestMtime = 0;
+      const files = this.app.vault.getFiles();
+      for (const d of drafts) {
+        const folderPrefix = `${path}/Drafts/${d}/`;
+        let maxM = 0;
+        for (const f of files) {
+          if (f.path.startsWith(folderPrefix)) {
+            // f.stat may be undefined in some hosts; guard access
+            const m = f.stat && typeof f.stat.mtime === "number" ? f.stat.mtime : 0;
+            if (m > maxM) maxM = m;
+          }
+        }
+        if (maxM > bestMtime) {
+          bestMtime = maxM;
+          bestDraft = d;
+        }
+      }
+      if (!bestDraft) bestDraft = drafts[0];
+      // Optionally surface debug notice when debug setting is enabled so we can
+      // observe what draft was auto-selected during startup.
+      try {
+        const dbg = (this.settings as WriteAidSettings | undefined)?.debug || false;
+        if (dbg) {
+          console.debug(`WriteAid debug: auto-selected draft '${bestDraft}' for project '${path}'`);
+        }
+      } catch (e) {
+        // ignore
+      }
+      await this.setActiveDraft(bestDraft, path, false);
+    } catch (e) {
+      // Ignore errors selecting active draft
     }
   }
 
@@ -242,11 +356,9 @@ export class WriteAidManager {
     // set as active project by default after successful creation
     if (path) {
       await this.setActiveProject(path as string);
-      // Set the first draft as active draft
-      const drafts = this.listDrafts(path as string);
-      if (drafts.length > 0) {
-        await this.setActiveDraft(drafts[0], path as string);
-      }
+      // Set the created draft as active draft
+      const draftName = initialDraftName || "Draft 1";
+      await this.setActiveDraft(draftName, path as string);
       // notify panels so UI can refresh
       try {
         this.notifyPanelRefresh();
@@ -335,8 +447,9 @@ export class WriteAidManager {
     new SelectProjectModal(this.app, {
       folders: projects,
       onSubmit: async (projectPath: string) => {
+        const suggestedName = await this.suggestNextDraftName(projectPath);
         new CreateDraftModal(this.app, {
-          suggestedName: this.suggestNextDraftName(projectPath),
+          suggestedName,
           drafts: this.listDrafts(projectPath),
           projectPath,
           onSubmit: async (draftName: string, copyFrom?: string) => {
@@ -441,6 +554,12 @@ export class WriteAidManager {
     } catch (e) {
       // Ignore errors in updateMetaStats
     }
+    // notify listeners about the active draft change
+    try {
+      this.notifyActiveDraftListeners(this.activeDraft);
+    } catch (e) {
+      // ignore
+    }
     if (showNotice) new Notice(`Active draft set to ${draftName}`);
     return true;
   }
@@ -490,8 +609,8 @@ export class WriteAidManager {
     return false;
   }
 
-  suggestNextDraftName(projectPath?: string): string {
-    return this.draftService.suggestNextDraftName(projectPath);
+  async suggestNextDraftName(projectPath?: string): Promise<string> {
+    return await this.draftService.suggestNextDraftName(projectPath);
   }
 
   getCurrentProjectPath(): string | null {
