@@ -11,10 +11,10 @@ interface WriteAidPlugin {
 
 import { DraftService } from "@/core/DraftService";
 import { ProjectService } from "@/core/ProjectService";
+import { WRITE_AID_ICON_NAME } from "@/ui/components/icons";
+import ProjectPanel from "@/ui/sidepanel/ProjectPanel.svelte";
 import { ItemView, Notice, type App, type WorkspaceLeaf } from "obsidian";
 import { mount } from "svelte";
-import { WRITE_AID_ICON_NAME } from "../components/icons";
-import ProjectPanel from "./ProjectPanel.svelte";
 
 // window.__WRITEAID_DEBUG__ = true in the DevTools console at runtime.
 function debug(...args: unknown[]) {

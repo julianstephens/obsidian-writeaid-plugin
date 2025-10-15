@@ -1,6 +1,6 @@
+import type { WriteAidManager } from "@/manager";
+import { VIEW_TYPE_PROJECT_PANEL } from "@/ui/sidepanel/ProjectPanelView";
 import type { App } from "obsidian";
-import type { WriteAidManager } from "../manager";
-import { VIEW_TYPE_PROJECT_PANEL } from "../ui/sidepanel/ProjectPanelView";
 
 export function toggleProjectPanelCommand(manager: WriteAidManager, app: App) {
   return () => {

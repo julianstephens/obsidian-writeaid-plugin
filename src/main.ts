@@ -1,26 +1,26 @@
+import { convertIndexToPlanningCommand } from "@/commands/convertIndexToPlanningCommand";
+import { convertSingleToMultiFileProjectCommand } from "@/commands/convertSingleToMultiFileProjectCommand";
+import { createNewDraftCommand } from "@/commands/createNewDraftCommand";
+import { createNewProjectCommand } from "@/commands/createNewProjectCommand";
+import { selectActiveProjectCommand } from "@/commands/selectActiveProjectCommand";
+import { switchDraftCommand } from "@/commands/switchDraftCommand";
+import { toggleProjectPanelCommand } from "@/commands/toggleProjectPanelCommand";
+import { updateProjectMetadataCommand } from "@/commands/updateProjectMetadataCommand";
 import { ProjectService } from "@/core/ProjectService";
 import { asyncFilter } from "@/core/utils";
+import { WriteAidManager } from "@/manager";
+import { WriteAidSettingTab } from "@/settings";
 import type { WriteAidSettings } from "@/types";
 import { Plugin } from "obsidian";
-import { convertIndexToPlanningCommand } from "./commands/convertIndexToPlanningCommand";
-import { convertSingleToMultiFileProjectCommand } from "./commands/convertSingleToMultiFileProjectCommand";
-import { createNewDraftCommand } from "./commands/createNewDraftCommand";
-import { createNewProjectCommand } from "./commands/createNewProjectCommand";
-import { selectActiveProjectCommand } from "./commands/selectActiveProjectCommand";
-import { switchDraftCommand } from "./commands/switchDraftCommand";
-import { toggleProjectPanelCommand } from "./commands/toggleProjectPanelCommand";
-import { updateProjectMetadataCommand } from "./commands/updateProjectMetadataCommand";
-import { WriteAidManager } from "./manager";
-import { WriteAidSettingTab } from "./settings";
 
 // Import the plugin CSS as inline text so we can inject it into the host
 // document at runtime. Vite supports '?inline' to return the file contents
 // as a string. This ensures the plugin styles are applied when the plugin
 // is loaded in Obsidian even though the build emits a separate CSS asset.
 // @ts-expect-error - import CSS as raw text via Vite
-import stylesText from "./styles/writeaid.css?inline";
-import { WRITE_AID_ICON_NAME } from "./ui/components/icons";
-import { ProjectPanelView, VIEW_TYPE_PROJECT_PANEL } from "./ui/sidepanel/ProjectPanelView";
+import stylesText from "@/styles/writeaid.css?inline";
+import { WRITE_AID_ICON_NAME } from "@/ui/components/icons";
+import { ProjectPanelView, VIEW_TYPE_PROJECT_PANEL } from "@/ui/sidepanel/ProjectPanelView";
 
 // Local debug helper for plugin-level logs. Uses the same runtime flag as the
 // panel mount helper: window.__WRITEAID_DEBUG__
