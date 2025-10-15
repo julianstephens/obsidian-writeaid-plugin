@@ -1,3 +1,10 @@
+import { DraftService } from "@/core/DraftService";
+import { ProjectService } from "@/core/ProjectService";
+import { WRITE_AID_ICON_NAME } from "@/ui/components/icons";
+import ProjectPanel from "@/ui/sidepanel/ProjectPanel.svelte";
+import { ItemView, Notice, type App, type WorkspaceLeaf } from "obsidian";
+import { mount } from "svelte";
+
 interface WriteAidPluginManager {
   activeProject?: unknown;
   addActiveProjectListener?: (cb: (active: unknown) => void) => void;
@@ -6,16 +13,6 @@ interface WriteAidPluginManager {
 interface WriteAidPlugin {
   manager?: WriteAidPluginManager;
 }
-// Runtime verbose logging flag. Default is off. Toggle by setting
-
-import { DraftService } from "@/core/DraftService";
-import { ProjectService } from "@/core/ProjectService";
-import { WRITE_AID_ICON_NAME } from "@/ui/components/icons";
-import ProjectPanel from "@/ui/sidepanel/ProjectPanel.svelte";
-import { ItemView, Notice, type App, type WorkspaceLeaf } from "obsidian";
-import { mount } from "svelte";
-
-// window.__WRITEAID_DEBUG__ = true in the DevTools console at runtime.
 
 export const VIEW_TYPE_PROJECT_PANEL = "writeaid-project-panel";
 
