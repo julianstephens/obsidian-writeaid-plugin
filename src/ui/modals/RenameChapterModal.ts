@@ -7,11 +7,7 @@ export class RenameChapterModal extends Modal {
   errorEl: HTMLElement | undefined;
   cancelBtn: HTMLButtonElement | undefined;
 
-  constructor(
-    app: App,
-    oldName: string,
-    onSubmit: (newName: string) => void,
-  ) {
+  constructor(app: App, oldName: string, onSubmit: (newName: string) => void) {
     super(app);
     this.oldName = oldName;
     this.onSubmit = onSubmit;

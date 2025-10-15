@@ -712,19 +712,15 @@
                   onclick={() => {
                     if (!selectedValue || !manager?.activeDraft) return;
                     const app = window && window.app ? window.app : manager.app;
-                    const modal = new RenameChapterModal(
-                      app,
-                      ch.chapterName,
-                      async (newName) => {
-                        await manager.renameChapter(
-                          selectedValue,
-                          manager.activeDraft,
-                          ch.chapterName,
-                          newName,
-                        );
-                        await refreshChapters();
-                      },
-                    );
+                    const modal = new RenameChapterModal(app, ch.chapterName, async (newName) => {
+                      await manager.renameChapter(
+                        selectedValue,
+                        manager.activeDraft,
+                        ch.chapterName,
+                        newName,
+                      );
+                      await refreshChapters();
+                    });
                     modal.open();
                   }}
                 >
