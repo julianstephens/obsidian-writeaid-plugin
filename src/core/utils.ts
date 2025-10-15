@@ -9,21 +9,30 @@ export const SLUG_STYLE = {
   COMPACT: "compact",
   KEBAB: "kebab",
 } as const;
-export type DraftSlugStyle = typeof SLUG_STYLE[keyof typeof SLUG_STYLE];
+export type DraftSlugStyle = (typeof SLUG_STYLE)[keyof typeof SLUG_STYLE];
 
 export const PROJECT_TYPE = {
   SINGLE: "single-file",
   MULTI: "multi-file",
 } as const;
-export type ProjectType = typeof PROJECT_TYPE[keyof typeof PROJECT_TYPE];
+export type ProjectType = (typeof PROJECT_TYPE)[keyof typeof PROJECT_TYPE];
 export const VALID_PROJECT_TYPES = Object.values(PROJECT_TYPE);
+
+export const DEFAULT_MULTI_TARGET_WORD_COUNT = 50000;
+export const DEFAULT_SINGLE_TARGET_WORD_COUNT = 20000;
+
+export const APP_NAME = "WriteAid";
+export const DEBUG_PREFIX = `${APP_NAME} debug:`;
 
 /**
  * Turn a draft name into a filesystem-safe filename for per-draft main files.
  * - 'compact': remove whitespace and lowercase (default) -> "Draft 1" => "draft1"
  * - 'kebab': replace whitespace with dashes and lowercase -> "Draft 1" => "draft-1"
  */
-export function slugifyDraftName(draftName: string, style: DraftSlugStyle = SLUG_STYLE.COMPACT): string {
+export function slugifyDraftName(
+  draftName: string,
+  style: DraftSlugStyle = SLUG_STYLE.COMPACT,
+): string {
   if (!draftName) return "";
   const trimmed = draftName.trim();
   if (style === SLUG_STYLE.KEBAB) {
@@ -32,9 +41,6 @@ export function slugifyDraftName(draftName: string, style: DraftSlugStyle = SLUG
   // compact
   return trimmed.replace(/\s+/g, "").toLowerCase();
 }
-
-export const DEFAULT_MULTI_TARGET_WORD_COUNT = 50000;
-export const DEFAULT_SINGLE_TARGET_WORD_COUNT = 20000;
 
 /**
  * Async-aware filter: runs the async predicate across the array and returns items
@@ -48,8 +54,12 @@ export async function asyncFilter<T>(
   return arr.filter((_, i) => results[i]);
 }
 
-
-
+/**
+ * Suppresses exceptions thrown by a function.
+ * @param func The function to execute.
+ * @param exceptionsToSuppress The exception types to suppress.
+ * @returns The result of the function, or undefined if an exception was suppressed.
+ */
 export function suppress<T>(
   func: CallableFunction<T>,
   ...exceptionsToSuppress: ExceptionConstructor[]
@@ -57,10 +67,7 @@ export function suppress<T>(
   try {
     return func();
   } catch (e) {
-    if (
-      exceptionsToSuppress.length > 0 &&
-      exceptionsToSuppress.some(ex => e instanceof ex)
-    ) {
+    if (exceptionsToSuppress.length > 0 && exceptionsToSuppress.some((ex) => e instanceof ex)) {
       // The thrown error is one of the types we want to suppress.
       // Silently ignore it.
       return;
@@ -74,6 +81,12 @@ export function suppress<T>(
   }
 }
 
+/**
+ * Suppresses exceptions thrown by an async function.
+ * @param func The async function to execute.
+ * @param exceptionsToSuppress The exception types to suppress.
+ * @returns The result of the function, or undefined if an exception was suppressed.
+ */
 export async function suppressAsync<T>(
   func: CallableFunction<Promise<T>>,
   ...exceptionsToSuppress: ExceptionConstructor[]
@@ -81,10 +94,7 @@ export async function suppressAsync<T>(
   try {
     return await func();
   } catch (e) {
-    if (
-      exceptionsToSuppress.length > 0 &&
-      exceptionsToSuppress.some(ex => e instanceof ex)
-    ) {
+    if (exceptionsToSuppress.length > 0 && exceptionsToSuppress.some((ex) => e instanceof ex)) {
       // The thrown error is one of the types we want to suppress.
       // Silently ignore it.
       return;
@@ -96,4 +106,16 @@ export async function suppressAsync<T>(
     // Re-throw if the error is not one we want to suppress.
     throw e;
   }
+}
+
+/**
+ * Helper function for conditional debug logging.
+ * Only logs when the global __WRITEAID_DEBUG__ flag is set to true.
+ */
+export function debug(...args: unknown[]) {
+  suppress(() => {
+    if ((window as unknown as { __WRITEAID_DEBUG__?: boolean }).__WRITEAID_DEBUG__) {
+      (console.debug || console.log).apply(console, args as []);
+    }
+  });
 }

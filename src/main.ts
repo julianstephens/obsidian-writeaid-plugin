@@ -1,6 +1,7 @@
 import { convertSingleToMultiFileProjectCommand } from "@/commands/convertSingleToMultiFileProjectCommand";
 import { createNewDraftCommand } from "@/commands/createNewDraftCommand";
 import { createNewProjectCommand } from "@/commands/createNewProjectCommand";
+import { generateManuscriptCommand } from "@/commands/generateManuscriptCommand";
 import { navigateToNextChapterCommand } from "@/commands/navigateToNextChapterCommand";
 import { navigateToPreviousChapterCommand } from "@/commands/navigateToPreviousChapterCommand";
 import { selectActiveProjectCommand } from "@/commands/selectActiveProjectCommand";
@@ -8,25 +9,14 @@ import { switchDraftCommand } from "@/commands/switchDraftCommand";
 import { toggleProjectPanelCommand } from "@/commands/toggleProjectPanelCommand";
 import { updateProjectMetadataCommand } from "@/commands/updateProjectMetadataCommand";
 import { ProjectService } from "@/core/ProjectService";
-import { asyncFilter } from "@/core/utils";
+import { APP_NAME, asyncFilter, debug, DEBUG_PREFIX, suppress, suppressAsync } from "@/core/utils";
 import { WriteAidManager } from "@/manager";
 import { WriteAidSettingTab } from "@/settings";
+import stylesText from "@/styles/writeaid.css?inline";
 import type { WriteAidSettings } from "@/types";
 import { WRITE_AID_ICON_NAME } from "@/ui/components/icons";
 import { ProjectPanelView, VIEW_TYPE_PROJECT_PANEL } from "@/ui/sidepanel/ProjectPanelView";
 import { Plugin } from "obsidian";
-
-import { suppress, suppressAsync } from "@/core/utils";
-import stylesText from "@/styles/writeaid.css?inline";
-import { generateManuscriptCommand } from "./commands/generateManuscriptCommand";
-
-function debug(...args: unknown[]) {
-  suppress(() => {
-    if ((window as unknown as { __WRITEAID_DEBUG__?: boolean }).__WRITEAID_DEBUG__) {
-      (console.debug || console.log).apply(console, args as []);
-    }
-  });
-}
 
 // Helper function to truncate long project names for status bar display
 function truncateProjectName(projectName: string, maxLength: number = 20): string {
@@ -101,16 +91,12 @@ export default class WriteAidPlugin extends Plugin {
       const allFolders: string[] = projectService.listAllFolders();
       const filteredFolders = allFolders.filter((p) => !!p);
       const projects = await asyncFilter(filteredFolders, (p) => projectService.isProjectFolder(p));
-      suppress(() => {
-        if ((this.settings as WriteAidSettings).debug) {
-          console.debug(`WriteAid debug: allFolders:`, allFolders);
-          console.debug(`WriteAid debug: filteredFolders:`, filteredFolders);
-          console.debug(
-            `WriteAid debug: found ${filteredFolders.length} folders, ${projects.length} projects:`,
-            projects,
-          );
-        }
-      });
+      debug(`${DEBUG_PREFIX} allFolders:`, allFolders);
+      debug(`${DEBUG_PREFIX} filteredFolders:`, filteredFolders);
+      debug(
+        `${DEBUG_PREFIX} found ${filteredFolders.length} folders, ${projects.length} projects:`,
+        projects,
+      );
       let toActivate: string | null = null;
       if (projects.length === 1) {
         toActivate = projects[0];
@@ -118,13 +104,9 @@ export default class WriteAidPlugin extends Plugin {
         // Use last active if it exists in the list, else first
         const lastActiveRaw = this.settings.activeProject;
         const lastActive = lastActiveRaw?.trim().replace(/^\/+/, "").replace(/\/+$/, "");
-        suppress(() => {
-          if ((this.settings as WriteAidSettings).debug) {
-            console.debug(
-              `WriteAid debug: lastActiveRaw='${lastActiveRaw}', normalized='${lastActive}', includes=${lastActive && projects.includes(lastActive)}`,
-            );
-          }
-        });
+        debug(
+          `${DEBUG_PREFIX} lastActiveRaw='${lastActiveRaw}', normalized='${lastActive}', includes=${lastActive && projects.includes(lastActive)}`,
+        );
         if (lastActive && projects.includes(lastActive)) {
           toActivate = lastActive;
         } else {
@@ -137,22 +119,14 @@ export default class WriteAidPlugin extends Plugin {
         if (lastActive && (await this.app.vault.adapter.exists(lastActive))) {
           const metaPath = `${lastActive}/meta.md`;
           if (await this.app.vault.adapter.exists(metaPath)) {
-            suppress(() => {
-              if ((this.settings as WriteAidSettings).debug) {
-                console.debug(
-                  `WriteAid debug: activating saved project '${lastActive}' as it exists and has meta.md`,
-                );
-              }
-            });
+            debug(
+              `${DEBUG_PREFIX} activating saved project '${lastActive}' as it exists and has meta.md`,
+            );
             toActivate = lastActive;
           }
         }
       }
-      suppress(() => {
-        if ((this.settings as WriteAidSettings).debug) {
-          console.debug(`WriteAid debug: toActivate='${toActivate}'`);
-        }
-      });
+      debug(`${DEBUG_PREFIX} toActivate='${toActivate}'`);
       if (toActivate) {
         await this.manager.setActiveProject(toActivate);
         this.settings.activeProject = toActivate;
@@ -185,7 +159,7 @@ export default class WriteAidPlugin extends Plugin {
       }
     });
     this.statusBarEl = this.addStatusBarItem();
-    this.statusBarEl.setText("WriteAid: No active project");
+    this.statusBarEl.setText(`${APP_NAME}: No active project`);
 
     // Defer verbose loading message until persisted debug setting is applied below
     // Inject plugin styles into the document head so the compiled CSS is
@@ -209,37 +183,31 @@ export default class WriteAidPlugin extends Plugin {
       );
     });
     // Log load message only when debug is enabled so users don't see this in normal runs
-    suppress(() => {
-      debug("Loading WriteAid Novel Multi-Draft Plugin");
-    });
+    debug(`${DEBUG_PREFIX} Loading ${APP_NAME} Novel Multi-Draft Plugin`);
 
     this.manager.addActiveProjectListener((project) => {
       if (this.statusBarEl) {
         if (project) {
-          this.statusBarEl.setText(`WriteAid: ${truncateProjectName(project)}`);
-          suppress(() => {
-            if (this.settings && (this.settings as WriteAidSettings).debug) {
-              console.debug(`WriteAid debug: active project updated -> ${project}`);
-            }
-          });
+          this.statusBarEl.setText(`${APP_NAME}: ${truncateProjectName(project)}`);
+          debug(`${DEBUG_PREFIX} active project updated -> ${project}`);
         } else {
-          this.statusBarEl.setText("WriteAid: No active project");
+          this.statusBarEl.setText(`${APP_NAME}: No active project`);
         }
       }
     });
 
     // Set initial status bar text if a project is already active
     if (this.manager.activeProject) {
-      this.statusBarEl.setText(`WriteAid: ${truncateProjectName(this.manager.activeProject)}`);
+      this.statusBarEl.setText(`${APP_NAME}: ${truncateProjectName(this.manager.activeProject)}`);
     }
 
     // register side panel view
     this.registerView(VIEW_TYPE_PROJECT_PANEL, (leaf) => new ProjectPanelView(leaf, this.app));
 
-    const ribbonEl = this.addRibbonIcon(WRITE_AID_ICON_NAME, "WriteAid Projects", () => {});
+    const ribbonEl = this.addRibbonIcon(WRITE_AID_ICON_NAME, `${APP_NAME} Projects`, () => {});
     ribbonEl.classList.add("writeaid-ribbon");
     this.ribbonEl = ribbonEl;
-    ribbonEl.setAttr("aria-label", "WriteAid Projects");
+    ribbonEl.setAttr("aria-label", `${APP_NAME} Projects`);
 
     // click behavior: reveal or create left panel
     ribbonEl.onclick = () => {
@@ -344,7 +312,7 @@ export default class WriteAidPlugin extends Plugin {
 
     this.addCommand({
       id: "toggle-project-panel",
-      name: "Toggle WriteAid Project Panel",
+      name: `Toggle ${APP_NAME} Project Panel`,
       callback: toggleProjectPanelCommand(this.manager, this.app),
     });
     this.addCommand({
@@ -392,9 +360,7 @@ export default class WriteAidPlugin extends Plugin {
     if (this.statusBarEl && this.statusBarEl.parentElement) {
       this.statusBarEl.parentElement.removeChild(this.statusBarEl);
     }
-    suppress(() => {
-      debug("Unloading WriteAid Novel Multi-Draft Plugin");
-    });
+    debug(`${DEBUG_PREFIX} Unloading ${APP_NAME} Novel Multi-Draft Plugin`);
     if (this.waStyleEl && this.waStyleEl.parentElement)
       this.waStyleEl.parentElement.removeChild(this.waStyleEl);
   }

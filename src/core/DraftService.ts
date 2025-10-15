@@ -1,6 +1,12 @@
 import { TemplateService } from "@/core/TemplateService";
 import { readMetaFile, updateMetaStats } from "@/core/meta";
-import { PROJECT_TYPE, slugifyDraftName, suppressAsync, type ProjectType } from "@/core/utils";
+import {
+  FOLDERS,
+  PROJECT_TYPE,
+  slugifyDraftName,
+  suppressAsync,
+  type ProjectType,
+} from "@/core/utils";
 import type { WriteAidSettings } from "@/types";
 import { App, Notice, TFile, TFolder } from "obsidian";
 
@@ -59,7 +65,7 @@ export class DraftService {
   ) {
     const project = this.resolveProjectPath(projectPath);
     if (!project) return false;
-    const draftFolder = `${project}/Drafts/${draftName}`;
+    const draftFolder = `${project}/${FOLDERS.DRAFTS}/${draftName}`;
     for (let i = 0; i < newOrder.length; i++) {
       const { chapterName } = newOrder[i];
       const filePath = `${draftFolder}/${chapterName}.md`;
@@ -106,7 +112,7 @@ export class DraftService {
   ): Promise<Array<{ name: string; chapterName?: string }>> {
     const project = this.resolveProjectPath(projectPath);
     if (!project) return [];
-    const draftFolder = `${project}/Drafts/${draftName}`;
+    const draftFolder = `${project}/${FOLDERS.DRAFTS}/${draftName}`;
     const folder = this.app.vault.getAbstractFileByPath(draftFolder);
     const chapters: Array<{ name: string; chapterName?: string; order: number }> = [];
     if (folder && folder instanceof TFolder) {
@@ -160,7 +166,7 @@ export class DraftService {
   ) {
     const project = this.resolveProjectPath(projectPath);
     if (!project) return false;
-    const draftFolder = `${project}/Drafts/${draftName}`;
+    const draftFolder = `${project}/${FOLDERS.DRAFTS}/${draftName}`;
     const slug = slugifyDraftName(
       chapterName,
       settings?.slugStyle as import("@/core/utils").DraftSlugStyle,
@@ -201,7 +207,7 @@ export class DraftService {
   async deleteChapter(projectPath: string, draftName: string, chapterName: string) {
     const project = this.resolveProjectPath(projectPath);
     if (!project) return false;
-    const draftFolder = `${project}/Drafts/${draftName}`;
+    const draftFolder = `${project}/${FOLDERS.DRAFTS}/${draftName}`;
     const fileName = `${chapterName}.md`;
     const filePath = `${draftFolder}/${fileName}`;
     const file = this.app.vault.getAbstractFileByPath(filePath);
@@ -235,7 +241,7 @@ export class DraftService {
   async renameChapter(projectPath: string, draftName: string, oldName: string, newName: string) {
     const project = this.resolveProjectPath(projectPath);
     if (!project) return false;
-    const draftFolder = `${project}/Drafts/${draftName}`;
+    const draftFolder = `${project}/${FOLDERS.DRAFTS}/${draftName}`;
     const oldFile = `${draftFolder}/${oldName}.md`;
     const newFile = `${draftFolder}/${newName}.md`;
     const file = this.app.vault.getAbstractFileByPath(oldFile);
@@ -281,7 +287,7 @@ export class DraftService {
       return;
     }
 
-    const draftsFolder = `${projectPathResolved}/Drafts`;
+    const draftsFolder = `${projectPathResolved}/${FOLDERS.DRAFTS}`;
     const newDraftFolder = `${draftsFolder}/${draftName}`;
 
     const projectName = projectPathResolved.split("/").pop() || projectPathResolved;
@@ -397,7 +403,7 @@ export class DraftService {
   listDrafts(projectPath?: string): string[] {
     const project = this.resolveProjectPath(projectPath);
     if (!project) return [];
-    const draftsFolder = `${project}/Drafts`;
+    const draftsFolder = `${project}/${FOLDERS.DRAFTS}`;
     const folder = this.app.vault.getAbstractFileByPath(draftsFolder);
     if (folder && folder instanceof TFolder) {
       return folder.children
@@ -414,7 +420,7 @@ export class DraftService {
   async openDraft(projectPath: string | undefined, draftName: string): Promise<boolean> {
     const project = this.resolveProjectPath(projectPath);
     if (!project) return false;
-    const outlinePath = `${project}/Drafts/${draftName}/outline.md`;
+    const outlinePath = `${project}/${FOLDERS.DRAFTS}/${draftName}/outline.md`;
     const outlineFile = this.app.vault.getAbstractFileByPath(outlinePath);
     const outlineOpened = await suppressAsync(async () => {
       if (outlineFile && outlineFile instanceof TFile) {
@@ -427,7 +433,7 @@ export class DraftService {
     if (outlineOpened) return true;
 
     // fallback: open first file inside the draft folder
-    const folderPath = `${project}/Drafts/${draftName}`;
+    const folderPath = `${project}/${FOLDERS.DRAFTS}/${draftName}`;
     const files = this.app.vault.getFiles().filter((f) => f.path.startsWith(folderPath));
     if (files.length > 0) {
       const leaf = this.app.workspace.getLeaf();
@@ -451,7 +457,7 @@ export class DraftService {
   ): Promise<boolean> {
     const project = this.resolveProjectPath(projectPath);
     if (!project) return false;
-    const filePath = `${project}/Drafts/${draftName}/${chapterName}.md`;
+    const filePath = `${project}/${FOLDERS.DRAFTS}/${draftName}/${chapterName}.md`;
     const file = this.app.vault.getAbstractFileByPath(filePath);
     if (file && file instanceof TFile) {
       await suppressAsync(async () => {
@@ -476,8 +482,8 @@ export class DraftService {
   ): Promise<boolean> {
     const project = this.resolveProjectPath(projectPath);
     if (!project) return false;
-    const oldFolder = `${project}/Drafts/${oldName}`;
-    const newFolder = `${project}/Drafts/${newName}`;
+    const oldFolder = `${project}/${FOLDERS.DRAFTS}/${oldName}`;
+    const newFolder = `${project}/${FOLDERS.DRAFTS}/${newName}`;
     try {
       // create new folder if needed
       if (!this.app.vault.getAbstractFileByPath(newFolder)) {
@@ -554,7 +560,7 @@ export class DraftService {
   ): Promise<boolean> {
     const project = this.resolveProjectPath(projectPath);
     if (!project) return false;
-    const draftFolder = `${project}/Drafts/${draftName}`;
+    const draftFolder = `${project}/${FOLDERS.DRAFTS}/${draftName}`;
     const ts = Date.now();
     const backupBase = `${project}/.writeaid-backups/${ts}`;
     try {
@@ -588,8 +594,8 @@ export class DraftService {
     const project = this.resolveProjectPath(projectPath);
     if (!project) return false;
     const projectType = await this.getProjectType(project);
-    const draftFolder = `${project}/Drafts/${draftName}`;
-    const manuscriptFolder = `${project}/Manuscripts`;
+    const draftFolder = `${project}/${FOLDERS.DRAFTS}/${draftName}`;
+    const manuscriptFolder = `${project}/${FOLDERS.MANUSCRIPTS}`;
 
     if (!this.app.vault.getAbstractFileByPath(draftFolder)) {
       new Notice(`Draft folder ${draftFolder} does not exist.`);

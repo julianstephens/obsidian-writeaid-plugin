@@ -2,7 +2,15 @@
 import { DraftService } from "@/core/DraftService";
 import { readMetaFile, updateMetaStats } from "@/core/meta";
 import { ProjectService } from "@/core/ProjectService";
-import { asyncFilter, suppress, suppressAsync } from "@/core/utils";
+import {
+  APP_NAME,
+  asyncFilter,
+  debug,
+  DEBUG_PREFIX,
+  FOLDERS,
+  suppress,
+  suppressAsync,
+} from "@/core/utils";
 import type { PluginLike, WriteAidSettings } from "@/types";
 import { App, Notice } from "obsidian";
 
@@ -144,11 +152,7 @@ export class WriteAidManager {
     if (path) {
       path = path.trim().replace(/^\/+/, "").replace(/\/+$/, "");
     }
-    suppress(() => {
-      if (this.plugin?.settings?.debug) {
-        console.debug(`WriteAid debug: setActiveProject called with '${path}'`);
-      }
-    });
+    debug(`${DEBUG_PREFIX} setActiveProject called with '${path}'`);
     this.activeProject = path;
     await suppressAsync(async () => {
       if (this.plugin) {
@@ -181,14 +185,7 @@ export class WriteAidManager {
       }
       if (drafts.length === 1) {
         await this.setActiveDraft(drafts[0], path, false);
-        suppress(() => {
-          const dbg = (this.settings as WriteAidSettings | undefined)?.debug || false;
-          if (dbg) {
-            console.debug(
-              `WriteAid debug: auto-selected single draft '${drafts[0]}' for project '${path}'`,
-            );
-          }
-        });
+        debug(`${DEBUG_PREFIX} auto-selected single draft '${drafts[0]}' for project '${path}'`);
         return;
       }
 
@@ -197,14 +194,9 @@ export class WriteAidManager {
         const meta = await readMetaFile(this.app, `${path}/meta.md`);
         if (meta && meta.current_active_draft && drafts.includes(meta.current_active_draft)) {
           await this.setActiveDraft(meta.current_active_draft, path, false);
-          suppress(() => {
-            const dbg = (this.settings as WriteAidSettings | undefined)?.debug || false;
-            if (dbg) {
-              console.debug(
-                `WriteAid debug: auto-selected meta draft '${meta.current_active_draft}' for project '${path}'`,
-              );
-            }
-          });
+          debug(
+            `${DEBUG_PREFIX} auto-selected meta draft '${meta.current_active_draft}' for project '${path}'`,
+          );
           return;
         }
       });
@@ -214,7 +206,7 @@ export class WriteAidManager {
       let bestMtime = 0;
       const files = this.app.vault.getFiles();
       for (const d of drafts) {
-        const folderPrefix = `${path}/Drafts/${d}/`;
+        const folderPrefix = `${path}/${FOLDERS.DRAFTS}/${d}/`;
         let maxM = 0;
         for (const f of files) {
           if (f.path.startsWith(folderPrefix)) {
@@ -231,12 +223,7 @@ export class WriteAidManager {
       if (!bestDraft) bestDraft = drafts[0];
       // Optionally surface debug notice when debug setting is enabled so we can
       // observe what draft was auto-selected during startup.
-      suppress(() => {
-        const dbg = (this.settings as WriteAidSettings | undefined)?.debug || false;
-        if (dbg) {
-          console.debug(`WriteAid debug: auto-selected draft '${bestDraft}' for project '${path}'`);
-        }
-      });
+      debug(`${DEBUG_PREFIX} auto-selected draft '${bestDraft}' for project '${path}'`);
       await this.setActiveDraft(bestDraft, path, false);
     } catch {
       // Ignore errors selecting active draft
@@ -398,7 +385,7 @@ export class WriteAidManager {
     const all = this.listAllFolders();
     const projects = await asyncFilter(all, (p) => this.projectService.isProjectFolder(p));
     if (projects.length === 0) {
-      new Notice("No WriteAid projects found in the vault.");
+      new Notice(`No ${APP_NAME} projects found in the vault.`);
       return;
     }
     new SelectProjectModal(this.app, {

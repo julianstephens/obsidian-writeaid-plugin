@@ -6,6 +6,7 @@
   import type { DraftService } from "@/core/DraftService";
   import { readMetaFile } from "@/core/meta";
   import type { ProjectService } from "@/core/ProjectService";
+  import { APP_NAME, debug, DEBUG_PREFIX } from "@/core/utils";
   import type { WriteAidManager } from "@/manager";
   import type { Chapter } from "@/types";
   import BaseButton from "@/ui/components/BaseButton.svelte";
@@ -53,6 +54,7 @@
   // Local reactive copy of manager.activeDraft for Svelte reactivity
   let activeDraft: string | null = manager?.activeDraft ?? null;
   let activeProjectListener: ((p: string | null) => void) | null = null;
+  const ICON_SIZE = 20;
 
   // Chapter management state
   let chapters: Array<Chapter> = [];
@@ -104,9 +106,7 @@
       selectedValue = newProjects[0];
       // Debug: log project selection
       try {
-        if (manager && manager.settings && manager.settings.debug) {
-          console.debug(`WriteAid debug: panel refresh selected single project '${selectedValue}'`);
-        }
+        debug(`${DEBUG_PREFIX} panel refresh selected single project '${selectedValue}'`);
       } catch (e) {
         // ignore
       }
@@ -117,11 +117,7 @@
       selectedValue = newProjects[0];
       // Debug: log fallback selection
       try {
-        if (manager && manager.settings && manager.settings.debug) {
-          console.debug(
-            `WriteAid debug: panel refresh selected fallback project '${selectedValue}'`,
-          );
-        }
+        debug(`${DEBUG_PREFIX} panel refresh selected fallback project '${selectedValue}'`);
       } catch (e) {
         // ignore
       }
@@ -133,9 +129,7 @@
         selected = found;
         selectedValue = found.value;
         try {
-          if (manager && manager.settings && manager.settings.debug) {
-            console.debug(`WriteAid debug: panel refresh kept project '${selectedValue}'`);
-          }
+          debug(`${DEBUG_PREFIX} panel refresh kept project '${selectedValue}'`);
         } catch (e) {
           // ignore
         }
@@ -443,7 +437,7 @@
 
 <div class="project-list wa-panel">
   <div class="wa-row justify-between">
-    <div class="wa-title">WriteAid Projects</div>
+    <div class="wa-title">{APP_NAME} Projects</div>
     <div>
       <IconButton
         ariaLabel="Refresh projects"
@@ -473,8 +467,8 @@
         );
         if (!projectPath) return;
         // Wait for the new project to appear in the list
-  let newProjects: string[] = [];
-  let newProject: string | null = null;
+        let newProjects: string[] = [];
+        let newProject: string | null = null;
         for (let i = 0; i < 20; i++) {
           await new Promise(res => setTimeout(res, 100));
           newProjects = await refresh();
@@ -558,7 +552,7 @@
             </IconButton>
           </div>
           <div class="wa-button-group">
-            <BaseButton onclick={createDraft} variant="primary">New</BaseButton>
+            <BaseButton onclick={createDraft} variant="primary">New Draft</BaseButton>
             <IconButton
               ariaLabel="Refresh drafts"
               title={undefined}
@@ -607,7 +601,7 @@
               </div>
               <div class="wa-draft-actions">
                 <IconButton ariaLabel="Open draft" title={undefined} onclick={() => openDraft(d)}>
-                  <Eye size={18} />
+                  <Eye size={ICON_SIZE} />
                 </IconButton>
                 {#if activeDraft !== d}
                   <IconButton
@@ -615,7 +609,7 @@
                     title={undefined}
                     onclick={() => setActiveDraft(d)}
                   >
-                    <BookOpenCheck size={18} />
+                    <BookOpenCheck size={ICON_SIZE} />
                   </IconButton>
                 {/if}
                 <IconButton
@@ -623,21 +617,21 @@
                   title={undefined}
                   onclick={() => renameDraft(d)}
                 >
-                  <Pencil size={18} />
+                  <Pencil size={ICON_SIZE} />
                 </IconButton>
                 <IconButton
                   ariaLabel="Duplicate draft"
                   title={undefined}
                   onclick={() => duplicateDraft(d)}
                 >
-                  <Copy size={18} />
+                  <Copy size={ICON_SIZE} />
                 </IconButton>
                 <IconButton
                   ariaLabel="Delete draft"
                   title={undefined}
                   onclick={() => deleteDraftHandler(d)}
                 >
-                  <Trash size={18} />
+                  <Trash size={ICON_SIZE} />
                 </IconButton>
               </div>
             </div>
@@ -708,6 +702,7 @@
               </div>
               <div class="wa-draft-actions">
                 <BaseButton
+                  title="Move chapter up"
                   onclick={async () => {
                     if (i === 0) return;
                     // Move chapter up
@@ -725,9 +720,10 @@
                     );
                     await refreshChapters();
                   }}
-                  disabled={i === 0}>↑</BaseButton
+                  disabled={i === 0}><ArrowUp /></BaseButton
                 >
                 <BaseButton
+                  title="Move chapter down"
                   onclick={async () => {
                     if (i === chapters.length - 1) return;
                     // Move chapter down
@@ -745,7 +741,7 @@
                     );
                     await refreshChapters();
                   }}
-                  disabled={i === chapters.length - 1}>↓</BaseButton
+                  disabled={i === chapters.length - 1}><ArrowDown /></BaseButton
                 >
                 <IconButton
                   ariaLabel="Open chapter"
@@ -759,7 +755,7 @@
                     );
                   }}
                 >
-                  <Eye size={18} />
+                  <Eye size={ICON_SIZE} />
                 </IconButton>
                 <IconButton
                   ariaLabel="Rename chapter"
@@ -782,7 +778,7 @@
                     modal.open();
                   }}
                 >
-                  <Pencil size={18} />
+                  <Pencil size={ICON_SIZE} />
                 </IconButton>
                 <IconButton
                   ariaLabel="Delete chapter"
@@ -805,7 +801,7 @@
                     modal.open();
                   }}
                 >
-                  <Trash size={18} />
+                  <Trash size={ICON_SIZE} />
                 </IconButton>
               </div>
             </div>

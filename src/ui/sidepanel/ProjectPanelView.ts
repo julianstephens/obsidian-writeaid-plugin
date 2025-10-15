@@ -1,6 +1,6 @@
 import { DraftService } from "@/core/DraftService";
 import { ProjectService } from "@/core/ProjectService";
-import { suppress } from "@/core/utils";
+import { APP_NAME, suppress } from "@/core/utils";
 import type { WriteAidManager } from "@/manager";
 import { WRITE_AID_ICON_NAME } from "@/ui/components/icons";
 import ProjectPanel from "@/ui/sidepanel/ProjectPanel.svelte";
@@ -45,7 +45,7 @@ export class ProjectPanelView extends ItemView {
   }
 
   getDisplayText(): string {
-    return "WriteAid Projects";
+    return `${APP_NAME} Projects`;
   }
 
   getIcon(): string {
@@ -61,7 +61,7 @@ export class ProjectPanelView extends ItemView {
     try {
       const Component = (ProjectPanel as { default?: unknown })?.default ?? ProjectPanel;
       if (!Component) {
-        new Notice("WriteAid: failed to load project panel component.");
+        new Notice(`${APP_NAME}: failed to load project panel component.`);
         return;
       }
       // Get the manager
@@ -73,7 +73,7 @@ export class ProjectPanelView extends ItemView {
 
       // Ensure manager exists before mounting
       if (!manager) {
-        new Notice("WriteAid: manager not available, cannot mount project panel.");
+        new Notice(`${APP_NAME}: manager not available, cannot mount project panel.`);
         return;
       }
 
@@ -123,7 +123,7 @@ export class ProjectPanelView extends ItemView {
           this.svelteComponent = el;
           mounted = true;
         } catch (elErr) {
-          console.warn("WriteAid: creating custom element instance failed:", elErr);
+          console.warn(`${APP_NAME}: creating custom element instance failed:`, elErr);
         }
       }
 
@@ -165,7 +165,7 @@ export class ProjectPanelView extends ItemView {
             mounted = true;
           }
         } catch (tagErr) {
-          console.warn("WriteAid: attempting to create by tag failed:", tagErr);
+          console.warn(`${APP_NAME}: attempting to create by tag failed:`, tagErr);
         }
       }
 
@@ -179,7 +179,7 @@ export class ProjectPanelView extends ItemView {
           });
           mounted = true;
         } catch (mountErr) {
-          console.warn("WriteAid: svelte.mount failed; trying constructor:", mountErr);
+          console.warn(`${APP_NAME}: svelte.mount failed; trying constructor:`, mountErr);
           try {
             this.svelteComponent = new (Component as {
               new (args: { target: HTMLElement; props: object }): unknown;
@@ -190,13 +190,13 @@ export class ProjectPanelView extends ItemView {
             mounted = true;
           } catch (ctorErr) {
             console.error(
-              "WriteAid: failed to mount ProjectPanel (mount + constructor failed)",
+              `${APP_NAME}: failed to mount ProjectPanel (mount + constructor failed)`,
               ctorErr,
             );
             suppress(() => {
-              console.error("WriteAid: component snapshot:", Component);
+              console.error(`${APP_NAME}: component snapshot:`, Component);
             });
-            new Notice("WriteAid: error mounting project panel component. See console.");
+            new Notice(`${APP_NAME}: error mounting project panel component. See console.`);
             return;
           }
         }
@@ -290,7 +290,8 @@ export class ProjectPanelView extends ItemView {
           if (deferredActive && this.svelteComponent) {
             // If it's a Svelte instance, prefer $set
             if (
-              typeof (this.svelteComponent as { $set?: (props: object) => void }).$set === "function"
+              typeof (this.svelteComponent as { $set?: (props: object) => void }).$set ===
+              "function"
             ) {
               (this.svelteComponent as { $set: (props: { activeProject: unknown }) => void }).$set({
                 activeProject: deferredActive,

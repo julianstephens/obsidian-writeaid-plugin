@@ -1,5 +1,5 @@
 import { App, TFile, TFolder } from "obsidian";
-import type { ProjectType } from "./utils";
+import { FOLDERS, type ProjectType } from "./utils";
 
 /**
  * Project metadata tracked in meta.md
@@ -82,7 +82,7 @@ export async function updateMetaStats(
   }
 
   // Count drafts in the Drafts folder
-  const draftsFolder = app.vault.getAbstractFileByPath(`${projectPath}/Drafts`);
+  const draftsFolder = app.vault.getAbstractFileByPath(`${projectPath}/${FOLDERS.DRAFTS}`);
   if (draftsFolder && draftsFolder instanceof TFolder) {
     const draftFolders = draftsFolder.children.filter((child) => child instanceof TFolder);
     metadata.total_drafts = draftFolders.length;

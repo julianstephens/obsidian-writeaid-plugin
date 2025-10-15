@@ -2,6 +2,7 @@ import { DraftService } from "@/core/DraftService";
 import { TemplateService } from "@/core/TemplateService";
 import type { WriteAidSettings } from "@/types";
 import { App, normalizePath, Notice, TFile, TFolder } from "obsidian";
+import { FOLDERS } from "./utils";
 
 export class ProjectService {
   app: App;
@@ -29,7 +30,7 @@ export class ProjectService {
 
     const projectPath =
       parentFolder && parentFolder !== "" ? `${parentFolder}/${projectName}` : projectName;
-    const draftsFolder = `${projectPath}/Drafts`;
+    const draftsFolder = `${projectPath}/${FOLDERS.DRAFTS}`;
 
     if (!this.app.vault.getAbstractFileByPath(projectPath)) {
       await this.app.vault.createFolder(projectPath);
@@ -66,7 +67,7 @@ export class ProjectService {
       `${projectPath}/Chapter 1.md`,
       `${projectPath}/Chapter 01.md`,
       `${projectPath}/outline.md`,
-      `${projectPath}/Drafts/Draft 1/outline.md`,
+      `${projectPath}/${FOLDERS.DRAFTS}/Draft 1/outline.md`,
     ];
     for (const p of candidates) {
       const f = this.app.vault.getAbstractFileByPath(p);
@@ -106,7 +107,9 @@ export class ProjectService {
     try {
       const metaPath = normalizePath(`${base}/meta.md`);
       const hasMeta = await this.app.vault.adapter.exists(metaPath);
-      const hasDrafts = await this.app.vault.adapter.exists(normalizePath(`${base}/Drafts`));
+      const hasDrafts = await this.app.vault.adapter.exists(
+        normalizePath(`${base}/${FOLDERS.DRAFTS}`),
+      );
       if (!hasMeta || !hasDrafts) return false;
 
       try {

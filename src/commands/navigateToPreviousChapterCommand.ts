@@ -1,3 +1,4 @@
+import { FOLDERS } from "@/core/utils";
 import type { WriteAidManager } from "@/manager";
 import { Notice } from "obsidian";
 
@@ -10,7 +11,7 @@ export function navigateToPreviousChapterCommand(manager: WriteAidManager) {
     }
 
     const path = activeFile.path;
-    const match = path.match(/^(.+)\/Drafts\/(.+)\/(.+)\.md$/);
+    const match = path.match(new RegExp(`^(.+)/${FOLDERS.DRAFTS}/(.+)/(.+)\\.md$`));
     if (!match) {
       new Notice("The current file is not a chapter.");
       return;

@@ -1,5 +1,5 @@
 import { readMetaFile, writeMetaFile } from "@/core/meta";
-import { PROJECT_TYPE, slugifyDraftName } from "@/core/utils";
+import { FOLDERS, PROJECT_TYPE, slugifyDraftName } from "@/core/utils";
 import { Notice, TFile, TFolder, type App } from "obsidian";
 
 async function convertSingleToMultiFileProject(app: App, projectPath: string) {
@@ -14,7 +14,7 @@ async function convertSingleToMultiFileProject(app: App, projectPath: string) {
   await writeMetaFile(app, metaPath, meta);
 
   // Rename all draft files in Drafts/*/ to 'Chapter 1.md'
-  const draftsFolder = app.vault.getAbstractFileByPath(`${projectPath}/Drafts`);
+  const draftsFolder = app.vault.getAbstractFileByPath(`${projectPath}/${FOLDERS.DRAFTS}`);
   if (!draftsFolder || !(draftsFolder instanceof TFolder)) {
     new Notice("Drafts folder not found.");
     return false;

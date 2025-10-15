@@ -1,4 +1,4 @@
-import { slugifyDraftName, suppress } from "@/core/utils";
+import { APP_NAME, slugifyDraftName, suppress } from "@/core/utils";
 import type { WriteAidSettings } from "@/types";
 import { App, Modal, Notice, PluginSettingTab, Setting, TFile, TFolder } from "obsidian";
 
@@ -29,7 +29,7 @@ export class WriteAidSettingTab extends PluginSettingTab {
   display(): void {
     const { containerEl } = this;
     containerEl.empty();
-    containerEl.createEl("h2", { text: "WriteAid Settings" });
+    containerEl.createEl("h2", { text: `${APP_NAME} Settings` });
 
     const plugin = this.plugin;
 
@@ -166,7 +166,7 @@ export class WriteAidSettingTab extends PluginSettingTab {
 
     new Setting(containerEl)
       .setName("Ribbon placement")
-      .setDesc("Place the WriteAid icon on the left or right ribbon")
+      .setDesc(`Place the ${APP_NAME} icon on the left or right ribbon`)
       .addDropdown((d) => {
         d.addOption("left", "Left");
         d.addOption("right", "Right");
@@ -184,7 +184,7 @@ export class WriteAidSettingTab extends PluginSettingTab {
     new Setting(containerEl)
       .setName("Always show ribbon")
       .setDesc(
-        "If enabled, the WriteAid ribbon icon will always be visible regardless of whether projects are detected",
+        `If enabled, the ${APP_NAME} ribbon icon will always be visible regardless of whether projects are detected`,
       )
       .addToggle((t) =>
         t.setValue(Boolean(plugin.settings.ribbonAlwaysShow)).onChange((v) => {
@@ -199,7 +199,7 @@ export class WriteAidSettingTab extends PluginSettingTab {
     new Setting(containerEl)
       .setName("Auto-open project panel on startup")
       .setDesc(
-        "If enabled, the WriteAid project panel will open on plugin load when an active project is saved",
+        `If enabled, the ${APP_NAME} project panel will open on plugin load when an active project is saved`,
       )
       .addToggle((t) =>
         t.setValue(Boolean(plugin.settings.autoOpenPanelOnStartup)).onChange((v) => {
@@ -221,9 +221,9 @@ export class WriteAidSettingTab extends PluginSettingTab {
       );
 
     new Setting(containerEl)
-      .setName("Enable WriteAid debug logs")
+      .setName(`Enable ${APP_NAME} debug logs`)
       .setDesc(
-        "When enabled, WriteAid will set window.__WRITEAID_DEBUG__ to true to show verbose runtime logs useful during development.",
+        `When enabled, ${APP_NAME} will set window.__${APP_NAME.toUpperCase()}__ to true to show verbose runtime logs useful during development.`,
       )
       .addToggle((t) =>
         t.setValue(Boolean(plugin.settings.debug)).onChange((v) => {
@@ -234,10 +234,10 @@ export class WriteAidSettingTab extends PluginSettingTab {
           // Show a brief visual confirmation so users know the change took effect
           if (v) {
             new Notice(
-              "WriteAid: debug logs enabled — verbose logs will appear in the DevTools console.",
+              `${APP_NAME}: debug logs enabled — verbose logs will appear in the DevTools console.`,
             );
           } else {
-            new Notice("WriteAid: debug logs disabled.");
+            new Notice(`${APP_NAME}: debug logs disabled.`);
           }
         }),
       );
