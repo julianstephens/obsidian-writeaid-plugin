@@ -119,7 +119,6 @@
         activeProject = prevActive;
         selected = found;
         selectedValue = found.value;
-        // Debug: log kept selection
         try {
           if (manager && manager.settings && manager.settings.debug) {
             console.debug(`WriteAid debug: panel refresh kept project '${selectedValue}'`);
@@ -144,6 +143,7 @@
   // Refresh drafts list for the selected project
   async function refreshDrafts() {
     loadingDrafts = true;
+    const minSpin = new Promise((resolve) => setTimeout(resolve, 400));
     try {
       if (!selectedValue) {
         drafts = [];
@@ -165,6 +165,7 @@
     } catch (e) {
       drafts = [];
     } finally {
+      await minSpin;
       loadingDrafts = false;
     }
   }
@@ -172,6 +173,7 @@
   // Refresh chapters (multi-file projects)
   async function refreshChapters() {
     loadingChapters = true;
+    const minSpin = new Promise((resolve) => setTimeout(resolve, 400));
     try {
       if (!selectedValue) {
         chapters = [];
@@ -202,6 +204,7 @@
       chapters = [];
       isMultiFileProject = false;
     } finally {
+      await minSpin;
       loadingChapters = false;
     }
   }
