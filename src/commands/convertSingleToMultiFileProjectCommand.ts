@@ -1,16 +1,16 @@
 import { readMetaFile, writeMetaFile } from "@/core/meta";
-import { slugifyDraftName } from "@/core/utils";
+import { PROJECT_TYPE, slugifyDraftName } from "@/core/utils";
 import { Notice, TFile, TFolder, type App } from "obsidian";
 
 async function convertSingleToMultiFileProject(app: App, projectPath: string) {
   const metaPath = `${projectPath}/meta.md`;
   const meta = await readMetaFile(app, metaPath);
-  if (!meta || meta.project_type !== "single-file") {
-    new Notice("Project is not a single-file project.");
+  if (!meta || meta.project_type !== PROJECT_TYPE.SINGLE) {
+    new Notice(`Project is not a ${PROJECT_TYPE.SINGLE} project.`);
     return false;
   }
 
-  meta.project_type = "multi-file";
+  meta.project_type = PROJECT_TYPE.MULTI;
   await writeMetaFile(app, metaPath, meta);
 
   // Rename all draft files in Drafts/*/ to 'Chapter 1.md'

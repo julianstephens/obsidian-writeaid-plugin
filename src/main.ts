@@ -16,18 +16,16 @@ import { WRITE_AID_ICON_NAME } from "@/ui/components/icons";
 import { ProjectPanelView, VIEW_TYPE_PROJECT_PANEL } from "@/ui/sidepanel/ProjectPanelView";
 import { Plugin } from "obsidian";
 
-// @ts-expect-error - import CSS as raw text via Vite
+import { suppress, suppressAsync } from "@/core/utils";
 import stylesText from "@/styles/writeaid.css?inline";
 import { generateManuscriptCommand } from "./commands/generateManuscriptCommand";
 
 function debug(...args: unknown[]) {
-  try {
+  suppress(() => {
     if ((window as unknown as { __WRITEAID_DEBUG__?: boolean }).__WRITEAID_DEBUG__) {
       (console.debug || console.log).apply(console, args as []);
     }
-  } catch (_e) {
-    // ignore
-  }
+  });
 }
 
 // Helper function to truncate long project names for status bar display
@@ -73,12 +71,14 @@ export default class WriteAidPlugin extends Plugin {
   }
 
   async saveSettings() {
-    try {
+    const result = await suppressAsync(async () => {
       const toSave = normalizeSettings(this.settings);
       await this.saveData(toSave);
       this.settings = toSave;
-    } catch (_e) {
-      // ignore
+    });
+
+    if (result === undefined) {
+      // Error was suppressed, try fallback
       await this.saveData(this.settings);
     }
   }
@@ -101,7 +101,7 @@ export default class WriteAidPlugin extends Plugin {
       const allFolders: string[] = projectService.listAllFolders();
       const filteredFolders = allFolders.filter((p) => !!p);
       const projects = await asyncFilter(filteredFolders, (p) => projectService.isProjectFolder(p));
-      try {
+      suppress(() => {
         if ((this.settings as WriteAidSettings).debug) {
           console.debug(`WriteAid debug: allFolders:`, allFolders);
           console.debug(`WriteAid debug: filteredFolders:`, filteredFolders);
@@ -110,9 +110,7 @@ export default class WriteAidPlugin extends Plugin {
             projects,
           );
         }
-      } catch (_e) {
-        // ignore
-      }
+      });
       let toActivate: string | null = null;
       if (projects.length === 1) {
         toActivate = projects[0];
@@ -120,15 +118,13 @@ export default class WriteAidPlugin extends Plugin {
         // Use last active if it exists in the list, else first
         const lastActiveRaw = this.settings.activeProject;
         const lastActive = lastActiveRaw?.trim().replace(/^\/+/, "").replace(/\/+$/, "");
-        try {
+        suppress(() => {
           if ((this.settings as WriteAidSettings).debug) {
             console.debug(
               `WriteAid debug: lastActiveRaw='${lastActiveRaw}', normalized='${lastActive}', includes=${lastActive && projects.includes(lastActive)}`,
             );
           }
-        } catch (_e) {
-          // ignore
-        }
+        });
         if (lastActive && projects.includes(lastActive)) {
           toActivate = lastActive;
         } else {
@@ -141,26 +137,22 @@ export default class WriteAidPlugin extends Plugin {
         if (lastActive && (await this.app.vault.adapter.exists(lastActive))) {
           const metaPath = `${lastActive}/meta.md`;
           if (await this.app.vault.adapter.exists(metaPath)) {
-            try {
+            suppress(() => {
               if ((this.settings as WriteAidSettings).debug) {
                 console.debug(
                   `WriteAid debug: activating saved project '${lastActive}' as it exists and has meta.md`,
                 );
               }
-            } catch (_e) {
-              // ignore
-            }
+            });
             toActivate = lastActive;
           }
         }
       }
-      try {
+      suppress(() => {
         if ((this.settings as WriteAidSettings).debug) {
           console.debug(`WriteAid debug: toActivate='${toActivate}'`);
         }
-      } catch (_e) {
-        // ignore
-      }
+      });
       if (toActivate) {
         await this.manager.setActiveProject(toActivate);
         this.settings.activeProject = toActivate;
@@ -198,7 +190,7 @@ export default class WriteAidPlugin extends Plugin {
     // Defer verbose loading message until persisted debug setting is applied below
     // Inject plugin styles into the document head so the compiled CSS is
     // applied inside Obsidian. Keep a reference so we can remove it on unload.
-    try {
+    suppress(() => {
       if (!this.waStyleEl) {
         this.waStyleEl = document.createElement("style");
         this.waStyleEl.setAttribute("data-writeaid-style", "");
@@ -206,39 +198,30 @@ export default class WriteAidPlugin extends Plugin {
         this.waStyleEl.classList.add("writeaid-plugin-style");
         document.head.appendChild(this.waStyleEl);
       }
-    } catch (_e) {
-      // ignore
-      console.warn("WriteAid: failed to inject styles into document head", _e);
-    }
+    });
     await this.loadSettings();
     // Apply persisted debug setting to the global runtime toggle so other modules
     // (panel mount helper / svelte components) can check window.__WRITEAID_DEBUG__
-    try {
+    suppress(() => {
       // coerce to boolean and set global
       (window as unknown as { __WRITEAID_DEBUG__?: boolean }).__WRITEAID_DEBUG__ = Boolean(
         (this.settings as WriteAidSettings).debug,
       );
-    } catch (_e) {
-      // ignore
-    }
+    });
     // Log load message only when debug is enabled so users don't see this in normal runs
-    try {
+    suppress(() => {
       debug("Loading WriteAid Novel Multi-Draft Plugin");
-    } catch (_e) {
-      // ignore
-    }
+    });
 
     this.manager.addActiveProjectListener((project) => {
       if (this.statusBarEl) {
         if (project) {
           this.statusBarEl.setText(`WriteAid: ${truncateProjectName(project)}`);
-          try {
+          suppress(() => {
             if (this.settings && (this.settings as WriteAidSettings).debug) {
               console.debug(`WriteAid debug: active project updated -> ${project}`);
             }
-          } catch (_e) {
-            // ignore
-          }
+          });
         } else {
           this.statusBarEl.setText("WriteAid: No active project");
         }
@@ -259,7 +242,7 @@ export default class WriteAidPlugin extends Plugin {
     ribbonEl.setAttr("aria-label", "WriteAid Projects");
 
     // click behavior: reveal or create left panel
-    ribbonEl.onclick = (_evt: MouseEvent) => {
+    ribbonEl.onclick = () => {
       const existing = this.app.workspace.getLeavesOfType(VIEW_TYPE_PROJECT_PANEL);
       if (existing.length > 0) {
         const leaf = existing[0];
@@ -278,7 +261,7 @@ export default class WriteAidPlugin extends Plugin {
 
     // Control visibility: show based on settings and project detection
     const updateRibbonVisibility = async () => {
-      try {
+      const result = await suppressAsync(async () => {
         if (this.settings.ribbonAlwaysShow) {
           ribbonEl.style.display = "";
           return;
@@ -290,8 +273,10 @@ export default class WriteAidPlugin extends Plugin {
         } else {
           ribbonEl.style.display = "none";
         }
-      } catch (_e) {
-        // ignore
+      });
+
+      if (result === undefined) {
+        // Error was suppressed, set default visibility
         ribbonEl.style.display = "";
       }
     };
@@ -355,7 +340,7 @@ export default class WriteAidPlugin extends Plugin {
       id: "generate-manuscript",
       name: "Generate Manuscript",
       callback: generateManuscriptCommand(this.manager),
-    })
+    });
 
     this.addCommand({
       id: "toggle-project-panel",
@@ -387,7 +372,7 @@ export default class WriteAidPlugin extends Plugin {
   }
 
   moveRibbon(to: "left" | "right") {
-    try {
+    suppress(() => {
       if (!this.ribbonEl) return;
       const rightRibbon = this.app.workspace.containerEl.querySelector(
         ".workspace-ribbon.mod-right",
@@ -400,22 +385,16 @@ export default class WriteAidPlugin extends Plugin {
       } else if (to === "left" && leftRibbon) {
         leftRibbon.appendChild(this.ribbonEl);
       }
-    } catch (_e) {
-      // ignore
-      // Ignore errors in moveRibbon
-    }
+    });
   }
 
   onunload() {
     if (this.statusBarEl && this.statusBarEl.parentElement) {
       this.statusBarEl.parentElement.removeChild(this.statusBarEl);
     }
-    try {
+    suppress(() => {
       debug("Unloading WriteAid Novel Multi-Draft Plugin");
-    } catch (_e) {
-      // ignore
-      // Ignore errors in debug logging
-    }
+    });
     if (this.waStyleEl && this.waStyleEl.parentElement)
       this.waStyleEl.parentElement.removeChild(this.waStyleEl);
   }

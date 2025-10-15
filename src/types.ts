@@ -40,3 +40,11 @@ export interface Chapter {
   name: string;
   chapterName?: string;
 }
+
+export interface CallableFunction<T> {
+  (...args: unknown[]): T;
+}
+
+export interface ExceptionConstructor {
+  new (...args: unknown[]): Error;
+}

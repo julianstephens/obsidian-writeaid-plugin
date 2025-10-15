@@ -1,6 +1,6 @@
 import { TemplateService } from "@/core/TemplateService";
 import { readMetaFile, updateMetaStats } from "@/core/meta";
-import { slugifyDraftName } from "@/core/utils";
+import { PROJECT_TYPE, slugifyDraftName, suppressAsync, type ProjectType } from "@/core/utils";
 import type { WriteAidSettings } from "@/types";
 import { App, Notice, TFile, TFolder } from "obsidian";
 
@@ -17,10 +17,10 @@ export class DraftService {
    * Get the project type for a given project path.
    * Returns "single-file" or "multi-file".
    */
-  async getProjectType(projectPath: string): Promise<"single-file" | "multi-file"> {
+  async getProjectType(projectPath: string): Promise<ProjectType> {
     const metaCandidate = `${projectPath}/meta.md`;
     if (this.app.vault.getAbstractFileByPath(metaCandidate)) {
-      try {
+      const result = await suppressAsync(async () => {
         const metaFile = this.app.vault.getAbstractFileByPath(metaCandidate);
         if (metaFile instanceof TFile) {
           const metaContent = await this.app.vault.read(metaFile);
@@ -31,22 +31,21 @@ export class DraftService {
               const mType = line.match(/^project_type:\s*(.*)$/i);
               if (mType) {
                 const val = mType[1].trim();
-                if (val === "single-file") return "single-file";
-                if (val === "multi-file") return "multi-file";
+                if (val === PROJECT_TYPE.SINGLE) return PROJECT_TYPE.SINGLE;
+                if (val === PROJECT_TYPE.MULTI) return PROJECT_TYPE.MULTI;
               }
             }
           }
         }
-      } catch (_e) {
-        // ignore, fallback below
-      }
+      });
+      if (result !== undefined) return result;
     }
 
     // fallback: old heuristic - check if there's a file named after the project
     const projectName = projectPath.split("/").pop() || projectPath;
     const singleFileCandidate = `${projectPath}/${projectName}.md`;
     const isSingleFile = !!this.app.vault.getAbstractFileByPath(singleFileCandidate);
-    return isSingleFile ? "single-file" : "multi-file";
+    return isSingleFile ? PROJECT_TYPE.SINGLE : PROJECT_TYPE.MULTI;
   }
 
   /**
@@ -89,14 +88,12 @@ export class DraftService {
     if (!project) return "Draft 1";
     const metaPath = `${project}/meta.md`;
     let totalDrafts = 0;
-    try {
+    await suppressAsync(async () => {
       const meta = await readMetaFile(this.app, metaPath);
       if (meta && typeof meta.total_drafts === "number") {
         totalDrafts = meta.total_drafts;
       }
-    } catch (_e) {
-      // ignore
-    }
+    });
     return `Draft ${totalDrafts + 1}`;
   }
 
@@ -115,7 +112,7 @@ export class DraftService {
     if (folder && folder instanceof TFolder) {
       for (const file of folder.children) {
         if (file instanceof TFile && file.extension === "md") {
-          try {
+          await suppressAsync(async () => {
             const content = await this.app.vault.read(file);
             const fmMatch = content.match(/^---\n([\s\S]*?)\n---/);
             let order: number | undefined = undefined;
@@ -146,9 +143,7 @@ export class DraftService {
             ) {
               chapters.push({ name: file.name.replace(/\.md$/, ""), chapterName, order });
             }
-          } catch (_e) {
-            // ignore
-          }
+          });
         }
       }
     }
@@ -178,7 +173,7 @@ export class DraftService {
     if (folder && folder instanceof TFolder) {
       for (const file of folder.children) {
         if (file instanceof TFile && file.extension === "md") {
-          try {
+          await suppressAsync(async () => {
             const content = await this.app.vault.read(file);
             const fmMatch = content.match(/^---\n([\s\S]*?)\n---/);
             if (fmMatch) {
@@ -191,9 +186,7 @@ export class DraftService {
                 }
               }
             }
-          } catch (_e) {
-            // ignore
-          }
+          });
         }
       }
     }
@@ -373,7 +366,7 @@ export class DraftService {
         if (folder && folder instanceof TFolder) {
           for (const file of folder.children) {
             if (file instanceof TFile && file.extension === "md") {
-              try {
+              await suppressAsync(async () => {
                 const content = await this.app.vault.read(file);
                 const fmMatch = content.match(/^---\n([\s\S]*?)\n---/);
                 if (fmMatch) {
@@ -386,10 +379,7 @@ export class DraftService {
                     }
                   }
                 }
-              } catch (_e) {
-                // ignore
-                /* ignore */
-              }
+              });
               if (hasChapter) break;
             }
           }
@@ -426,15 +416,15 @@ export class DraftService {
     if (!project) return false;
     const outlinePath = `${project}/Drafts/${draftName}/outline.md`;
     const outlineFile = this.app.vault.getAbstractFileByPath(outlinePath);
-    try {
+    const outlineOpened = await suppressAsync(async () => {
       if (outlineFile && outlineFile instanceof TFile) {
         const leaf = this.app.workspace.getLeaf();
         await leaf.openFile(outlineFile);
         return true;
       }
-    } catch (_e) {
-      // ignore
-    }
+      return false;
+    });
+    if (outlineOpened) return true;
 
     // fallback: open first file inside the draft folder
     const folderPath = `${project}/Drafts/${draftName}`;
@@ -463,15 +453,12 @@ export class DraftService {
     if (!project) return false;
     const filePath = `${project}/Drafts/${draftName}/${chapterName}.md`;
     const file = this.app.vault.getAbstractFileByPath(filePath);
-    try {
-      if (file && file instanceof TFile) {
+    if (file && file instanceof TFile) {
+      await suppressAsync(async () => {
         const leaf = this.app.workspace.getLeaf();
         await leaf.openFile(file);
-        return true;
-      }
-    } catch (_e) {
-      // ignore
-      // ignore
+      });
+      return true;
     }
     return false;
   }
@@ -534,17 +521,14 @@ export class DraftService {
         await this.app.vault.delete(oldFolderObj, true);
       }
       // Update meta.md in the project root
-      try {
+      await suppressAsync(async () => {
         await import("./meta").then((meta) => meta.updateMetaStats(this.app, project, newName));
-      } catch (_e) {
-        // ignore
-        // Ignore errors updating project meta
-      }
+      });
       // Update meta.md in the renamed draft folder if it exists
       const draftMetaPath = `${newFolder}/meta.md`;
       const draftMetaFile = this.app.vault.getAbstractFileByPath(draftMetaPath);
       if (draftMetaFile) {
-        try {
+        await suppressAsync(async () => {
           // Read, update the draft property, and write back
           const { readMetaFile, writeMetaFile } = await import("./meta");
           const meta = await readMetaFile(this.app, draftMetaPath);
@@ -552,14 +536,10 @@ export class DraftService {
             meta.draft = newName;
             await writeMetaFile(this.app, draftMetaPath, meta);
           }
-        } catch (_e) {
-          // ignore
-          // Ignore errors updating draft meta
-        }
+        });
       }
       return true;
-    } catch (_e) {
-      // ignore
+    } catch {
       return false;
     }
   }
@@ -590,15 +570,12 @@ export class DraftService {
       }
       // delete original files
       for (const file of files) {
-        try {
+        await suppressAsync(async () => {
           await this.app.vault.delete(file);
-        } catch (_e) {
-          // ignore
-          // Ignore errors when deleting files
-        }
+        });
       }
       return true;
-    } catch (_e) {
+    } catch {
       return false;
     }
   }
@@ -639,7 +616,7 @@ export class DraftService {
 
     let manuscriptContent = `# Manuscript for ${draftName}\n\n`;
 
-    if (projectType === "single-file") {
+    if (projectType === PROJECT_TYPE.SINGLE) {
       const slug = slugifyDraftName(
         draftName,
         settings?.slugStyle as import("@/core/utils").DraftSlugStyle,

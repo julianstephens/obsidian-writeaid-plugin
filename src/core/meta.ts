@@ -1,8 +1,5 @@
-// Valid project types
-export const VALID_PROJECT_TYPES = ["single-file", "multi-file"];
-
-export type ProjectType = (typeof VALID_PROJECT_TYPES)[number];
 import { App, TFile, TFolder } from "obsidian";
+import type { ProjectType } from "./utils";
 
 /**
  * Project metadata tracked in meta.md

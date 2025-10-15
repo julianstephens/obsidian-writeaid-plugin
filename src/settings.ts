@@ -1,4 +1,4 @@
-import { slugifyDraftName } from "@/core/utils";
+import { slugifyDraftName, suppress } from "@/core/utils";
 import type { WriteAidSettings } from "@/types";
 import { App, Modal, Notice, PluginSettingTab, Setting, TFile, TFolder } from "obsidian";
 
@@ -106,7 +106,9 @@ export class WriteAidSettingTab extends PluginSettingTab {
 
     new Setting(containerEl)
       .setName("Manuscript name template")
-      .setDesc("Template for manuscript filenames. Use {{draftName}}, {{projectName}}, and moment.js date qualifiers like {{YYYY-MM-DD}}")
+      .setDesc(
+        "Template for manuscript filenames. Use {{draftName}}, {{projectName}}, and moment.js date qualifiers like {{YYYY-MM-DD}}",
+      )
       .addText((t) =>
         t.setValue(plugin.settings.manuscriptNameTemplate || "{{draftName}}").onChange((v) => {
           plugin.settings.manuscriptNameTemplate = v;
@@ -272,7 +274,7 @@ export class WriteAidSettingTab extends PluginSettingTab {
             if (res && typeof (res as Promise<unknown>).catch === "function") {
               (res as Promise<unknown>).catch(() => {});
             }
-          } catch (_e) {
+          } catch {
             // ignore
           }
           if (
@@ -298,12 +300,9 @@ export class WriteAidSettingTab extends PluginSettingTab {
           inputEl.setAttribute("step", "50");
           inputEl.setAttribute("aria-label", "Panel refresh debounce in milliseconds");
           // append a small unit suffix after the input for clarity (CSS handles spacing)
-          try {
+          suppress(() => {
             inputEl.insertAdjacentHTML("afterend", '<span class="wa-unit">ms</span>');
-          } catch (_e) {
-            // ignore
-            // Ignore errors in saveSettings
-          }
+          });
 
           // create a range slider and insert after the unit
           rangeEl = document.createElement("input");
@@ -313,26 +312,15 @@ export class WriteAidSettingTab extends PluginSettingTab {
           rangeEl.step = "50";
           rangeEl.value = String(initial);
           rangeEl.className = "wa-debounce-range";
-          try {
+          suppress(() => {
             // Insert after the unit span if present so order is: input -> unit -> range
             const unitNode = inputEl.nextSibling as HTMLElement | null;
             if (unitNode && unitNode.parentElement) {
-              unitNode.insertAdjacentElement("afterend", rangeEl);
+              unitNode.insertAdjacentElement("afterend", rangeEl!);
             } else {
-              inputEl.insertAdjacentElement("afterend", rangeEl);
+              inputEl.insertAdjacentElement("afterend", rangeEl!);
             }
-          } catch (_e) {
-            // ignore
-            // fallback: append to the Setting's container element
-            // Find the closest .setting-item container
-            let settingItem = t.inputEl.closest(".setting-item");
-            if (settingItem) {
-              settingItem.appendChild(rangeEl);
-            } else {
-              // fallback: append to parent of inputEl
-              t.inputEl.parentElement?.appendChild(rangeEl);
-            }
-          }
+          });
 
           // wire events: text input → applyValue, range → sync & applyValue
           t.onChange((v: string) => {
@@ -345,7 +333,7 @@ export class WriteAidSettingTab extends PluginSettingTab {
             (t.inputEl as HTMLInputElement).value = String(v);
             applyValue(v);
           });
-        } catch (_e) {
+        } catch {
           // ignore
           // if anything fails, fall back to simple text behavior
           t.onChange((v: string) => {

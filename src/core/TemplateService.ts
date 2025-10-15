@@ -1,3 +1,4 @@
+import { suppressAsync } from "@/core/utils";
 import { App, TFile } from "obsidian";
 
 declare global {
@@ -24,14 +25,12 @@ export class TemplateService {
    */
   async render(templateOrPath: string, vars: Record<string, string> = {}): Promise<string> {
     let tpl = templateOrPath || "";
-    try {
+    await suppressAsync(async () => {
       const f = this.app.vault.getAbstractFileByPath(tpl);
       if (f && f instanceof TFile) {
         tpl = await this.app.vault.read(f);
       }
-    } catch (_e) {
-      // ignore
-    }
+    });
 
     // First handle moment.js date qualifiers
     tpl = tpl.replace(/{{\s*(\w+)\s*}}/g, (_m, k) => {
@@ -53,11 +52,39 @@ export class TemplateService {
   private isMomentFormat(str: string): boolean {
     // Common moment.js format tokens
     const momentTokens = [
-      'YYYY', 'YY', 'Y', 'Q', 'MMMM', 'MMM', 'MM', 'M', 'DD', 'D', 'Do', 'dddd', 'ddd', 'dd', 'd',
-      'HH', 'H', 'hh', 'h', 'mm', 'm', 'ss', 's', 'A', 'a', 'X', 'x', 'Z', 'zz', 'ZZ'
+      "YYYY",
+      "YY",
+      "Y",
+      "Q",
+      "MMMM",
+      "MMM",
+      "MM",
+      "M",
+      "DD",
+      "D",
+      "Do",
+      "dddd",
+      "ddd",
+      "dd",
+      "d",
+      "HH",
+      "H",
+      "hh",
+      "h",
+      "mm",
+      "m",
+      "ss",
+      "s",
+      "A",
+      "a",
+      "X",
+      "x",
+      "Z",
+      "zz",
+      "ZZ",
     ];
 
     // Check if the string contains any moment.js format token
-    return momentTokens.some(token => str.includes(token));
+    return momentTokens.some((token) => str.includes(token));
   }
 }

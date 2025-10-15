@@ -2,7 +2,7 @@
 import { DraftService } from "@/core/DraftService";
 import { readMetaFile, updateMetaStats } from "@/core/meta";
 import { ProjectService } from "@/core/ProjectService";
-import { asyncFilter } from "@/core/utils";
+import { asyncFilter, suppress, suppressAsync } from "@/core/utils";
 import type { PluginLike, WriteAidSettings } from "@/types";
 import { App, Notice } from "obsidian";
 
@@ -104,11 +104,7 @@ export class WriteAidManager {
 
   private notifyActiveDraftListeners(draft: string | null) {
     for (const fn of this.activeDraftListeners) {
-      try {
-        fn(draft);
-      } catch (_e) {
-        // ignore
-      }
+      suppress(() => fn(draft));
     }
   }
 
@@ -127,23 +123,15 @@ export class WriteAidManager {
       }
       this._panelRefreshTimer = setTimeout(() => {
         for (const fn of this.panelRefreshListeners) {
-          try {
-            fn();
-          } catch (_e) {
-            // ignore
-          }
+          suppress(() => fn());
         }
         this._panelRefreshTimer = null;
       }, this._panelRefreshDebounceMs);
-    } catch (_e) {
+    } catch {
       // ignore
       // fallback: immediate notify
       for (const fn of this.panelRefreshListeners) {
-        try {
-          fn();
-        } catch (_e) {
-          // ignore
-        }
+        suppress(() => fn());
       }
     }
   }
@@ -156,16 +144,13 @@ export class WriteAidManager {
     if (path) {
       path = path.trim().replace(/^\/+/, "").replace(/\/+$/, "");
     }
-    try {
-      const dbg = (this.settings as WriteAidSettings | undefined)?.debug || false;
-      if (dbg) {
+    suppress(() => {
+      if (this.plugin?.settings?.debug) {
         console.debug(`WriteAid debug: setActiveProject called with '${path}'`);
       }
-    } catch (_e) {
-      // ignore
-    }
+    });
     this.activeProject = path;
-    try {
+    await suppressAsync(async () => {
       if (this.plugin) {
         const pluginWithSettings = this.plugin as {
           settings?: WriteAidSettings;
@@ -177,26 +162,16 @@ export class WriteAidManager {
           await pluginWithSettings.saveSettings();
         }
       }
-    } catch (_e) {
-      // ignore
-    }
+    });
     for (const l of this.activeProjectListeners) {
-      try {
-        l(path);
-      } catch (_e) {
-        // ignore
-      }
+      suppress(() => l(path));
     }
 
     // Ensure an active draft is set for the newly activated project.
     try {
       if (!path) {
         this.activeDraft = null;
-        try {
-          this.notifyActiveDraftListeners(null);
-        } catch (_e) {
-          // ignore
-        }
+        this.notifyActiveDraftListeners(null);
         return;
       }
       const drafts = this.listDrafts(path);
@@ -206,39 +181,33 @@ export class WriteAidManager {
       }
       if (drafts.length === 1) {
         await this.setActiveDraft(drafts[0], path, false);
-        try {
+        suppress(() => {
           const dbg = (this.settings as WriteAidSettings | undefined)?.debug || false;
           if (dbg) {
             console.debug(
               `WriteAid debug: auto-selected single draft '${drafts[0]}' for project '${path}'`,
             );
           }
-        } catch (_e) {
-          // ignore
-        }
+        });
         return;
       }
 
       // Multiple drafts: prefer meta.md's current_active_draft when valid
-      try {
+      await suppressAsync(async () => {
         const meta = await readMetaFile(this.app, `${path}/meta.md`);
         if (meta && meta.current_active_draft && drafts.includes(meta.current_active_draft)) {
           await this.setActiveDraft(meta.current_active_draft, path, false);
-          try {
+          suppress(() => {
             const dbg = (this.settings as WriteAidSettings | undefined)?.debug || false;
             if (dbg) {
               console.debug(
                 `WriteAid debug: auto-selected meta draft '${meta.current_active_draft}' for project '${path}'`,
               );
             }
-          } catch (_e) {
-            // ignore
-          }
+          });
           return;
         }
-      } catch (_e) {
-        // ignore
-      }
+      });
 
       // Fallback: choose the draft with the most recently modified file inside it
       let bestDraft: string | null = null;
@@ -262,18 +231,14 @@ export class WriteAidManager {
       if (!bestDraft) bestDraft = drafts[0];
       // Optionally surface debug notice when debug setting is enabled so we can
       // observe what draft was auto-selected during startup.
-      try {
+      suppress(() => {
         const dbg = (this.settings as WriteAidSettings | undefined)?.debug || false;
         if (dbg) {
           console.debug(`WriteAid debug: auto-selected draft '${bestDraft}' for project '${path}'`);
         }
-      } catch (_e) {
-        // ignore
-        // ignore
-      }
+      });
       await this.setActiveDraft(bestDraft, path, false);
-    } catch (_e) {
-      // ignore
+    } catch {
       // Ignore errors selecting active draft
     }
   }
@@ -356,12 +321,7 @@ export class WriteAidManager {
       const draftName = initialDraftName || "Draft 1";
       await this.setActiveDraft(draftName, path as string);
       // notify panels so UI can refresh
-      try {
-        this.notifyPanelRefresh();
-      } catch (_e) {
-        // ignore
-        // Ignore errors in notifyPanelRefresh
-      }
+      suppress(() => this.notifyPanelRefresh());
     }
     return path;
   }
@@ -457,12 +417,7 @@ export class WriteAidManager {
       projectPath,
       this.settings,
     );
-    try {
-      this.notifyPanelRefresh();
-    } catch (_e) {
-      // ignore
-      // Ignore errors in notifyPanelRefresh
-    }
+    suppress(() => this.notifyPanelRefresh());
     return res;
   }
 
@@ -481,19 +436,11 @@ export class WriteAidManager {
     }
     this.activeDraft = draftName;
     // Update meta.md with the new active draft
-    try {
+    await suppressAsync(async () => {
       await updateMetaStats(this.app, project, draftName);
-    } catch (_e) {
-      // ignore
-      // Ignore errors in updateMetaStats
-    }
+    });
     // notify listeners about the active draft change
-    try {
-      this.notifyActiveDraftListeners(this.activeDraft);
-    } catch (_e) {
-      // ignore
-      // ignore
-    }
+    this.notifyActiveDraftListeners(this.activeDraft);
     if (showNotice) new Notice(`Active draft set to ${draftName}`);
     return true;
   }
