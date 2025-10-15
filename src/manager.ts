@@ -7,9 +7,9 @@ import {
   asyncFilter,
   debug,
   DEBUG_PREFIX,
-  FOLDERS,
+  getDraftsFolderName,
   suppress,
-  suppressAsync,
+  suppressAsync
 } from "@/core/utils";
 import type { PluginLike, WriteAidSettings } from "@/types";
 import { App, Notice } from "obsidian";
@@ -214,8 +214,9 @@ export class WriteAidManager {
       let bestDraft: string | null = null;
       let bestMtime = 0;
       const files = this.app.vault.getFiles();
+      const draftsFolderName = getDraftsFolderName(this.settings);
       for (const d of drafts) {
-        const folderPrefix = `${path}/${FOLDERS.DRAFTS}/${d}/`;
+        const folderPrefix = `${path}/${draftsFolderName}/${d}/`;
         let maxM = 0;
         for (const f of files) {
           if (f.path.startsWith(folderPrefix)) {
@@ -366,7 +367,7 @@ export class WriteAidManager {
       // Update meta.md with the new active draft
       const projectPath = this.getCurrentProjectPath();
       if (projectPath) {
-        await updateMetaStats(this.app, projectPath, draftName);
+        await updateMetaStats(this.app, projectPath, draftName, undefined, this.settings);
       }
     }).open();
   }
@@ -374,7 +375,7 @@ export class WriteAidManager {
   async updateProjectMetadataPrompt() {
     // If we have an active project, operate on it immediately
     if (this.activeProject) {
-      await updateMetaStats(this.app, this.activeProject);
+      await updateMetaStats(this.app, this.activeProject, undefined, undefined, this.settings);
       new Notice(`Metadata updated for ${this.activeProject}`);
       return;
     }
@@ -387,7 +388,7 @@ export class WriteAidManager {
       new SelectProjectModal(this.app, {
         folders: projects,
         onSubmit: async (projectPath: string) => {
-          await updateMetaStats(this.app, projectPath);
+          await updateMetaStats(this.app, projectPath, undefined, undefined, this.settings);
           new Notice(`Metadata updated for ${projectPath}`);
         },
       }).open();
@@ -438,7 +439,7 @@ export class WriteAidManager {
     this.activeDraft = draftName;
     // Update meta.md with the new active draft
     await suppressAsync(async () => {
-      await updateMetaStats(this.app, project, draftName);
+      await updateMetaStats(this.app, project, draftName, undefined, this.settings);
     });
     // notify listeners about the active draft change
     this.notifyActiveDraftListeners(this.activeDraft);

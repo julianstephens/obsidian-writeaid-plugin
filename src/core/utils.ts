@@ -24,11 +24,29 @@ export const PROJECT_TYPE = {
 export type ProjectType = (typeof PROJECT_TYPE)[keyof typeof PROJECT_TYPE];
 export const VALID_PROJECT_TYPES = Object.values(PROJECT_TYPE);
 
-export const DEFAULT_MULTI_TARGET_WORD_COUNT = 50000;
-export const DEFAULT_SINGLE_TARGET_WORD_COUNT = 20000;
-
 export const APP_NAME = "WriteAid";
 export const DEBUG_PREFIX = `${APP_NAME} debug:`;
+
+// Utility functions to get configured names with fallbacks
+export function getDraftsFolderName(settings?: { draftsFolderName?: string }): string {
+  return settings?.draftsFolderName || FOLDERS.DRAFTS;
+}
+
+export function getManuscriptsFolderName(settings?: { manuscriptsFolderName?: string }): string {
+  return settings?.manuscriptsFolderName || FOLDERS.MANUSCRIPTS;
+}
+
+export function getBackupsFolderName(settings?: { backupsFolderName?: string }): string {
+  return settings?.backupsFolderName || FOLDERS.BACKUPS;
+}
+
+export function getMetaFileName(settings?: { metaFileName?: string }): string {
+  return settings?.metaFileName || FILES.META;
+}
+
+export function getOutlineFileName(settings?: { outlineFileName?: string }): string {
+  return settings?.outlineFileName || FILES.OUTLINE;
+}
 
 /**
  * Turn a draft name into a filesystem-safe filename for per-draft main files.

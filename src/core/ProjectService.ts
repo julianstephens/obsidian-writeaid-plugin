@@ -7,10 +7,11 @@ import {
   asyncFilter,
   debug,
   DEBUG_PREFIX,
-  FILES,
-  FOLDERS,
+  getDraftsFolderName,
+  getManuscriptsFolderName,
+  getMetaFileName,
   PROJECT_TYPE,
-  type ProjectType,
+  type ProjectType
 } from "./utils";
 
 export class ProjectService {
@@ -39,7 +40,7 @@ export class ProjectService {
 
     const projectPath =
       parentFolder && parentFolder !== "" ? `${parentFolder}/${projectName}` : projectName;
-    const draftsFolder = `${projectPath}/${FOLDERS.DRAFTS}`;
+    const draftsFolder = `${projectPath}/${getDraftsFolderName(settings)}`;
 
     if (!this.app.vault.getAbstractFileByPath(projectPath)) {
       await this.app.vault.createFolder(projectPath);
@@ -49,10 +50,13 @@ export class ProjectService {
       await this.app.vault.createFolder(draftsFolder);
     }
 
-    const metaPath = `${projectPath}/meta.md`;
+    const metaPath = `${projectPath}/${getMetaFileName(settings)}`;
     if (!this.app.vault.getAbstractFileByPath(metaPath)) {
       const projectType = singleFile ? "single-file" : "multi-file";
-      const metaContent = `---\nproject_type: ${projectType}\n---\n`;
+      const targetWordCount = singleFile
+        ? (settings?.defaultSingleTargetWordCount ?? 20000)
+        : (settings?.defaultMultiTargetWordCount ?? 50000);
+      const metaContent = `---\nproject_type: ${projectType}\ntarget_word_count: ${targetWordCount}\n---\n`;
       await this.app.vault.create(metaPath, metaContent);
     }
 
@@ -76,7 +80,7 @@ export class ProjectService {
       `${projectPath}/Chapter 1.md`,
       `${projectPath}/Chapter 01.md`,
       `${projectPath}/outline.md`,
-      `${projectPath}/${FOLDERS.DRAFTS}/Draft 1/outline.md`,
+      `${projectPath}/${getDraftsFolderName()}/Draft 1/outline.md`,
     ];
     for (const p of candidates) {
       const f = this.app.vault.getAbstractFileByPath(p);
@@ -124,7 +128,7 @@ export class ProjectService {
 
   /** Get the project type ("single-file" or "multi-file") from meta.md, or null if not found/invalid */
   async getProjectType(projectPath: string): Promise<ProjectType | null> {
-    const metaPath = `${projectPath}/${FILES.META}`;
+    const metaPath = `${projectPath}/${getMetaFileName()}`;
     const metaContent = await readMetaFile(this.app, metaPath);
     if (metaContent && metaContent.project_type) {
       const pt = metaContent.project_type as ProjectType;
@@ -137,8 +141,8 @@ export class ProjectService {
 
   /** Get the Drafts folder TFolder object, or null if not found */
   getDraftsFolder(projectPath: string): TFolder | null {
-    // First try the standard lowercase "drafts"
-    const draftsPath = `${projectPath}/${FOLDERS.DRAFTS}`;
+    // First try the configured drafts folder name
+    const draftsPath = `${projectPath}/${getDraftsFolderName()}`;
     let draftsFolder = this.app.vault.getAbstractFileByPath(draftsPath);
     if (draftsFolder && draftsFolder instanceof TFolder) {
       return draftsFolder;
@@ -156,7 +160,7 @@ export class ProjectService {
 
   /** Get the Manuscripts folder TFolder object, or null if not found */
   async getManuscriptsFolder(projectPath: string): Promise<TFolder | null> {
-    const manuscriptsPath = `${projectPath}/${FOLDERS.MANUSCRIPTS}`;
+    const manuscriptsPath = `${projectPath}/${getManuscriptsFolderName()}`;
     const manuscriptsFolder = this.app.vault.getAbstractFileByPath(manuscriptsPath);
     if (manuscriptsFolder && manuscriptsFolder instanceof TFolder) {
       return manuscriptsFolder;
@@ -170,14 +174,14 @@ export class ProjectService {
     if (!path || typeof path !== "string") return false;
     const base = path.trim().replace(/\\/g, "/").replace(/\/+$/, "");
     try {
-      const metaPath = normalizePath(`${base}/${FILES.META}`);
+      const metaPath = normalizePath(`${base}/${getMetaFileName()}`);
       const hasMeta = await this.app.vault.adapter.exists(metaPath);
 
-      // Check for drafts folder case-insensitively
-      const draftsPath = normalizePath(`${base}/${FOLDERS.DRAFTS}`);
+      // Check for drafts folder - try configured name first
+      const draftsPath = normalizePath(`${base}/${getDraftsFolderName()}`);
       let hasDrafts = await this.app.vault.adapter.exists(draftsPath);
 
-      // If standard lowercase "drafts" doesn't exist, check for capitalized "Drafts"
+      // If configured name doesn't exist, check for capitalized "Drafts" for backward compatibility
       if (!hasDrafts) {
         const capitalizedDraftsPath = normalizePath(`${base}/Drafts`);
         hasDrafts = await this.app.vault.adapter.exists(capitalizedDraftsPath);

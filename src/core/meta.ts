@@ -1,5 +1,6 @@
+import type { WriteAidSettings } from "@/types";
 import { App, TFile, TFolder } from "obsidian";
-import { FOLDERS, type ProjectType } from "./utils";
+import { getDraftsFolderName, type ProjectType } from "./utils";
 
 /**
  * Project metadata tracked in meta.md
@@ -70,6 +71,7 @@ export async function updateMetaStats(
   projectPath: string,
   activeDraft?: string,
   options?: Partial<ProjectMetadata>,
+  settings?: WriteAidSettings,
 ): Promise<void> {
   const metaPath = `${projectPath}/meta.md`;
 
@@ -82,7 +84,8 @@ export async function updateMetaStats(
   }
 
   // Count drafts in the Drafts folder
-  const draftsFolder = app.vault.getAbstractFileByPath(`${projectPath}/${FOLDERS.DRAFTS}`);
+  const draftsFolderName = getDraftsFolderName(settings);
+  const draftsFolder = app.vault.getAbstractFileByPath(`${projectPath}/${draftsFolderName}`);
   if (draftsFolder && draftsFolder instanceof TFolder) {
     const draftFolders = draftsFolder.children.filter((child) => child instanceof TFolder);
     metadata.total_drafts = draftFolders.length;

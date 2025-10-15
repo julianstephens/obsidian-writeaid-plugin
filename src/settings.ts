@@ -272,6 +272,42 @@ export class WriteAidSettingTab extends PluginSettingTab {
         }),
       );
 
+    containerEl.createEl("h3", { text: "Word Count Targets" });
+
+    new Setting(containerEl)
+      .setName("Default target word count for multi-file projects")
+      .setDesc("Target word count automatically set for new multi-file projects (chapters)")
+      .addText((t) =>
+        t
+          .setValue(String(plugin.settings.defaultMultiTargetWordCount ?? 50000))
+          .setPlaceholder("50000")
+          .onChange((v) => {
+            const num = parseInt(v, 10);
+            if (!isNaN(num) && num > 0) {
+              debug(`${DEBUG_PREFIX} Default multi-file target word count changed: ${num}`);
+              plugin.settings.defaultMultiTargetWordCount = num;
+              plugin.saveSettings();
+            }
+          }),
+      );
+
+    new Setting(containerEl)
+      .setName("Default target word count for single-file projects")
+      .setDesc("Target word count automatically set for new single-file projects")
+      .addText((t) =>
+        t
+          .setValue(String(plugin.settings.defaultSingleTargetWordCount ?? 20000))
+          .setPlaceholder("20000")
+          .onChange((v) => {
+            const num = parseInt(v, 10);
+            if (!isNaN(num) && num > 0) {
+              debug(`${DEBUG_PREFIX} Default single-file target word count changed: ${num}`);
+              plugin.settings.defaultSingleTargetWordCount = num;
+              plugin.saveSettings();
+            }
+          }),
+      );
+
     containerEl.createEl("h3", { text: "UI & Startup" });
 
     containerEl.createEl("p", {

@@ -33,6 +33,10 @@ export interface WriteAidSettings {
   // Customizable file names
   metaFileName?: string;
   outlineFileName?: string;
+
+  // Default target word counts for new projects
+  defaultMultiTargetWordCount?: number;
+  defaultSingleTargetWordCount?: number;
 }
 
 // Minimal plugin-like interface used for typing in services

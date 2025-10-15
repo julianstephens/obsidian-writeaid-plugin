@@ -6,7 +6,7 @@
   "description": "A novel writing plugin for Obsidian supporting multiple drafts per project.",
   "author": "julianstephens",
   "authorUrl": "https://github.com/julianstephens",
-  "isDesktopOnly": false,
+  "isDesktopOnly": true,
   "commands": [
     {
       "id": "create-new-draft",

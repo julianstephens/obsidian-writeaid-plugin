@@ -355,6 +355,7 @@ export default class WriteAidPlugin extends Plugin {
         convertSingleToMultiFileProjectCommand(
           this.app,
           this.manager.activeProject || this.manager.getCurrentProjectPath?.() || undefined,
+          this.manager.settings,
         ),
     });
     this.addCommand({

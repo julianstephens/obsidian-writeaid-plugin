@@ -48,6 +48,8 @@
   },
   "dependencies": {
     "@lucide/svelte": "^0.545.0",
+    "@types/archiver": "^6.0.3",
+    "archiver": "^7.0.1",
     "svelte-select": "5.8.0"
   }
 }

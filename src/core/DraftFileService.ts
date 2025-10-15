@@ -17,11 +17,11 @@ export class DraftFileService {
   chapters: ChapterFileService;
   manager: WriteAidManager | null;
 
-  constructor(app: App, chapters: ChapterFileService, projectSvc: ProjectService) {
+  constructor(app: App, chapters: ChapterFileService, projectSvc: ProjectService, backupSvc: BackupService) {
     this.app = app;
     this.tpl = new TemplateService(app);
     this.projectSvc = projectSvc;
-    this.backupSvc = new BackupService();
+    this.backupSvc = backupSvc;
     this.chapters = chapters;
     this.manager =
       (
@@ -223,7 +223,7 @@ export class DraftFileService {
       }
     }
 
-    await updateMetaStats(this.app, projectPathResolved, draftName);
+    await updateMetaStats(this.app, projectPathResolved, draftName, undefined, this.manager?.settings);
   }
 
   /**
@@ -349,7 +349,7 @@ export class DraftFileService {
       }
       // Update meta.md in the project root
       await suppressAsync(async () => {
-        await import("./meta").then((meta) => meta.updateMetaStats(this.app, project, newName));
+        await import("./meta").then((meta) => meta.updateMetaStats(this.app, project, newName, undefined, this.manager?.settings));
       });
       // Update meta.md in the renamed draft folder if it exists
       const draftMetaPath = `${newFolder}/${this.getFileName("metaFileName")}`;
@@ -387,7 +387,7 @@ export class DraftFileService {
     try {
       const files = this.app.vault.getFiles().filter((f) => f.path.startsWith(draftFolder));
       if (createBackup) {
-        await this.backupSvc.createBackup(draftFolder);
+        await this.backupSvc.createBackup(draftFolder, this.manager?.settings);
       }
       // delete original files
       for (const file of files) {
