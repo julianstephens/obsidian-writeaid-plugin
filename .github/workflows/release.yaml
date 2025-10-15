@@ -6,7 +6,6 @@ on:
       - "v*.*.*"
   workflow_dispatch:
 
-
 jobs:
   release:
     name: Create Release

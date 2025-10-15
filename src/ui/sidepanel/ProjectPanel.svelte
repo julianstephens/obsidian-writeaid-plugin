@@ -714,8 +714,15 @@
                     const newOrder = chapters.slice();
                     [newOrder[i - 1], newOrder[i]] = [newOrder[i], newOrder[i - 1]];
                     // Ensure order property is correct
-                    const ordered = newOrder.map((ch, idx) => ({ chapterName: ch.chapterName!, order: idx + 1 }));
-                    await manager.reorderChapters(selectedValue as string, manager.activeDraft!, ordered);
+                    const ordered = newOrder.map((ch, idx) => ({
+                      chapterName: ch.chapterName!,
+                      order: idx + 1,
+                    }));
+                    await manager.reorderChapters(
+                      selectedValue as string,
+                      manager.activeDraft!,
+                      ordered,
+                    );
                     await refreshChapters();
                   }}
                   disabled={i === 0}>↑</BaseButton
@@ -727,8 +734,15 @@
                     const newOrder = chapters.slice();
                     [newOrder[i], newOrder[i + 1]] = [newOrder[i + 1], newOrder[i]];
                     // Ensure order property is correct
-                    const ordered = newOrder.map((ch, idx) => ({ chapterName: ch.chapterName!, order: idx + 1 }));
-                    await manager.reorderChapters(selectedValue as string, manager.activeDraft!, ordered);
+                    const ordered = newOrder.map((ch, idx) => ({
+                      chapterName: ch.chapterName!,
+                      order: idx + 1,
+                    }));
+                    await manager.reorderChapters(
+                      selectedValue as string,
+                      manager.activeDraft!,
+                      ordered,
+                    );
                     await refreshChapters();
                   }}
                   disabled={i === chapters.length - 1}>↓</BaseButton
@@ -738,7 +752,11 @@
                   title="Open chapter"
                   onclick={async () => {
                     if (!selectedValue || !manager?.activeDraft) return;
-                    await manager.openChapter(selectedValue as string, manager.activeDraft!, ch.chapterName!);
+                    await manager.openChapter(
+                      selectedValue as string,
+                      manager.activeDraft!,
+                      ch.chapterName!,
+                    );
                   }}
                 >
                   <Eye size={18} />
@@ -748,15 +766,19 @@
                   title="Rename chapter"
                   onclick={() => {
                     if (!selectedValue || !manager?.activeDraft) return;
-                    const modal = new RenameChapterModal(manager.app, ch.chapterName!, async (newName) => {
-                      await manager.renameChapter(
-                        selectedValue as string,
-                        manager.activeDraft!,
-                        ch.chapterName!,
-                        newName,
-                      );
-                      await refreshChapters();
-                    });
+                    const modal = new RenameChapterModal(
+                      manager.app,
+                      ch.chapterName!,
+                      async (newName) => {
+                        await manager.renameChapter(
+                          selectedValue as string,
+                          manager.activeDraft!,
+                          ch.chapterName!,
+                          newName,
+                        );
+                        await refreshChapters();
+                      },
+                    );
                     modal.open();
                   }}
                 >

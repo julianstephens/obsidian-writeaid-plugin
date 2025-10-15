@@ -6,7 +6,6 @@ import ProjectPanel from "@/ui/sidepanel/ProjectPanel.svelte";
 import { ItemView, Notice, type App, type WorkspaceLeaf } from "obsidian";
 import { mount } from "svelte";
 
-
 interface WriteAidPlugin {
   manager?: WriteAidManager;
 }
@@ -66,7 +65,9 @@ export class ProjectPanelView extends ItemView {
       }
       // Get the manager
       const manager = (
-        this.app as unknown as { plugins: { getPlugin?: (id: string) => { manager?: WriteAidManager } } }
+        this.app as unknown as {
+          plugins: { getPlugin?: (id: string) => { manager?: WriteAidManager } };
+        }
       ).plugins.getPlugin?.("obsidian-writeaid-plugin")?.manager;
 
       // Ensure manager exists before mounting
