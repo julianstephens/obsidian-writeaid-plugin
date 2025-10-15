@@ -1,6 +1,8 @@
 import { TemplateService } from "@/core/TemplateService";
 import { readMetaFile, updateMetaStats } from "@/core/meta";
 import {
+  debug,
+  DEBUG_PREFIX,
   FOLDERS,
   PROJECT_TYPE,
   slugifyDraftName,
@@ -8,6 +10,7 @@ import {
   type ProjectType,
 } from "@/core/utils";
 import type { WriteAidSettings } from "@/types";
+import { ConfirmOverwriteModal } from "@/ui/modals/ConfirmOverwriteModal";
 import { App, Notice, TFile, TFolder } from "obsidian";
 
 export class DraftService {
@@ -609,16 +612,17 @@ export class DraftService {
     // Generate manuscript filename using template
     const projectName = project.split("/").pop() || project;
     const manuscriptNameTemplate = settings?.manuscriptNameTemplate || "{{draftName}}";
+
+    debug(
+      `${DEBUG_PREFIX} DraftService.generateManuscript - manuscriptNameTemplate: "${manuscriptNameTemplate}"`,
+    );
+    debug(`${DEBUG_PREFIX} DraftService.generateManuscript - settings object:`, settings);
+
     const manuscriptBaseName = await this.tpl.render(manuscriptNameTemplate, {
       draftName,
       projectName,
     });
     const manuscriptPath = `${manuscriptFolder}/${manuscriptBaseName}.md`;
-
-    if (this.app.vault.getAbstractFileByPath(manuscriptPath)) {
-      new Notice(`Manuscript file ${manuscriptPath} already exists. Please delete it first.`);
-      return false;
-    }
 
     let manuscriptContent = `# Manuscript for ${draftName}\n\n`;
 
@@ -633,7 +637,21 @@ export class DraftService {
       if (draftFile && draftFile instanceof TFile) {
         const content = await this.app.vault.read(draftFile);
         manuscriptContent += stripHeadings(stripFrontmatter(content));
-        await this.app.vault.create(manuscriptPath, manuscriptContent);
+        
+        // Create or overwrite the manuscript file
+        const existingFile = this.app.vault.getAbstractFileByPath(manuscriptPath);
+        if (existingFile && existingFile instanceof TFile) {
+          const modal = new ConfirmOverwriteModal(this.app, manuscriptPath);
+          const shouldOverwrite = await modal.open();
+          if (!shouldOverwrite) {
+            return false; // User cancelled
+          }
+          debug(`${DEBUG_PREFIX} Overwriting existing manuscript: ${manuscriptPath}`);
+          await this.app.vault.modify(existingFile, manuscriptContent);
+        } else {
+          debug(`${DEBUG_PREFIX} Creating new manuscript: ${manuscriptPath}`);
+          await this.app.vault.create(manuscriptPath, manuscriptContent);
+        }
       } else {
         new Notice(`Main draft file ${draftMainPath} not found.`);
         return false;

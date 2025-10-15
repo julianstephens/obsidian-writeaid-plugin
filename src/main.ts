@@ -51,6 +51,7 @@ export default class WriteAidPlugin extends Plugin {
   settings: WriteAidSettings = DEFAULT_SETTINGS;
   private waStyleEl?: HTMLStyleElement;
   private ribbonEl?: HTMLElement;
+  private settingsChangedCallbacks: (() => void)[] = [];
 
   async loadSettings() {
     const data = await this.loadData();
@@ -58,6 +59,20 @@ export default class WriteAidPlugin extends Plugin {
     if (data && data.activeProject !== undefined) {
       this.settings.activeProject = data.activeProject;
     }
+
+    // Update manager's settings reference to point to the loaded settings object
+    if (this.manager) {
+      this.manager.settings = this.settings;
+    }
+
+    // Notify any registered callbacks that settings have been loaded
+    this.settingsChangedCallbacks.forEach((callback) => {
+      try {
+        callback();
+      } catch (error) {
+        console.error("Error in settings changed callback:", error);
+      }
+    });
   }
 
   async saveSettings() {
@@ -71,6 +86,26 @@ export default class WriteAidPlugin extends Plugin {
       // Error was suppressed, try fallback
       await this.saveData(this.settings);
     }
+
+    // Update manager's settings reference to point to the new settings object
+    if (this.manager) {
+      this.manager.settings = this.settings;
+      debug(`${DEBUG_PREFIX} Updated manager settings reference, manuscript template: ${this.settings.manuscriptNameTemplate}`);
+    }
+
+    // Notify any registered callbacks that settings have changed
+    this.settingsChangedCallbacks.forEach((callback) => {
+      try {
+        callback();
+      } catch (error) {
+        console.error("Error in settings changed callback:", error);
+      }
+    });
+  }
+
+  // Method to register callbacks that should be called when settings change
+  registerSettingsChangedCallback(callback: () => void) {
+    this.settingsChangedCallbacks.push(callback);
   }
 
   async onload() {
