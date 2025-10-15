@@ -4,7 +4,7 @@ import { Notice } from "obsidian";
 
 export function generateManuscriptCommand(manager: WriteAidManager) {
   return async () => {
-    const draftService = manager.draftService;
+    const draftService = manager.projectFileService.drafts;
     const activeProjectPath = manager.activeProject;
     const activeDraftName = manager.activeDraft;
 

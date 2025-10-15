@@ -1,6 +1,6 @@
 // ...existing code...
-import { DraftService } from "@/core/DraftService";
 import { readMetaFile, updateMetaStats } from "@/core/meta";
+import { ProjectFileService } from "@/core/ProjectFileService";
 import { ProjectService } from "@/core/ProjectService";
 import {
   APP_NAME,
@@ -33,7 +33,7 @@ export class WriteAidManager {
   plugin?: PluginLike;
   settings?: WriteAidSettings;
   projectService: ProjectService;
-  draftService: DraftService;
+  projectFileService: ProjectFileService;
 
   /**
    * @param app Obsidian app instance
@@ -49,7 +49,7 @@ export class WriteAidManager {
     }
     this.activeProject = (this.settings as WriteAidSettings | undefined)?.activeProject || null;
     this.projectService = new ProjectService(app);
-    this.draftService = new DraftService(app);
+    this.projectFileService = new ProjectFileService(app);
   }
 
   /**
@@ -63,14 +63,14 @@ export class WriteAidManager {
     draftName: string,
     newOrder: Array<{ chapterName: string; order: number }>,
   ) {
-    return await this.draftService.reorderChapters(projectPath, draftName, newOrder);
+    return await this.projectFileService.chapters.reorderChapters(projectPath, draftName, newOrder);
   }
 
   async listChapters(projectPath: string, draftName: string) {
-    return await this.draftService.listChapters(projectPath, draftName);
+    return await this.projectFileService.chapters.listChapters(projectPath, draftName);
   }
   async createChapter(projectPath: string, draftName: string, chapterName: string) {
-    return await this.draftService.createChapter(
+    return await this.projectFileService.chapters.createChapter(
       projectPath,
       draftName,
       chapterName,
@@ -78,13 +78,22 @@ export class WriteAidManager {
     );
   }
   async deleteChapter(projectPath: string, draftName: string, chapterName: string) {
-    return await this.draftService.deleteChapter(projectPath, draftName, chapterName);
+    return await this.projectFileService.chapters.deleteChapter(
+      projectPath,
+      draftName,
+      chapterName,
+    );
   }
   async renameChapter(projectPath: string, draftName: string, oldName: string, newName: string) {
-    return await this.draftService.renameChapter(projectPath, draftName, oldName, newName);
+    return await this.projectFileService.chapters.renameChapter(
+      projectPath,
+      draftName,
+      oldName,
+      newName,
+    );
   }
   async openChapter(projectPath: string, draftName: string, chapterName: string) {
-    return await this.draftService.openChapter(projectPath, draftName, chapterName);
+    return await this.projectFileService.chapters.openChapter(projectPath, draftName, chapterName);
   }
 
   get panelRefreshDebounceMs(): number {
@@ -331,7 +340,12 @@ export class WriteAidManager {
           drafts: this.listDrafts(projectPath),
           projectPath,
           onSubmit: async (draftName: string, copyFrom?: string) => {
-            await this.draftService.createDraft(draftName, copyFrom, projectPath, this.settings);
+            await this.projectFileService.drafts.createDraft(
+              draftName,
+              copyFrom,
+              projectPath,
+              this.settings,
+            );
             new Notice(`Draft "${draftName}" created in ${projectPath}.`);
           },
         }).open();
@@ -398,7 +412,7 @@ export class WriteAidManager {
   }
 
   async createNewDraft(draftName: string, copyFromDraft?: string, projectPath?: string) {
-    const res = await this.draftService.createDraft(
+    const res = await this.projectFileService.drafts.createDraft(
       draftName,
       copyFromDraft,
       projectPath,
@@ -409,7 +423,7 @@ export class WriteAidManager {
   }
 
   listDrafts(projectPath?: string): string[] {
-    return this.draftService.listDrafts(projectPath);
+    return this.projectFileService.drafts.listDrafts(projectPath);
   }
 
   /**
@@ -444,7 +458,7 @@ export class WriteAidManager {
       return false;
     }
     const wasActive = this.activeDraft === oldName;
-    const ok = await this.draftService.renameDraft(
+    const ok = await this.projectFileService.drafts.renameDraft(
       project,
       oldName,
       newName,
@@ -468,7 +482,7 @@ export class WriteAidManager {
       new Notice("No project selected to delete draft.");
       return false;
     }
-    const ok = await this.draftService.deleteDraft(project, draftName, createBackup);
+    const ok = await this.projectFileService.drafts.deleteDraft(project, draftName, createBackup);
     if (ok) {
       new Notice(`Deleted draft ${draftName}`);
       return true;
@@ -478,7 +492,7 @@ export class WriteAidManager {
   }
 
   async suggestNextDraftName(projectPath?: string): Promise<string> {
-    return await this.draftService.suggestNextDraftName(projectPath);
+    return await this.projectFileService.drafts.suggestNextDraftName(projectPath);
   }
 
   getCurrentProjectPath(): string | null {

@@ -1,8 +1,14 @@
 import type { CallableFunction, ExceptionConstructor } from "@/types";
 
 export const FOLDERS = {
-  DRAFTS: "Drafts",
-  MANUSCRIPTS: "Manuscripts",
+  DRAFTS: "drafts",
+  MANUSCRIPTS: "manuscripts",
+  BACKUPS: ".writeaid-backups",
+} as const;
+
+export const FILES = {
+  META: "meta.md",
+  OUTLINE: "outline.md",
 } as const;
 
 export const SLUG_STYLE = {

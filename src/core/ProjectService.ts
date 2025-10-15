@@ -1,18 +1,19 @@
-import { DraftService } from "@/core/DraftService";
+import { ProjectFileService } from "@/core/ProjectFileService";
 import { TemplateService } from "@/core/TemplateService";
 import type { WriteAidSettings } from "@/types";
 import { App, normalizePath, Notice, TFile, TFolder } from "obsidian";
-import { FOLDERS } from "./utils";
+import { readMetaFile } from "./meta";
+import { asyncFilter, debug, DEBUG_PREFIX, FILES, FOLDERS, PROJECT_TYPE, type ProjectType } from "./utils";
 
 export class ProjectService {
   app: App;
   tpl: TemplateService;
-  draftService: DraftService;
+  projectFileService: ProjectFileService;
 
   constructor(app: App) {
     this.app = app;
     this.tpl = new TemplateService(app);
-    this.draftService = new DraftService(app);
+    this.projectFileService = new ProjectFileService(app);
   }
 
   /** Create a project folder, drafts folder and initial draft folder(s). Returns the project path. */
@@ -48,7 +49,7 @@ export class ProjectService {
     }
 
     const draftName = initialDraftName || "Draft 1";
-    await this.draftService.createDraft(draftName, undefined, projectPath, settings);
+    await this.projectFileService.drafts.createDraft(draftName, undefined, projectPath, settings);
 
     return projectPath;
   }
@@ -99,13 +100,61 @@ export class ProjectService {
     return out;
   }
 
+  /** List all folders that look like WriteAid projects */
+  async listProjects(): Promise<string[]> {
+    const folders = this.listAllFolders();
+    const filteredFolders = folders.filter((p) => !!p);
+    debug(`${DEBUG_PREFIX} allFolders:`, folders);
+    debug(`${DEBUG_PREFIX} filteredFolders:`, filteredFolders);
+    const projects = await asyncFilter(filteredFolders, (p) => this.isProjectFolder(p));
+    debug(
+      `${DEBUG_PREFIX} found ${filteredFolders.length} folders, ${projects.length} projects:`,
+      projects,
+    );
+    return projects;
+  }
+
+  /** Get the project type ("single-file" or "multi-file") from meta.md, or null if not found/invalid */
+  async getProjectType(projectPath: string): Promise<ProjectType | null> {
+    const metaPath = `${projectPath}/${FILES.META}`;
+    const metaContent = await readMetaFile(this.app, metaPath);
+    if (metaContent && metaContent.project_type) {
+      const pt = metaContent.project_type as ProjectType;
+      if (Object.values(PROJECT_TYPE).includes(pt)) {
+        return pt;
+      }
+    }
+    return null;
+  }
+
+  /** Get the Drafts folder TFolder object, or null if not found */
+  async getDraftsFolder(projectPath: string): Promise<TFolder | null> {
+    const draftsPath = `${projectPath}/${FOLDERS.DRAFTS}`;
+    const draftsFolder = this.app.vault.getAbstractFileByPath(draftsPath);
+    if (draftsFolder && draftsFolder instanceof TFolder) {
+      return draftsFolder;
+    }
+    return null;
+  }
+
+  /** Get the Manuscripts folder TFolder object, or null if not found */
+  async getManuscriptsFolder(projectPath: string): Promise<TFolder | null> {
+    const manuscriptsPath = `${projectPath}/${FOLDERS.MANUSCRIPTS}`;
+    const manuscriptsFolder = this.app.vault.getAbstractFileByPath(manuscriptsPath);
+    if (manuscriptsFolder && manuscriptsFolder instanceof TFolder) {
+      return manuscriptsFolder;
+    }
+    return null;
+  }
+
+
   // Simple heuristic to determine whether a folder looks like a project managed by WriteAid
   // We consider a folder a project if it contains a meta.md or a Drafts/ subfolder.
   async isProjectFolder(path: string): Promise<boolean> {
     if (!path || typeof path !== "string") return false;
     const base = path.trim().replace(/\\/g, "/").replace(/\/+$/, "");
     try {
-      const metaPath = normalizePath(`${base}/meta.md`);
+      const metaPath = normalizePath(`${base}/${FILES.META}`);
       const hasMeta = await this.app.vault.adapter.exists(metaPath);
       const hasDrafts = await this.app.vault.adapter.exists(
         normalizePath(`${base}/${FOLDERS.DRAFTS}`),

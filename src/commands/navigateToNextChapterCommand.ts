@@ -22,7 +22,10 @@ export function navigateToNextChapterCommand(manager: WriteAidManager) {
     const chapterFileName = match[3];
 
     try {
-      const chapters = await manager.draftService.listChapters(projectPath, draftName);
+      const chapters = await manager.projectFileService.chapters.listChapters(
+        projectPath,
+        draftName,
+      );
       const currentIndex = chapters.findIndex((ch) => ch.name === chapterFileName);
       if (currentIndex === -1) {
         new Notice("Unable to find the current chapter in the draft.");

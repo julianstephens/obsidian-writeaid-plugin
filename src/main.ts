@@ -125,15 +125,7 @@ export default class WriteAidPlugin extends Plugin {
 
     this.app.workspace.onLayoutReady(async () => {
       // Ensure an active project is always selected on startup if projects exist
-      const allFolders: string[] = projectService.listAllFolders();
-      const filteredFolders = allFolders.filter((p) => !!p);
-      const projects = await asyncFilter(filteredFolders, (p) => projectService.isProjectFolder(p));
-      debug(`${DEBUG_PREFIX} allFolders:`, allFolders);
-      debug(`${DEBUG_PREFIX} filteredFolders:`, filteredFolders);
-      debug(
-        `${DEBUG_PREFIX} found ${filteredFolders.length} folders, ${projects.length} projects:`,
-        projects,
-      );
+      const projects = await projectService.listProjects();
       let toActivate: string | null = null;
       if (projects.length === 1) {
         toActivate = projects[0];
@@ -153,14 +145,12 @@ export default class WriteAidPlugin extends Plugin {
         // No valid projects found, but check if saved active project exists and has meta.md
         const lastActiveRaw = this.settings.activeProject;
         const lastActive = lastActiveRaw?.trim().replace(/^\/+/, "").replace(/\/+$/, "");
-        if (lastActive && (await this.app.vault.adapter.exists(lastActive))) {
-          const metaPath = `${lastActive}/meta.md`;
-          if (await this.app.vault.adapter.exists(metaPath)) {
+        const isValidProject = await projectService.isProjectFolder(lastActiveRaw || "");
+        if (isValidProject) {
             debug(
-              `${DEBUG_PREFIX} activating saved project '${lastActive}' as it exists and has meta.md`,
+              `${DEBUG_PREFIX} activating saved project '${lastActive}' as it exists and has valid meta.md`,
             );
-            toActivate = lastActive;
-          }
+            toActivate = lastActive ?? null;
         }
       }
       debug(`${DEBUG_PREFIX} toActivate='${toActivate}'`);

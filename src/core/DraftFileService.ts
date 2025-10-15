@@ -3,90 +3,42 @@ import { readMetaFile, updateMetaStats } from "@/core/meta";
 import {
   debug,
   DEBUG_PREFIX,
+  FILES,
   FOLDERS,
   PROJECT_TYPE,
   slugifyDraftName,
-  suppressAsync,
-  type ProjectType,
+  suppressAsync
 } from "@/core/utils";
+import type { WriteAidManager } from "@/manager";
 import type { WriteAidSettings } from "@/types";
 import { ConfirmOverwriteModal } from "@/ui/modals/ConfirmOverwriteModal";
 import { App, Notice, TFile, TFolder } from "obsidian";
+import { ChapterFileService } from "./ChapterFileService";
+import { ProjectService } from "./ProjectService";
 
-export class DraftService {
+export class DraftFileService {
   app: App;
   tpl: TemplateService;
+  projectSvc: ProjectService;
+  backupSvc: BackupService;
+  chapters: ChapterFileService;
+  manager: WriteAidManager;
 
-  constructor(app: App) {
+  constructor(app: App, chapters: ChapterFileService) {
     this.app = app;
     this.tpl = new TemplateService(app);
-  }
-
-  /**
-   * Get the project type for a given project path.
-   * Returns "single-file" or "multi-file".
-   */
-  async getProjectType(projectPath: string): Promise<ProjectType> {
-    const metaCandidate = `${projectPath}/meta.md`;
-    if (this.app.vault.getAbstractFileByPath(metaCandidate)) {
-      const result = await suppressAsync(async () => {
-        const metaFile = this.app.vault.getAbstractFileByPath(metaCandidate);
-        if (metaFile instanceof TFile) {
-          const metaContent = await this.app.vault.read(metaFile);
-          const fmMatch = metaContent.match(/^---\n([\s\S]*?)\n---/);
-          if (fmMatch) {
-            const lines = fmMatch[1].split(/\r?\n/);
-            for (const line of lines) {
-              const mType = line.match(/^project_type:\s*(.*)$/i);
-              if (mType) {
-                const val = mType[1].trim();
-                if (val === PROJECT_TYPE.SINGLE) return PROJECT_TYPE.SINGLE;
-                if (val === PROJECT_TYPE.MULTI) return PROJECT_TYPE.MULTI;
-              }
-            }
-          }
-        }
-      });
-      if (result !== undefined) return result;
-    }
-
-    // fallback: old heuristic - check if there's a file named after the project
-    const projectName = projectPath.split("/").pop() || projectPath;
-    const singleFileCandidate = `${projectPath}/${projectName}.md`;
-    const isSingleFile = !!this.app.vault.getAbstractFileByPath(singleFileCandidate);
-    return isSingleFile ? PROJECT_TYPE.SINGLE : PROJECT_TYPE.MULTI;
-  }
-
-  /**
-   * Reorder chapters in a draft. Accepts an array of chapter objects in the new order.
-   * Each object must have { chapterName, order }.
-   */
-  async reorderChapters(
-    projectPath: string,
-    draftName: string,
-    newOrder: Array<{ chapterName: string; order: number }>,
-  ) {
-    const project = this.resolveProjectPath(projectPath);
-    if (!project) return false;
-    const draftFolder = `${project}/${FOLDERS.DRAFTS}/${draftName}`;
-    for (let i = 0; i < newOrder.length; i++) {
-      const { chapterName } = newOrder[i];
-      const filePath = `${draftFolder}/${chapterName}.md`;
-      const file = this.app.vault.getAbstractFileByPath(filePath);
-      if (file && file instanceof TFile) {
-        let content = await this.app.vault.read(file);
-        if (content.match(/^---\n([\s\S]*?)\n---/)) {
-          content = content.replace(/^---\n([\s\S]*?)\n---/, (match, fm) => {
-            let cleanedFm = fm.replace(/^order:.*\n?/gm, "");
-            if (!cleanedFm.endsWith("\n")) cleanedFm += "\n";
-            cleanedFm += `order: ${i + 1}\n`;
-            return `---\n${cleanedFm}---`;
-          });
-          await this.app.vault.modify(file, content);
-        }
+    this.projectSvc = new ProjectService(app)
+    this.backupSvc = new BackupService();
+    this.chapters = chapters;
+    this.manager = (
+      this.app as unknown as {
+        plugins: { getPlugin?: (id: string) => { manager?: WriteAidManager } };
       }
-    }
-    return true;
+    ).plugins.getPlugin?.("obsidian-writeaid-plugin")?.manager!;
+  }
+
+  private resolveProjectPath(projectPath?: string): string | null {
+    return projectPath || this.manager.activeProject || null;
   }
 
   /**
@@ -95,7 +47,7 @@ export class DraftService {
   async suggestNextDraftName(projectPath?: string): Promise<string> {
     const project = this.resolveProjectPath(projectPath);
     if (!project) return "Draft 1";
-    const metaPath = `${project}/meta.md`;
+    const metaPath = `${project}/${FILES.META}`;
     let totalDrafts = 0;
     await suppressAsync(async () => {
       const meta = await readMetaFile(this.app, metaPath);
@@ -104,178 +56,6 @@ export class DraftService {
       }
     });
     return `Draft ${totalDrafts + 1}`;
-  }
-
-  /**
-   * List chapters for a draft in a multi-file project. Returns array of { name, chapterName? }
-   */
-  async listChapters(
-    projectPath: string,
-    draftName: string,
-  ): Promise<Array<{ name: string; chapterName?: string }>> {
-    const project = this.resolveProjectPath(projectPath);
-    if (!project) return [];
-    const draftFolder = `${project}/${FOLDERS.DRAFTS}/${draftName}`;
-    const folder = this.app.vault.getAbstractFileByPath(draftFolder);
-    const chapters: Array<{ name: string; chapterName?: string; order: number }> = [];
-    if (folder && folder instanceof TFolder) {
-      for (const file of folder.children) {
-        if (file instanceof TFile && file.extension === "md") {
-          await suppressAsync(async () => {
-            const content = await this.app.vault.read(file);
-            const fmMatch = content.match(/^---\n([\s\S]*?)\n---/);
-            let order: number | undefined = undefined;
-            let chapterName: string | undefined = undefined;
-            if (fmMatch) {
-              const lines = fmMatch[1].split(/\r?\n/);
-              for (const line of lines) {
-                const mOrder = line.match(/^order:\s*(\d+)/i);
-                if (mOrder) order = parseInt(mOrder[1], 10);
-                const mChapterName = line.match(/^chapter_name:\s*(.*)$/i);
-                if (mChapterName) {
-                  let val = mChapterName[1].trim();
-                  if (
-                    (val.startsWith('"') && val.endsWith('"')) ||
-                    (val.startsWith("'") && val.endsWith("'"))
-                  ) {
-                    val = val.slice(1, -1);
-                  }
-                  if (val.length > 0) chapterName = val;
-                }
-              }
-            }
-            if (
-              typeof order === "number" &&
-              !isNaN(order) &&
-              chapterName &&
-              chapterName.length > 0
-            ) {
-              chapters.push({ name: file.name.replace(/\.md$/, ""), chapterName, order });
-            }
-          });
-        }
-      }
-    }
-    chapters.sort((a, b) => a.order - b.order);
-    return chapters.map(({ name, chapterName }) => ({ name, chapterName }));
-  }
-
-  /** Create a new chapter file in a draft folder. */
-  async createChapter(
-    projectPath: string,
-    draftName: string,
-    chapterName: string,
-    settings?: WriteAidSettings,
-  ) {
-    const project = this.resolveProjectPath(projectPath);
-    if (!project) return false;
-    const draftFolder = `${project}/${FOLDERS.DRAFTS}/${draftName}`;
-    const slug = slugifyDraftName(
-      chapterName,
-      settings?.slugStyle as import("@/core/utils").DraftSlugStyle,
-    );
-    const fileName = `${slug}.md`;
-    const filePath = `${draftFolder}/${fileName}`;
-    if (this.app.vault.getAbstractFileByPath(filePath)) return false;
-    let maxOrder = 0;
-    const folder = this.app.vault.getAbstractFileByPath(draftFolder);
-    if (folder && folder instanceof TFolder) {
-      for (const file of folder.children) {
-        if (file instanceof TFile && file.extension === "md") {
-          await suppressAsync(async () => {
-            const content = await this.app.vault.read(file);
-            const fmMatch = content.match(/^---\n([\s\S]*?)\n---/);
-            if (fmMatch) {
-              const lines = fmMatch[1].split(/\r?\n/);
-              for (const line of lines) {
-                const m = line.match(/^order:\s*(\d+)/i);
-                if (m) {
-                  const ord = parseInt(m[1], 10);
-                  if (!isNaN(ord) && ord > maxOrder) maxOrder = ord;
-                }
-              }
-            }
-          });
-        }
-      }
-    }
-    const order = maxOrder + 1;
-    let title = `# ${chapterName}`;
-    const frontmatter = `---\norder: ${order}\nchapter_name: ${JSON.stringify(chapterName)}\n---\n`;
-    await this.app.vault.create(filePath, `${frontmatter}\n${title}\n\n`);
-    return true;
-  }
-
-  /** Delete a chapter file from a draft folder. */
-  async deleteChapter(projectPath: string, draftName: string, chapterName: string) {
-    const project = this.resolveProjectPath(projectPath);
-    if (!project) return false;
-    const draftFolder = `${project}/${FOLDERS.DRAFTS}/${draftName}`;
-    const fileName = `${chapterName}.md`;
-    const filePath = `${draftFolder}/${fileName}`;
-    const file = this.app.vault.getAbstractFileByPath(filePath);
-    if (file && file instanceof TFile) {
-      await this.app.vault.delete(file);
-      // After deletion, reassign order for all remaining chapters using listChapters
-      const chapters = await this.listChapters(projectPath, draftName);
-      for (let i = 0; i < chapters.length; i++) {
-        const { name } = chapters[i];
-        const chapterFilePath = `${draftFolder}/${name}.md`;
-        const chapterFile = this.app.vault.getAbstractFileByPath(chapterFilePath);
-        if (chapterFile && chapterFile instanceof TFile) {
-          let content = await this.app.vault.read(chapterFile);
-          if (content.match(/^---\n([\s\S]*?)\n---/)) {
-            content = content.replace(/^---\n([\s\S]*?)\n---/, (match, fm) => {
-              let cleanedFm = fm.replace(/^order:.*\n?/gm, "");
-              if (!cleanedFm.endsWith("\n")) cleanedFm += "\n";
-              cleanedFm += `order: ${i + 1}\n`;
-              return `---\n${cleanedFm}---`;
-            });
-            await this.app.vault.modify(chapterFile, content);
-          }
-        }
-      }
-      return true;
-    }
-    return false;
-  }
-
-  /** Rename a chapter file and/or update its short name. */
-  async renameChapter(projectPath: string, draftName: string, oldName: string, newName: string) {
-    const project = this.resolveProjectPath(projectPath);
-    if (!project) return false;
-    const draftFolder = `${project}/${FOLDERS.DRAFTS}/${draftName}`;
-    const oldFile = `${draftFolder}/${oldName}.md`;
-    const newFile = `${draftFolder}/${newName}.md`;
-    const file = this.app.vault.getAbstractFileByPath(oldFile);
-    if (!file || !(file instanceof TFile)) return false;
-    let content = await this.app.vault.read(file);
-    let title = `# ${newName}`;
-
-    if (content.match(/^---\n([\s\S]*?)\n---/)) {
-      content = content.replace(/^---\n([\s\S]*?)\n---/, (match, fm) => {
-        let cleanedFm = fm.replace(/^chapter_name:.*\n?/gm, "");
-        if (!cleanedFm.endsWith("\n")) cleanedFm += "\n";
-        cleanedFm += `chapter_name: ${JSON.stringify(newName)}\n`;
-        return `---\n${cleanedFm}---`;
-      });
-    }
-    content = content.replace(/^#.*$/m, title);
-    if (oldName !== newName) {
-      await this.app.vault.create(newFile, content);
-      await this.app.vault.delete(file);
-    } else {
-      await this.app.vault.modify(file, content);
-    }
-    return true;
-  }
-
-  private resolveProjectPath(projectPath?: string): string | null {
-    if (projectPath && projectPath !== "") return projectPath;
-    const activeFile = this.app.workspace.getActiveFile();
-    if (!activeFile) return null;
-    const folder = activeFile.parent;
-    return folder ? folder.path : null;
   }
 
   async createDraft(
@@ -351,8 +131,8 @@ export class DraftService {
       }
 
       // Determine project type
-      const projectType = await this.getProjectType(projectPathResolved);
-      const isSingleFileProject = projectType === "single-file";
+      const projectType = await this.projectSvc.getProjectType(projectPathResolved);
+      const isSingleFileProject = projectType === PROJECT_TYPE.SINGLE;
 
       if (isSingleFileProject) {
         const slug = slugifyDraftName(
@@ -395,7 +175,7 @@ export class DraftService {
         }
         if (!hasChapter) {
           // Create Chapter 1
-          await this.createChapter(projectPathResolved, draftName, "Chapter 1", settings);
+          await this.chapters.createChapter(projectPathResolved, draftName, "Chapter 1", settings);
         }
       }
     }
@@ -403,11 +183,15 @@ export class DraftService {
     await updateMetaStats(this.app, projectPathResolved, draftName);
   }
 
+  /**
+   * List all drafts in a project.
+   * @param projectPath - The path to the project.
+   * @returns An array of draft names.
+   */
   listDrafts(projectPath?: string): string[] {
     const project = this.resolveProjectPath(projectPath);
     if (!project) return [];
-    const draftsFolder = `${project}/${FOLDERS.DRAFTS}`;
-    const folder = this.app.vault.getAbstractFileByPath(draftsFolder);
+    const folder = this.projectSvc.getDraftsFolder(project);
     if (folder && folder instanceof TFolder) {
       return folder.children
         .filter((child): child is TFolder => child instanceof TFolder)
@@ -423,7 +207,9 @@ export class DraftService {
   async openDraft(projectPath: string | undefined, draftName: string): Promise<boolean> {
     const project = this.resolveProjectPath(projectPath);
     if (!project) return false;
-    const outlinePath = `${project}/${FOLDERS.DRAFTS}/${draftName}/outline.md`;
+    const draftsFolder = await this.projectSvc.getDraftsFolder(project);
+    if (!draftsFolder) return false;
+    const outlinePath = `${draftsFolder.path}/${draftName}/${FILES.OUTLINE}`;
     const outlineFile = this.app.vault.getAbstractFileByPath(outlinePath);
     const outlineOpened = await suppressAsync(async () => {
       if (outlineFile && outlineFile instanceof TFile) {
@@ -436,37 +222,11 @@ export class DraftService {
     if (outlineOpened) return true;
 
     // fallback: open first file inside the draft folder
-    const folderPath = `${project}/${FOLDERS.DRAFTS}/${draftName}`;
+    const folderPath = `${project}/${draftsFolder.name}/${draftName}`;
     const files = this.app.vault.getFiles().filter((f) => f.path.startsWith(folderPath));
     if (files.length > 0) {
       const leaf = this.app.workspace.getLeaf();
       await leaf.openFile(files[0]);
-      return true;
-    }
-    return false;
-  }
-
-  /**
-   * Open a chapter file in Obsidian.
-   * @param projectPath The project path
-   * @param draftName The draft name
-   * @param chapterName The chapter name
-   * @returns true if the file was opened successfully
-   */
-  async openChapter(
-    projectPath: string | undefined,
-    draftName: string,
-    chapterName: string,
-  ): Promise<boolean> {
-    const project = this.resolveProjectPath(projectPath);
-    if (!project) return false;
-    const filePath = `${project}/${FOLDERS.DRAFTS}/${draftName}/${chapterName}.md`;
-    const file = this.app.vault.getAbstractFileByPath(filePath);
-    if (file && file instanceof TFile) {
-      await suppressAsync(async () => {
-        const leaf = this.app.workspace.getLeaf();
-        await leaf.openFile(file);
-      });
       return true;
     }
     return false;
@@ -485,8 +245,10 @@ export class DraftService {
   ): Promise<boolean> {
     const project = this.resolveProjectPath(projectPath);
     if (!project) return false;
-    const oldFolder = `${project}/${FOLDERS.DRAFTS}/${oldName}`;
-    const newFolder = `${project}/${FOLDERS.DRAFTS}/${newName}`;
+    const draftsFolder = await this.projectSvc.getDraftsFolder(project);
+    if (!draftsFolder) return false;
+    const oldFolder = `${project}/${draftsFolder.name}/${oldName}`;
+    const newFolder = `${project}/${draftsFolder.name}/${newName}`;
     try {
       // create new folder if needed
       if (!this.app.vault.getAbstractFileByPath(newFolder)) {
@@ -534,7 +296,7 @@ export class DraftService {
         await import("./meta").then((meta) => meta.updateMetaStats(this.app, project, newName));
       });
       // Update meta.md in the renamed draft folder if it exists
-      const draftMetaPath = `${newFolder}/meta.md`;
+      const draftMetaPath = `${newFolder}/${FILES.META}`;
       const draftMetaFile = this.app.vault.getAbstractFileByPath(draftMetaPath);
       if (draftMetaFile) {
         await suppressAsync(async () => {
@@ -563,19 +325,13 @@ export class DraftService {
   ): Promise<boolean> {
     const project = this.resolveProjectPath(projectPath);
     if (!project) return false;
-    const draftFolder = `${project}/${FOLDERS.DRAFTS}/${draftName}`;
-    const ts = Date.now();
-    const backupBase = `${project}/.writeaid-backups/${ts}`;
+    const draftsFolder = await this.projectSvc.getDraftsFolder(project);
+    if (!draftsFolder) return false;
+    const draftFolder = `${project}/${draftsFolder.name}/${draftName}`;
     try {
       const files = this.app.vault.getFiles().filter((f) => f.path.startsWith(draftFolder));
       if (createBackup) {
-        for (const file of files) {
-          const rel = file.path.substring(draftFolder.length + 1);
-          const dest = `${backupBase}/${draftName}/${rel}`;
-          const content = await this.app.vault.read(file);
-          // ensure parent folders will be created by vault when creating files with nested paths
-          await this.app.vault.create(dest, content);
-        }
+        await this.backupSvc.createBackup(draftFolder);
       }
       // delete original files
       for (const file of files) {
@@ -596,15 +352,17 @@ export class DraftService {
   ): Promise<boolean> {
     const project = this.resolveProjectPath(projectPath);
     if (!project) return false;
-    const projectType = await this.getProjectType(project);
-    const draftFolder = `${project}/${FOLDERS.DRAFTS}/${draftName}`;
-    const manuscriptFolder = `${project}/${FOLDERS.MANUSCRIPTS}`;
+    const draftsFolder = await this.projectSvc.getDraftsFolder(project);
+    if (!draftsFolder) return false;
+    const projectType = await this.projectSvc.getProjectType(project);
 
+    const draftFolder = `${project}/${draftsFolder.name}/${draftName}`;
     if (!this.app.vault.getAbstractFileByPath(draftFolder)) {
       new Notice(`Draft folder ${draftFolder} does not exist.`);
       return false;
     }
 
+    const manuscriptFolder = `${project}/${FOLDERS.MANUSCRIPTS}`;
     if (!this.app.vault.getAbstractFileByPath(manuscriptFolder)) {
       await this.app.vault.createFolder(manuscriptFolder);
     }
@@ -614,9 +372,9 @@ export class DraftService {
     const manuscriptNameTemplate = settings?.manuscriptNameTemplate || "{{draftName}}";
 
     debug(
-      `${DEBUG_PREFIX} DraftService.generateManuscript - manuscriptNameTemplate: "${manuscriptNameTemplate}"`,
+      `${DEBUG_PREFIX} DraftFileService.generateManuscript - manuscriptNameTemplate: "${manuscriptNameTemplate}"`,
     );
-    debug(`${DEBUG_PREFIX} DraftService.generateManuscript - settings object:`, settings);
+    debug(`${DEBUG_PREFIX} DraftFileService.generateManuscript - settings object:`, settings);
 
     const draftSlug = slugifyDraftName(
       draftName,
@@ -664,10 +422,12 @@ export class DraftService {
   }
 }
 
+/** Remove frontmatter from a string */
 function stripFrontmatter(content: string): string {
   return content.replace(/^---\n([\s\S]*?)\n---/, "").trim();
 }
 
+/** Remove top-level headings from a string */
 function stripHeadings(content: string): string {
   return content.replace(/^#{1,6} .*\n/, "").trim();
 }

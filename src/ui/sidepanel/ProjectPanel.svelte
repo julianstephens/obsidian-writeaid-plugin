@@ -3,8 +3,8 @@
   // reliably inside the Obsidian ItemView using DOM APIs.
   // The tag name chosen is <wa-project-panel>.
   // Note: the Vite/Svelte build must enable customElement or svelte config.
-  import type { DraftService } from "@/core/DraftService";
   import { readMetaFile } from "@/core/meta";
+  import type { ProjectFileService } from "@/core/ProjectFileService";
   import type { ProjectService } from "@/core/ProjectService";
   import { APP_NAME, debug, DEBUG_PREFIX } from "@/core/utils";
   import type { WriteAidManager } from "@/manager";
@@ -31,7 +31,7 @@
   import { flip } from "svelte/animate";
   import { cubicOut } from "svelte/easing";
 
-  export let draftService: DraftService;
+  export let projectFileService: ProjectFileService;
   export let projectService: ProjectService;
   export let manager: WriteAidManager;
   export let activeProject: string | null = null;
@@ -156,13 +156,8 @@
         drafts = [];
         return;
       }
-      // Prefer draftService for listing drafts to avoid duplicating logic
-      if (draftService && typeof draftService.listDrafts === "function") {
-        drafts = draftService.listDrafts(selectedValue) || [];
-      } else {
-        // fallback to manager API
-        drafts = manager?.listDrafts ? manager.listDrafts(selectedValue) || [] : [];
-      }
+      // Use the new projectFileService for listing drafts
+      drafts = projectFileService.drafts.listDrafts(selectedValue) || [];
       // apply sort
       drafts = Array.from(drafts);
       drafts.sort((a, b) => (a > b ? 1 : a < b ? -1 : 0));
@@ -199,13 +194,9 @@
         chapters = [];
         return;
       }
-      // Prefer draftService for chapter listing
+      // Use the new projectFileService for chapter listing
       let ch: Chapter[] = [];
-      if (draftService && typeof draftService.listChapters === "function") {
-        ch = await draftService.listChapters(selectedValue, manager.activeDraft);
-      } else if (manager && typeof manager.listChapters === "function") {
-        ch = await manager.listChapters(selectedValue, manager.activeDraft);
-      }
+      ch = await projectFileService.chapters.listChapters(selectedValue, manager.activeDraft);
       chapters = Array.isArray(ch) ? ch : [];
     } catch (e) {
       chapters = [];
@@ -220,12 +211,8 @@
   async function createInlineDraft() {
     if (!selectedValue || !newDraftName.trim()) return;
     try {
-      // Prefer manager for creating drafts to ensure notifications and panel updates
-      if (manager && typeof manager.createNewDraft === "function") {
-        await manager.createNewDraft(newDraftName.trim(), copyFrom || undefined, selectedValue);
-      } else if (draftService && typeof draftService.createDraft === "function") {
-        await draftService.createDraft(newDraftName.trim(), copyFrom || undefined, selectedValue);
-      }
+      // Use the new projectFileService for creating drafts
+      await projectFileService.drafts.createDraft(newDraftName.trim(), copyFrom || undefined, selectedValue);
     } catch (e) {
       // ignore
     }
@@ -242,15 +229,9 @@
   async function openDraft(draftName) {
     // Prefer manager.setActiveDraft to change active draft
     if (!selectedValue) return;
-    // If draftService can open drafts, use it (opens files). Otherwise, fall back to manager.setActiveDraft.
+    // Use the new projectFileService for opening drafts
     let opened = false;
-    if (draftService && typeof draftService.openDraft === "function") {
-      try {
-        opened = await draftService.openDraft(selectedValue, draftName);
-      } catch (e) {
-        opened = false;
-      }
-    }
+    opened = await projectFileService.drafts.openDraft(selectedValue, draftName);
     if (!opened) {
       if (manager?.setActiveDraft) await manager.setActiveDraft(draftName, selectedValue);
     }

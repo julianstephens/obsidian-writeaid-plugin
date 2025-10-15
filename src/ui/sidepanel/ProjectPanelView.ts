@@ -1,4 +1,4 @@
-import { DraftService } from "@/core/DraftService";
+import { ProjectFileService } from "@/core/ProjectFileService";
 import { ProjectService } from "@/core/ProjectService";
 import { APP_NAME, suppress } from "@/core/utils";
 import type { WriteAidManager } from "@/manager";
@@ -16,7 +16,7 @@ export const VIEW_TYPE_PROJECT_PANEL = "writeaid-project-panel";
 export class ProjectPanelView extends ItemView {
   app: App;
   projectService: ProjectService;
-  draftService: DraftService;
+  projectFileService: ProjectFileService;
   containerElInner: HTMLElement | null = null;
   selectedProject: string | null = null;
   svelteComponent:
@@ -37,7 +37,7 @@ export class ProjectPanelView extends ItemView {
     super(leaf);
     this.app = app;
     this.projectService = new ProjectService(app);
-    this.draftService = new DraftService(app);
+    this.projectFileService = new ProjectFileService(app);
   }
 
   getViewType(): string {
@@ -82,7 +82,7 @@ export class ProjectPanelView extends ItemView {
         app: this.app,
         manager,
         projectService: this.projectService,
-        draftService: this.draftService,
+        projectFileService: this.projectFileService,
       };
 
       // Prefer mounting as a DOM custom element when possible. This avoids
@@ -108,7 +108,7 @@ export class ProjectPanelView extends ItemView {
             ).plugins.getPlugin?.("obsidian-writeaid-plugin")?.manager;
           });
           suppress(() => {
-            (el as { draftService?: DraftService }).draftService = this.draftService;
+            (el as { draftService?: any }).draftService = this.projectFileService.drafts;
           });
           suppress(() => {
             (el as { activeProject?: unknown }).activeProject =
@@ -135,7 +135,7 @@ export class ProjectPanelView extends ItemView {
             const el = document.createElement(tagName) as HTMLElement & {
               projectService?: ProjectService;
               manager?: unknown;
-              draftService?: DraftService;
+              draftService?: any;
               activeProject?: unknown;
             };
             suppress(() => {
@@ -149,7 +149,7 @@ export class ProjectPanelView extends ItemView {
               ).plugins.getPlugin?.("obsidian-writeaid-plugin")?.manager;
             });
             suppress(() => {
-              el.draftService = this.draftService;
+              el.draftService = this.projectFileService.drafts;
             });
             suppress(() => {
               el.activeProject =
