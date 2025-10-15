@@ -650,7 +650,7 @@ export class DraftService {
       if (draftFile && draftFile instanceof TFile) {
         const content = await this.app.vault.read(draftFile);
         manuscriptContent += stripHeadings(stripFrontmatter(content));
-        this.app.vault.create(manuscriptPath, manuscriptContent);
+        await this.app.vault.create(manuscriptPath, manuscriptContent);
       } else {
         new Notice(`Main draft file ${draftMainPath} not found.`);
         return false;
