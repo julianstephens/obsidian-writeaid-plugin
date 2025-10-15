@@ -126,11 +126,11 @@ export class ProjectService {
         ) {
           return false;
         }
-      } catch (e) {
+      } catch (_e) { // ignore }
         return false;
       }
       return true;
-    } catch (e) {
+    } catch (_e) { // ignore }
       return false;
     }
   }

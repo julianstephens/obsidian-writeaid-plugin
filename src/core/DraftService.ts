@@ -59,7 +59,7 @@ export class DraftService {
       if (meta && typeof meta.total_drafts === "number") {
         totalDrafts = meta.total_drafts;
       }
-    } catch (e) {
+    } catch (_e) { // ignore }
       // ignore error
     }
     return `Draft ${totalDrafts + 1}`;
@@ -113,7 +113,7 @@ export class DraftService {
             ) {
               chapters.push({ name: file.name.replace(/\.md$/, ""), chapterName, order });
             }
-          } catch (e) {
+          } catch (_e) { // ignore }
             // ignore error
           }
         }
@@ -128,7 +128,6 @@ export class DraftService {
     projectPath: string,
     draftName: string,
     chapterName: string,
-    // chapterNameValue?: string,
   ) {
     const project = this.resolveProjectPath(projectPath);
     if (!project) return false;
@@ -155,7 +154,7 @@ export class DraftService {
                 }
               }
             }
-          } catch (e) {
+          } catch (_e) { // ignore }
             /* ignore */
           }
         }
@@ -310,7 +309,7 @@ export class DraftService {
               }
             }
           }
-        } catch (e) {
+        } catch (_e) { // ignore }
           // fallback: treat as multi-file
         }
       } else {
@@ -353,7 +352,7 @@ export class DraftService {
                     }
                   }
                 }
-              } catch (e) {
+              } catch (_e) { // ignore }
                 /* ignore */
               }
               if (hasChapter) break;
@@ -399,7 +398,7 @@ export class DraftService {
         await leaf.openFile(outlineFile);
         return true;
       }
-    } catch (e) {
+    } catch (_e) { // ignore }
       // ignore and try fallback
     }
 
@@ -410,6 +409,34 @@ export class DraftService {
       const leaf = this.app.workspace.getLeaf();
       await leaf.openFile(files[0]);
       return true;
+    }
+    return false;
+  }
+
+  /**
+   * Open a chapter file in Obsidian.
+   * @param projectPath The project path
+   * @param draftName The draft name
+   * @param chapterName The chapter name
+   * @returns true if the file was opened successfully
+   */
+  async openChapter(
+    projectPath: string | undefined,
+    draftName: string,
+    chapterName: string,
+  ): Promise<boolean> {
+    const project = this.resolveProjectPath(projectPath);
+    if (!project) return false;
+    const filePath = `${project}/Drafts/${draftName}/${chapterName}.md`;
+    const file = this.app.vault.getAbstractFileByPath(filePath);
+    try {
+      if (file && file instanceof TFile) {
+        const leaf = this.app.workspace.getLeaf();
+        await leaf.openFile(file);
+        return true;
+      }
+    } catch (_e) { // ignore }
+      // ignore
     }
     return false;
   }
@@ -474,7 +501,7 @@ export class DraftService {
       // Update meta.md in the project root
       try {
         await import("./meta").then((meta) => meta.updateMetaStats(this.app, project, newName));
-      } catch (e) {
+      } catch (_e) { // ignore }
         // Ignore errors updating project meta
       }
       // Update meta.md in the renamed draft folder if it exists
@@ -489,12 +516,12 @@ export class DraftService {
             meta.draft = newName;
             await writeMetaFile(this.app, draftMetaPath, meta);
           }
-        } catch (e) {
+        } catch (_e) { // ignore }
           // Ignore errors updating draft meta
         }
       }
       return true;
-    } catch (e) {
+    } catch (_e) { // ignore }
       return false;
     }
   }
@@ -527,12 +554,12 @@ export class DraftService {
       for (const file of files) {
         try {
           await this.app.vault.delete(file);
-        } catch (e) {
+        } catch (_e) { // ignore }
           // Ignore errors when deleting files
         }
       }
       return true;
-    } catch (e) {
+    } catch (_e) { // ignore }
       return false;
     }
   }

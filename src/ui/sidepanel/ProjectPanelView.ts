@@ -17,16 +17,6 @@ import { ItemView, Notice, type App, type WorkspaceLeaf } from "obsidian";
 import { mount } from "svelte";
 
 // window.__WRITEAID_DEBUG__ = true in the DevTools console at runtime.
-function debug(...args: unknown[]) {
-  try {
-    if ((window as unknown as { __WRITEAID_DEBUG__?: boolean }).__WRITEAID_DEBUG__) {
-      // Use console.debug so users can filter easily; fallback to log if missing.
-      (console.debug || console.log).apply(console, args as []);
-    }
-  } catch (e) {
-    // Ignore errors in debug logging
-  }
-}
 
 export const VIEW_TYPE_PROJECT_PANEL = "writeaid-project-panel";
 
@@ -105,7 +95,7 @@ export class ProjectPanelView extends ItemView {
           // set props directly on the element instance
           try {
             (el as { projectService?: ProjectService }).projectService = this.projectService;
-          } catch (e) {
+          } catch (_e) { // ignore }
             /* ignore error */
           }
           try {
@@ -114,12 +104,12 @@ export class ProjectPanelView extends ItemView {
                 plugins: { getPlugin?: (id: string) => { manager?: unknown } };
               }
             ).plugins.getPlugin?.("obsidian-writeaid-plugin")?.manager;
-          } catch (e) {
+          } catch (_e) { // ignore }
             /* ignore error */
           }
           try {
             (el as { draftService?: DraftService }).draftService = this.draftService;
-          } catch (e) {
+          } catch (_e) { // ignore }
             /* ignore error */
           }
           try {
@@ -131,7 +121,7 @@ export class ProjectPanelView extends ItemView {
                   };
                 }
               ).plugins.getPlugin?.("obsidian-writeaid-plugin")?.manager?.activeProject ?? null;
-          } catch (e) {
+          } catch (_e) { // ignore }
             /* ignore error */
           }
           this.svelteComponent = el;
@@ -154,7 +144,7 @@ export class ProjectPanelView extends ItemView {
             };
             try {
               el.projectService = this.projectService;
-            } catch (e) {
+            } catch (_e) { // ignore }
               /* ignore error */
             }
             try {
@@ -163,12 +153,12 @@ export class ProjectPanelView extends ItemView {
                   plugins: { getPlugin?: (id: string) => { manager?: unknown } };
                 }
               ).plugins.getPlugin?.("obsidian-writeaid-plugin")?.manager;
-            } catch (e) {
+            } catch (_e) { // ignore }
               /* ignore error */
             }
             try {
               el.draftService = this.draftService;
-            } catch (e) {
+            } catch (_e) { // ignore }
               /* ignore error */
             }
             try {
@@ -180,7 +170,7 @@ export class ProjectPanelView extends ItemView {
                     };
                   }
                 ).plugins.getPlugin?.("obsidian-writeaid-plugin")?.manager?.activeProject ?? null;
-            } catch (e) {
+            } catch (_e) { // ignore }
               /* ignore error */
             }
             this.svelteComponent = el;
@@ -217,7 +207,7 @@ export class ProjectPanelView extends ItemView {
             );
             try {
               console.error("WriteAid: component snapshot:", Component);
-            } catch (e) {
+            } catch (_e) { // ignore }
               /* ignore error */
             }
             new Notice("WriteAid: error mounting project panel component. See console.");
@@ -264,13 +254,13 @@ export class ProjectPanelView extends ItemView {
               (this.svelteComponent as { $set: (props: { activeProject: unknown }) => void }).$set({
                 activeProject: initialActive,
               });
-            } catch (e) {
+            } catch (_e) { // ignore }
               /* ignore error */
             }
           } else if (this.svelteComponent instanceof HTMLElement) {
             try {
               (this.svelteComponent as { activeProject?: unknown }).activeProject = initialActive;
-            } catch (e) {
+            } catch (_e) { // ignore }
               /* ignore error */
             }
           } else if (
@@ -280,7 +270,7 @@ export class ProjectPanelView extends ItemView {
               (this.svelteComponent as { set: (props: { activeProject: unknown }) => void }).set({
                 activeProject: initialActive,
               });
-            } catch (e) {
+            } catch (_e) { // ignore }
               /* ignore error */
             }
           }
@@ -293,12 +283,12 @@ export class ProjectPanelView extends ItemView {
               (
                 this.svelteComponent as { setActiveProject: (active: unknown) => void }
               ).setActiveProject(initialActive);
-            } catch (e) {
+            } catch (_e) { // ignore }
               /* ignore error */
             }
           }
         }
-      } catch (e) {
+      } catch (_e) { // ignore }
         /* ignore error */
       }
 
@@ -309,7 +299,7 @@ export class ProjectPanelView extends ItemView {
         ) {
           try {
             (this.svelteComponent as { refreshPanel: () => void }).refreshPanel();
-          } catch (e) {
+          } catch (_e) { // ignore }
             /* ignore error */
           }
         }
@@ -332,14 +322,14 @@ export class ProjectPanelView extends ItemView {
                   ).$set({
                     activeProject: deferredActive,
                   });
-                } catch (e) {
+                } catch (_e) { // ignore }
                   /* ignore error */
                 }
               } else if (this.svelteComponent instanceof HTMLElement) {
                 try {
                   (this.svelteComponent as { activeProject?: unknown }).activeProject =
                     deferredActive;
-                } catch (e) {
+                } catch (_e) { // ignore }
                   /* ignore error */
                 }
               } else if (
@@ -352,7 +342,7 @@ export class ProjectPanelView extends ItemView {
                   ).set({
                     activeProject: deferredActive,
                   });
-                } catch (e) {
+                } catch (_e) { // ignore }
                   /* ignore error */
                 }
               }
@@ -360,15 +350,15 @@ export class ProjectPanelView extends ItemView {
                 if ((this.svelteComponent as { refreshPanel?: () => void }).refreshPanel) {
                   (this.svelteComponent as { refreshPanel: () => void }).refreshPanel();
                 }
-              } catch (e) {
+              } catch (_e) { // ignore }
                 /* ignore error */
               }
             }
-          } catch (e) {
+          } catch (_e) { // ignore }
             /* ignore error */
           }
         }, 0);
-      } catch (e) {
+      } catch (_e) { // ignore }
         /* ignore error */
       }
 
@@ -384,10 +374,10 @@ export class ProjectPanelView extends ItemView {
         ) {
           plugin.manager.addActiveProjectListener(this.onActiveProjectChanged.bind(this));
         }
-      } catch (e) {
+      } catch (_e) { // ignore }
         /* ignore error */
       }
-    } catch (e) {
+    } catch (_e) { // ignore }
       // Ignore errors in onOpen
     }
   }

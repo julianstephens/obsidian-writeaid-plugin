@@ -696,6 +696,16 @@
                   disabled={i === chapters.length - 1}>↓</BaseButton
                 >
                 <IconButton
+                  ariaLabel="Open chapter"
+                  title="Open chapter"
+                  onclick={async () => {
+                    if (!selectedValue || !manager?.activeDraft) return;
+                    await manager.openChapter(selectedValue, manager.activeDraft, ch.chapterName);
+                  }}
+                >
+                  <Eye size={18} />
+                </IconButton>
+                <IconButton
                   ariaLabel="Rename chapter"
                   title="Rename chapter"
                   onclick={() => {

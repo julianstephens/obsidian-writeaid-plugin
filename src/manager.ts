@@ -77,6 +77,9 @@ export class WriteAidManager {
   async renameChapter(projectPath: string, draftName: string, oldName: string, newName: string) {
     return await this.draftService.renameChapter(projectPath, draftName, oldName, newName);
   }
+  async openChapter(projectPath: string, draftName: string, chapterName: string) {
+    return await this.draftService.openChapter(projectPath, draftName, chapterName);
+  }
 
   get panelRefreshDebounceMs(): number {
     return this._panelRefreshDebounceMs;
@@ -105,7 +108,7 @@ export class WriteAidManager {
     for (const fn of this.activeDraftListeners) {
       try {
         fn(draft);
-      } catch (e) {
+      } catch (_e) { // ignore }
         // ignore
       }
     }
@@ -129,18 +132,18 @@ export class WriteAidManager {
         for (const fn of this.panelRefreshListeners) {
           try {
             fn();
-          } catch (e) {
+          } catch (_e) { // ignore }
             // Ignore errors in panel refresh listeners
           }
         }
         this._panelRefreshTimer = null;
       }, this._panelRefreshDebounceMs);
-    } catch (e) {
+    } catch (_e) { // ignore }
       // fallback: immediate notify
       for (const fn of this.panelRefreshListeners) {
         try {
           fn();
-        } catch (e) {
+        } catch (_e) { // ignore }
           // Ignore errors in panel refresh listeners
         }
       }
@@ -162,7 +165,7 @@ export class WriteAidManager {
       if (dbg) {
         console.debug(`WriteAid debug: setActiveProject called with '${path}'`);
       }
-    } catch (e) {
+    } catch (_e) { // ignore }
       // ignore
     }
     this.activeProject = path;
@@ -180,13 +183,13 @@ export class WriteAidManager {
           await pluginWithSettings.saveSettings();
         }
       }
-    } catch (e) {
+    } catch (_e) { // ignore }
       // Ignore save errors
     }
     for (const l of this.activeProjectListeners) {
       try {
         l(path);
-      } catch (e) {
+      } catch (_e) { // ignore }
         // Ignore errors in active project listeners
       }
     }
@@ -198,7 +201,7 @@ export class WriteAidManager {
         // notify listeners that active draft cleared
         try {
           this.notifyActiveDraftListeners(null);
-        } catch (e) {
+        } catch (_e) { // ignore }
           // ignore
         }
         return;
@@ -218,7 +221,7 @@ export class WriteAidManager {
               `WriteAid debug: auto-selected single draft '${drafts[0]}' for project '${path}'`,
             );
           }
-        } catch (e) {
+        } catch (_e) { // ignore }
           // ignore
         }
         return;
@@ -237,12 +240,12 @@ export class WriteAidManager {
                 `WriteAid debug: auto-selected meta draft '${meta.current_active_draft}' for project '${path}'`,
               );
             }
-          } catch (e) {
+          } catch (_e) { // ignore }
             // ignore
           }
           return;
         }
-      } catch (e) {
+      } catch (_e) { // ignore }
         // ignore and fall back
       }
 
@@ -273,11 +276,11 @@ export class WriteAidManager {
         if (dbg) {
           console.debug(`WriteAid debug: auto-selected draft '${bestDraft}' for project '${path}'`);
         }
-      } catch (e) {
+      } catch (_e) { // ignore }
         // ignore
       }
       await this.setActiveDraft(bestDraft, path, false);
-    } catch (e) {
+    } catch (_e) { // ignore }
       // Ignore errors selecting active draft
     }
   }
@@ -362,7 +365,7 @@ export class WriteAidManager {
       // notify panels so UI can refresh
       try {
         this.notifyPanelRefresh();
-      } catch (e) {
+      } catch (_e) { // ignore }
         // Ignore errors in notifyPanelRefresh
       }
     }
@@ -528,7 +531,7 @@ export class WriteAidManager {
     );
     try {
       this.notifyPanelRefresh();
-    } catch (e) {
+    } catch (_e) { // ignore }
       // Ignore errors in notifyPanelRefresh
     }
     return res;
@@ -551,13 +554,13 @@ export class WriteAidManager {
     // Update meta.md with the new active draft
     try {
       await updateMetaStats(this.app, project, draftName);
-    } catch (e) {
+    } catch (_e) { // ignore }
       // Ignore errors in updateMetaStats
     }
     // notify listeners about the active draft change
     try {
       this.notifyActiveDraftListeners(this.activeDraft);
-    } catch (e) {
+    } catch (_e) { // ignore }
       // ignore
     }
     if (showNotice) new Notice(`Active draft set to ${draftName}`);
