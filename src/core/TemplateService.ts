@@ -1,4 +1,4 @@
-import { App, TFile } from 'obsidian';
+import { App, TFile } from "obsidian";
 
 export class TemplateService {
   app: App;
@@ -12,18 +12,18 @@ export class TemplateService {
    * or a vault path to a markdown file. Performs simple {{key}} substitutions.
    */
   async render(templateOrPath: string, vars: Record<string, string> = {}): Promise<string> {
-    let tpl = templateOrPath || '';
+    let tpl = templateOrPath || "";
     try {
       const f = this.app.vault.getAbstractFileByPath(tpl);
       if (f && f instanceof TFile) {
         tpl = await this.app.vault.read(f);
       }
-    } catch (e) {
-      // ignore and treat as inline template
+    } catch (_e) {
+      // ignore
     }
 
     return tpl.replace(/{{\s*(\w+)\s*}}/g, (_m, k) => {
-      return vars[k] ?? '';
+      return vars[k] ?? "";
     });
   }
 }

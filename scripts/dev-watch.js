@@ -1,11 +1,18 @@
-const { spawn } = require('child_process');
-const fs = require('fs/promises');
-const path = require('path');
+const { spawn } = require("child_process");
+const fs = require("fs/promises");
+const path = require("path");
 
-const repoRoot = path.resolve(__dirname, '..');
-const distDir = path.join(repoRoot, 'dist');
-const manifest = path.join(repoRoot, 'manifest.json');
-const dest = path.join(repoRoot, '..', 'dev-workspace', '.obsidian', 'plugins', 'obsidian-writeaid-plugin');
+const repoRoot = path.resolve(__dirname, "..");
+const distDir = path.join(repoRoot, "dist");
+const manifest = path.join(repoRoot, "manifest.json");
+const dest = path.join(
+  repoRoot,
+  "..",
+  "dev-workspace",
+  ".obsidian",
+  "plugins",
+  "obsidian-writeaid-plugin",
+);
 
 /**
  * @type {string | number | NodeJS.Timeout | null | undefined}
@@ -19,13 +26,14 @@ async function copyDist() {
     await fs.cp(distDir, dest, { recursive: true });
     // ensure manifest is present at dest
     try {
-      await fs.copyFile(manifest, path.join(dest, 'manifest.json'));
+      await fs.copyFile(manifest, path.join(dest, "manifest.json"));
     } catch (e) {
       // ignore if manifest doesn't exist
     }
-    console.log('[dev-watch] Copied dist ->', dest);
+    // Informational copy output (keep this visible by default)
+    console.log("[dev-watch] Copied dist ->", dest);
   } catch (e) {
-    console.error('[dev-watch] Copy failed', e);
+    console.error("[dev-watch] Copy failed", e);
   }
 }
 
@@ -35,36 +43,33 @@ function scheduleCopy() {
 }
 
 async function main() {
-  if (process.argv.includes('--once')) {
+  if (process.argv.includes("--once")) {
     await copyDist();
     return;
   }
 
-  // spawn webpack in watch mode
-  let webpackBin;
-  try {
-    webpackBin = require.resolve('webpack/bin/webpack.js', { paths: [repoRoot] });
-  } catch (e) {
-    console.error('[dev-watch] Could not resolve webpack binary. Make sure deps are installed.');
-    process.exit(1);
-  }
-
-  const child = spawn(process.execPath, [webpackBin, '--mode', 'development', '--watch'], {
+  // spawn Vite build in watch mode
+  // Use the package manager to execute the local Vite binary. Using pnpm exec
+  // avoids relying on internal package subpaths that newer Vite versions don't
+  // export (which caused ERR_PACKAGE_PATH_NOT_EXPORTED errors).
+  const child = spawn("pnpm", ["exec", "vite", "build", "--watch"], {
     cwd: repoRoot,
     env: process.env,
+    shell: false,
   });
 
-  child.stdout.on('data', (d) => {
+  child.stdout.on("data", (d) => {
     process.stdout.write(d);
     scheduleCopy();
   });
-  child.stderr.on('data', (d) => {
+  child.stderr.on("data", (d) => {
     process.stderr.write(d);
     scheduleCopy();
   });
 
-  child.on('exit', (code) => {
-    console.log('[dev-watch] webpack exited', code);
+  child.on("exit", (code) => {
+    // Visible informational output when the child exits
+    console.log("[dev-watch] vite exited", code);
     process.exit(code || 0);
   });
 

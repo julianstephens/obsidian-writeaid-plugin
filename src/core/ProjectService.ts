@@ -1,97 +1,66 @@
-import { App, Notice, TFile, TFolder } from 'obsidian';
-import { WriteAidSettings } from '../types';
-import { updateMetaStats } from './meta';
-import { TemplateService } from './TemplateService';
-import { DEFAULT_TARGET_WORD_COUNT, DEFAULT_TOTAL_DRAFTS, slugifyDraftName } from './utils';
+import { DraftService } from "@/core/DraftService";
+import { TemplateService } from "@/core/TemplateService";
+import type { WriteAidSettings } from "@/types";
+import { App, normalizePath, Notice, TFile, TFolder } from "obsidian";
 
 export class ProjectService {
   app: App;
   tpl: TemplateService;
+  draftService: DraftService;
 
   constructor(app: App) {
     this.app = app;
     this.tpl = new TemplateService(app);
+    this.draftService = new DraftService(app);
   }
 
   /** Create a project folder, drafts folder and initial draft folder(s). Returns the project path. */
-  async createProject(projectName: string, singleFile: boolean, initialDraftName?: string, parentFolder?: string, settings?: WriteAidSettings ) {
+  async createProject(
+    projectName: string,
+    singleFile: boolean,
+    initialDraftName?: string,
+    parentFolder?: string,
+    settings?: WriteAidSettings,
+  ) {
     if (!projectName) {
-      new Notice('Project name is required.');
+      new Notice("Project name is required.");
       return null;
     }
 
-    const projectPath = parentFolder && parentFolder !== '' ? `${parentFolder}/${projectName}` : projectName;
+    const projectPath =
+      parentFolder && parentFolder !== "" ? `${parentFolder}/${projectName}` : projectName;
     const draftsFolder = `${projectPath}/Drafts`;
 
-    // Create project folder if it doesn't exist
     if (!this.app.vault.getAbstractFileByPath(projectPath)) {
       await this.app.vault.createFolder(projectPath);
     }
 
-    // Create Drafts folder
     if (!this.app.vault.getAbstractFileByPath(draftsFolder)) {
       await this.app.vault.createFolder(draftsFolder);
     }
 
-    // Create initial draft folder
-    const draftName = initialDraftName || 'Draft 1';
-    const newDraftFolder = `${draftsFolder}/${draftName}`;
-    if (!this.app.vault.getAbstractFileByPath(newDraftFolder)) {
-      await this.app.vault.createFolder(newDraftFolder);
-    }
-
-    // Optionally create sample files in the project
-    const projectFileTemplate = settings?.projectFileTemplate ?? '';
-    const chapterTemplate = settings?.chapterTemplate ?? '';
-
-    // Create a meta file at the project root (matches README example)
     const metaPath = `${projectPath}/meta.md`;
     if (!this.app.vault.getAbstractFileByPath(metaPath)) {
-      // Initialize meta.md with proper statistics
-      await updateMetaStats(this.app, projectPath, draftName, {
-        total_drafts: DEFAULT_TOTAL_DRAFTS,
-        target_word_count: DEFAULT_TARGET_WORD_COUNT, // default target
-      });
+      const projectType = singleFile ? "single-file" : "multi-file";
+      const metaContent = `---\nproject_type: ${projectType}\n---\n`;
+      await this.app.vault.create(metaPath, metaContent);
     }
 
-    if (singleFile) {
-      // For single-file projects, create a canonical project file if desired
-      // but ensure each draft folder also gets its own draft file (e.g., draft1.md)
-      const projectFilePath = `${projectPath}/${projectName}.md`;
-      if (!this.app.vault.getAbstractFileByPath(projectFilePath)) {
-        const content = await this.tpl.render(projectFileTemplate, { projectName });
-        await this.app.vault.create(projectFilePath, content);
-      }
-
-      // Create a draft file inside the draft folder with a slugified draft name (e.g. Draft 1 -> draft1.md)
-  const slug = slugifyDraftName(draftName, settings?.slugStyle as any);
-  const draftFileName = `${slug}.md`;
-      const notePath = `${newDraftFolder}/${draftFileName}`;
-      if (!this.app.vault.getAbstractFileByPath(notePath)) {
-        const fm = `---\ndraft: ${draftName}\nproject: ${projectName}\ncreated: ${new Date().toISOString()}\n---\n\n`;
-        const projectContent = await this.tpl.render(projectFileTemplate, { projectName });
-        await this.app.vault.create(notePath, fm + projectContent);
-      }
-    } else {
-      const chapters = ['Chapter 1.md', 'Chapter 2.md'];
-      for (const ch of chapters) {
-        const path = `${projectPath}/${ch}`;
-        if (!this.app.vault.getAbstractFileByPath(path)) {
-          await this.app.vault.create(path, await this.tpl.render(chapterTemplate, { chapterTitle: ch.replace('.md','') }));
-        }
-        // Also copy into draft folder as starting point
-        const draftNotePath = `${newDraftFolder}/${ch}`;
-        if (!this.app.vault.getAbstractFileByPath(draftNotePath)) {
-          await this.app.vault.create(draftNotePath, await this.tpl.render(chapterTemplate, { chapterTitle: ch.replace('.md','') }));
-        }
-      }
-    }
+    const draftName = initialDraftName || "Draft 1";
+    await this.draftService.createDraft(draftName, undefined, projectPath, settings);
 
     return projectPath;
   }
 
   /** Try to open a sensible file in the project. Returns true if opened. */
   async openProject(projectPath: string) {
+    const metaPath = `${projectPath}/meta.md`;
+    const metaFile = this.app.vault.getAbstractFileByPath(metaPath);
+    if (metaFile && metaFile instanceof TFile) {
+      const leaf = this.app.workspace.getLeaf();
+      await leaf.openFile(metaFile);
+      return true;
+    }
     const candidates = [
       `${projectPath}/${projectPath}.md`,
       `${projectPath}/Chapter 1.md`,
@@ -107,14 +76,14 @@ export class ProjectService {
         return true;
       }
     }
-    new Notice('Could not find a file to open in the project.');
+    new Notice("Could not find a file to open in the project.");
     return false;
   }
 
   /** List all folder paths in the vault (root represented as empty string) */
   listAllFolders(): string[] {
     const root = this.app.vault.getRoot();
-    const out: string[] = [''];
+    const out: string[] = [""];
 
     function walk(folder: TFolder) {
       for (const child of folder.children) {
@@ -127,5 +96,37 @@ export class ProjectService {
 
     walk(root);
     return out;
+  }
+
+  // Simple heuristic to determine whether a folder looks like a project managed by WriteAid
+  // We consider a folder a project if it contains a meta.md or a Drafts/ subfolder.
+  async isProjectFolder(path: string): Promise<boolean> {
+    if (!path || typeof path !== "string") return false;
+    const base = path.trim().replace(/\\/g, "/").replace(/\/+$/, "");
+    try {
+      const metaPath = normalizePath(`${base}/meta.md`);
+      const hasMeta = await this.app.vault.adapter.exists(metaPath);
+      const hasDrafts = await this.app.vault.adapter.exists(normalizePath(`${base}/Drafts`));
+      if (!hasMeta || !hasDrafts) return false;
+
+      try {
+        // Dynamically import to avoid circular deps
+        const { readMetaFile, VALID_PROJECT_TYPES } = await import("./meta");
+        const meta = await readMetaFile(this.app, metaPath);
+        if (
+          !meta ||
+          !VALID_PROJECT_TYPES.includes(meta.project_type as import("./meta").ProjectType)
+        ) {
+          return false;
+        }
+      } catch (_e) {
+        // ignore
+        return false;
+      }
+      return true;
+    } catch (_e) {
+      // ignore
+      return false;
+    }
   }
 }

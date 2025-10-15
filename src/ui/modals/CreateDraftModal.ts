@@ -1,10 +1,10 @@
-import { App, Modal, Setting } from 'obsidian';
-import { CreateDraftModalProps } from './modalTypes';
+import type { CreateDraftModalProps } from "@/ui/modals/modalTypes";
+import { Modal, Setting } from "obsidian";
 
 export class CreateDraftModal extends Modal {
   props: CreateDraftModalProps;
 
-  constructor(app: App, props: CreateDraftModalProps) {
+  constructor(app: import("obsidian").App, props: CreateDraftModalProps) {
     super(app);
     this.props = props;
   }
@@ -19,17 +19,17 @@ export class CreateDraftModal extends Modal {
 
     new Setting(contentEl)
       .setName("Draft name")
-      .addText((text) => text.setPlaceholder(suggestedName).onChange((value) => (draftName = value)));
+      .addText((text) =>
+        text.setPlaceholder(suggestedName).onChange((value) => (draftName = value)),
+      );
 
-  const drafts = this.props.drafts;
+    const drafts = this.props.drafts;
     if (drafts.length > 0) {
-      new Setting(contentEl)
-        .setName("Copy from existing draft")
-        .addDropdown((drop) => {
-          drop.addOption("", "Start blank");
-          for (const d of drafts) drop.addOption(d, d);
-          drop.onChange((value) => (copyFrom = value));
-        });
+      new Setting(contentEl).setName("Copy from existing draft").addDropdown((drop) => {
+        drop.addOption("", "Start blank");
+        for (const d of drafts) drop.addOption(d, d);
+        drop.onChange((value) => (copyFrom = value));
+      });
     }
 
     new Setting(contentEl).addButton((btn) =>
@@ -38,7 +38,7 @@ export class CreateDraftModal extends Modal {
         .setCta()
         .onClick(() => {
           this.close();
-          const finalName = (draftName && draftName.trim()) ? draftName.trim() : suggestedName;
+          const finalName = draftName && draftName.trim() ? draftName.trim() : suggestedName;
           this.props.onSubmit(finalName, copyFrom || undefined);
         }),
     );

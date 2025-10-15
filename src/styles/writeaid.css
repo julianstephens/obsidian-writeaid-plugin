@@ -1,0 +1,385 @@
+/* Svelte-select theming for WriteAid (Obsidian light/dark mode) */
+:root {
+  /* Core backgrounds and borders */
+  --background: var(--background-primary, #fff);
+  --border: var(--background-modifier-border, #ccc);
+  --border-focused: var(--interactive-accent, #7c5cff);
+  --border-hover: var(--interactive-accent, #7c5cff);
+  --border-radius: 6px;
+  --border-radius-focused: 6px;
+  --box-sizing: border-box;
+  --font-size: 1.5em;
+  --height: 38px;
+  --padding: 0 10px;
+  --margin: 0;
+  --width: 100%;
+  /* Dropdown list */
+  --list-background: var(--background-secondary, #f6f6f6);
+  --list-border: var(--background-modifier-border, #e0e0e0);
+  --list-border-radius: 6px;
+  --list-shadow: 0 2px 8px rgba(30, 30, 30, 0.06);
+  --list-z-index: 1000;
+  --list-max-height: 260px;
+  /* Items */
+  --item-color: var(--text-normal, #222);
+  --item-hover-bg: var(--background-modifier-hover, #f0f0ff);
+  --item-hover-color: var(--text-normal, #222);
+  --item-active-background: var(--background-modifier-active, #eaeaff);
+  --item-is-active-bg: var(--background-modifier-active, #eaeaff);
+  --item-is-active-color: var(--text-normal, #222);
+  --item-padding: 8px 14px;
+  --item-height: 36px;
+  --item-line-height: 1.4;
+  --item-transition: background 0.15s;
+  /* Placeholder */
+  --placeholder-color: var(--text-muted, #888);
+  --placeholder-opacity: 1;
+  /* Chevron and icons */
+  --chevron-color: var(--text-muted, #888);
+  --chevron-icon-colour: var(--text-muted, #888);
+  --chevron-background: transparent;
+  --chevron-border: none;
+  --chevron-width: 22px;
+  --chevron-height: 22px;
+  --chevron-pointer-events: auto;
+  --icons-color: var(--text-muted, #888);
+  /* Disabled */
+  --disabled-background: var(--background-modifier-disabled, #f3f3f3);
+  --disabled-border-color: var(--background-modifier-border, #eee);
+  --disabled-color: var(--text-muted, #bbb);
+  --disabled-placeholder-color: var(--text-muted, #bbb);
+  --disabled-placeholder-opacity: 0.7;
+  /* Error */
+  --error-background: #fff0f0;
+  --error-border: #d43c3c;
+}
+
+.theme-dark {
+  --background: var(--background-primary, #23232b);
+  --border: var(--background-modifier-border, #333);
+  --border-focused: var(--interactive-accent, #7c5cff);
+  --border-hover: var(--interactive-accent, #7c5cff);
+  --font-size: 1em;
+  --list-background: var(--background-secondary, #23233a);
+  --list-border: var(--background-modifier-border, #333);
+  --item-color: var(--text-normal, #e0e0e0);
+  --item-hover-bg: var(--background-modifier-hover, #2a2a4a);
+  --item-hover-color: var(--text-normal, #e0e0e0);
+  --item-active-background: var(--background-modifier-active, #2a2a4a);
+  --item-is-active-bg: var(--background-modifier-active, #2a2a4a);
+  --item-is-active-color: var(--text-normal, #e0e0e0);
+  --placeholder-color: var(--text-muted, #aaa);
+  --chevron-color: var(--text-muted, #aaa);
+  --chevron-icon-colour: var(--text-muted, #aaa);
+  --icons-color: var(--text-muted, #aaa);
+  --disabled-background: var(--background-modifier-disabled, #23232b);
+  --disabled-border-color: var(--background-modifier-border, #333);
+  --disabled-color: var(--text-muted, #444);
+  --disabled-placeholder-color: var(--text-muted, #444);
+  --error-background: #2a1a1a;
+  --error-border: #d43c3c;
+}
+.writeaid-ribbon {
+  padding-left: 6px;
+}
+.writeaid-ribbon .wa-icon {
+  display: inline-block;
+  vertical-align: middle;
+}
+.writeaid-ribbon .wa-icon svg {
+  width: 16px;
+  height: 16px;
+  fill: currentColor;
+  display: block;
+}
+
+/* Slider and unit styling for panel debounce control */
+:root {
+  --wa-slider-track-height: 6px;
+  --wa-slider-thumb-size: 12px;
+  --wa-slider-accent: var(--interactive-accent, #7c5cff);
+  --wa-slider-background: var(--background-modifier-host, #eee);
+  --wa-slider-gap: 12px;
+}
+
+.wa-debounce-range {
+  margin-left: var(--wa-slider-gap);
+  vertical-align: middle;
+  appearance: none;
+  height: var(--wa-slider-track-height);
+  background: linear-gradient(
+    90deg,
+    var(--wa-slider-accent) 0%,
+    var(--wa-slider-accent) 50%,
+    var(--wa-slider-background) 50%,
+    var(--wa-slider-background) 100%
+  );
+  border-radius: 999px;
+  outline: none;
+}
+
+.wa-debounce-range::-webkit-slider-thumb {
+  appearance: none;
+  width: var(--wa-slider-thumb-size);
+  height: var(--wa-slider-thumb-size);
+  border-radius: 50%;
+  background: var(--wa-slider-accent);
+  box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.05);
+  cursor: pointer;
+}
+
+.wa-debounce-range::-moz-range-thumb {
+  width: var(--wa-slider-thumb-size);
+  height: var(--wa-slider-thumb-size);
+  border-radius: 50%;
+  background: var(--wa-slider-accent);
+  cursor: pointer;
+}
+
+.wa-unit {
+  color: var(--text-muted, #666);
+  margin-left: 6px;
+}
+
+.justify-between {
+  justify-content: space-between;
+}
+
+/* Rename Modal Styles */
+.wa-rename-info {
+  margin-bottom: 8px;
+  color: var(--text-muted, #888);
+  font-size: 0.95em;
+}
+.wa-rename-label {
+  display: block;
+  font-weight: 500;
+  margin-bottom: 4px;
+  color: var(--text-normal, #222);
+}
+.wa-rename-input {
+  width: 100%;
+  padding: 7px 10px;
+  font-size: 1em;
+  border: 1px solid var(--background-modifier-border, #ccc);
+  border-radius: 5px;
+  margin-bottom: 10px;
+  box-sizing: border-box;
+  background: var(--background-primary, #fff);
+  color: var(--text-normal, #222);
+  transition: border 0.2s;
+}
+.wa-rename-input:focus {
+  border-color: var(--interactive-accent, #7c5cff);
+  outline: none;
+}
+.wa-rename-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 10px;
+  font-size: 0.97em;
+  color: var(--text-muted, #666);
+}
+.wa-rename-btn-row {
+  display: flex;
+  gap: 10px;
+  margin-top: 8px;
+  justify-content: flex-end;
+}
+.wa-rename-btn-row button {
+  min-width: 80px;
+  padding: 6px 14px;
+  font-size: 1em;
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.wa-rename-btn-row .mod-cta {
+  background: var(--interactive-accent, #7c5cff);
+  color: #fff;
+  font-weight: 600;
+}
+.wa-rename-btn-row .mod-cta:hover {
+  background: #5a3fd6;
+}
+.wa-rename-btn-row .mod-cancel {
+  background: var(--background-modifier-border, #eee);
+  color: var(--text-muted, #666);
+}
+.wa-rename-btn-row .mod-cancel:hover {
+  background: #e0e0e0;
+}
+.wa-rename-error {
+  min-height: 18px;
+  margin-bottom: 4px;
+  font-size: 0.97em;
+  color: var(--color-red, #d43c3c);
+  transition: opacity 0.2s;
+}
+
+/* Improved styling for create draft input */
+.wa-create-draft-input {
+  width: 100%;
+  padding: 8px 12px;
+  font-size: 1.05em;
+  border: 1.5px solid var(--background-modifier-border, #bbb);
+  border-radius: 6px;
+  box-sizing: border-box;
+  background: var(--background-primary, #fff);
+  color: var(--text-normal, #222);
+  transition:
+    border 0.2s,
+    box-shadow 0.2s;
+  outline: none;
+  box-shadow: 0 1px 2px rgba(60, 60, 60, 0.04);
+}
+.wa-create-draft-input:focus {
+  border-color: var(--interactive-accent, #7c5cff);
+  box-shadow: 0 2px 8px rgba(124, 92, 255, 0.08);
+  background: var(--background-secondary, #fafaff);
+}
+
+/* Panel and component styles for Obsidian light/dark mode */
+.wa-panel {
+  background: var(--background-primary, #fff);
+  color: var(--text-normal, #222);
+  border-radius: 8px;
+}
+
+.wa-title {
+  font-size: 1.2em;
+  font-weight: 600;
+  color: var(--text-title, var(--text-normal, #222));
+}
+
+.wa-muted {
+  color: var(--text-faint, var(--text-muted, #888));
+}
+
+.wa-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+.wa-button-group {
+  display: flex;
+  gap: 8px;
+}
+
+.wa-draft-list {
+  background: var(--background-secondary, #f6f6f6);
+  border-radius: 6px;
+  padding: 8px 0;
+  margin-top: 8px;
+}
+
+.wa-draft-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 14px;
+  border-bottom: 1px solid var(--background-modifier-border, #e0e0e0);
+  background: transparent;
+  color: var(--text-normal, #222);
+  transition: background 0.15s;
+}
+.wa-draft-item:last-child {
+  border-bottom: none;
+}
+.wa-draft-item.active {
+  background: var(--background-modifier-active, #eaeaff);
+}
+.wa-draft-name {
+  font-size: 1em;
+  font-weight: 500;
+  color: var(--text-normal, #222);
+}
+.wa-draft-actions {
+  display: flex;
+  gap: 6px;
+}
+
+/* Custom svelte-select styles for Obsidian light/dark mode */
+.wa-panel .wa-select {
+  --select-bg: var(--background-primary, #fff);
+  --select-border: var(--background-modifier-border, #ccc);
+  --select-border-focus: var(--interactive-accent, #7c5cff);
+  --select-text: var(--text-normal, #222);
+  --select-placeholder: var(--text-muted, #888);
+  --select-dropdown-bg: var(--background-secondary, #f6f6f6);
+  --select-dropdown-border: var(--background-modifier-border, #e0e0e0);
+  --select-option-hover: var(--background-modifier-hover, #f0f0ff);
+  --select-option-active: var(--background-modifier-active, #eaeaff);
+  --select-chevron: var(--text-muted, #888);
+}
+.theme-dark .wa-panel .wa-select {
+  --select-bg: var(--background-primary, #23232b);
+  --select-border: var(--background-modifier-border, #333);
+  --select-border-focus: var(--interactive-accent, #7c5cff);
+  --select-text: var(--text-normal, #e0e0e0);
+  --select-placeholder: var(--text-muted, #aaa);
+  --select-dropdown-bg: var(--background-secondary, #23233a);
+  --select-dropdown-border: var(--background-modifier-border, #333);
+  --select-option-hover: var(--background-modifier-hover, #2a2a4a);
+  --select-option-active: var(--background-modifier-active, #2a2a4a);
+  --select-chevron: var(--text-muted, #aaa);
+}
+.wa-select {
+  background: var(--select-bg);
+  color: var(--select-text);
+}
+.wa-select:focus,
+.wa-select:focus-within {
+  border-color: var(--select-border-focus);
+}
+.wa-select .select-placeholder {
+  color: var(--select-placeholder);
+}
+.wa-select .select-dropdown {
+  background: var(--select-dropdown-bg);
+}
+.wa-select .select-option {
+  color: var(--select-text);
+}
+.wa-select .select-option:hover {
+  background: var(--select-option-hover);
+}
+.wa-select .select-option[aria-selected="true"],
+.wa-select .select-option.selected {
+  background: var(--select-option-active);
+}
+.wa-select .select-chevron {
+  color: var(--select-chevron);
+}
+.wa-select input[type="text"]:focus {
+  border-radius: 0;
+}
+
+/* Support for dark mode */
+.theme-dark .wa-panel {
+  background: var(--background-primary, #23232b);
+  color: var(--text-normal, #e0e0e0);
+  border: 1px solid var(--background-modifier-border, #333);
+}
+.theme-dark .wa-title {
+  color: var(--text-title, var(--text-normal, #e0e0e0));
+}
+.theme-dark .wa-muted {
+  color: var(--text-faint, var(--text-muted, #aaa));
+}
+.theme-dark .wa-draft-list {
+  background: var(--background-secondary, #23233a);
+}
+.theme-dark .wa-draft-item {
+  color: var(--text-normal, #e0e0e0);
+  border-bottom: 1px solid var(--background-modifier-border, #333);
+}
+.theme-dark .wa-draft-item.active {
+  background: var(--background-modifier-active, #2a2a4a);
+}
+.theme-dark .wa-draft-name {
+  color: var(--text-normal, #e0e0e0);
+}
