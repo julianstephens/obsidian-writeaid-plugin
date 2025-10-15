@@ -18,6 +18,7 @@ import { Plugin } from "obsidian";
 
 // @ts-expect-error - import CSS as raw text via Vite
 import stylesText from "@/styles/writeaid.css?inline";
+import { generateManuscriptCommand } from "./commands/generateManuscriptCommand";
 
 function debug(...args: unknown[]) {
   try {
@@ -41,6 +42,7 @@ const DEFAULT_SETTINGS: WriteAidSettings = {
   draftOutlineTemplate: "# Outline for {{draftName}}",
   planningTemplate: "# Planning: {{projectName}}\n\n- [ ] ...",
   chapterTemplate: "# {{chapterTitle}}\n\n",
+  manuscriptNameTemplate: "{{draftName}}",
   slugStyle: "compact",
   ribbonPlacement: "left",
   ribbonAlwaysShow: false,
@@ -348,6 +350,12 @@ export default class WriteAidPlugin extends Plugin {
       name: "Select Active Project",
       callback: selectActiveProjectCommand(this.manager),
     });
+
+    this.addCommand({
+      id: "generate-manuscript",
+      name: "Generate Manuscript",
+      callback: generateManuscriptCommand(this.manager),
+    })
 
     this.addCommand({
       id: "toggle-project-panel",

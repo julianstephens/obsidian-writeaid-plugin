@@ -14,6 +14,42 @@ export class DraftService {
   }
 
   /**
+   * Get the project type for a given project path.
+   * Returns "single-file" or "multi-file".
+   */
+  async getProjectType(projectPath: string): Promise<"single-file" | "multi-file"> {
+    const metaCandidate = `${projectPath}/meta.md`;
+    if (this.app.vault.getAbstractFileByPath(metaCandidate)) {
+      try {
+        const metaFile = this.app.vault.getAbstractFileByPath(metaCandidate);
+        if (metaFile instanceof TFile) {
+          const metaContent = await this.app.vault.read(metaFile);
+          const fmMatch = metaContent.match(/^---\n([\s\S]*?)\n---/);
+          if (fmMatch) {
+            const lines = fmMatch[1].split(/\r?\n/);
+            for (const line of lines) {
+              const mType = line.match(/^project_type:\s*(.*)$/i);
+              if (mType) {
+                const val = mType[1].trim();
+                if (val === "single-file") return "single-file";
+                if (val === "multi-file") return "multi-file";
+              }
+            }
+          }
+        }
+      } catch (_e) {
+        // ignore, fallback below
+      }
+    }
+
+    // fallback: old heuristic - check if there's a file named after the project
+    const projectName = projectPath.split("/").pop() || projectPath;
+    const singleFileCandidate = `${projectPath}/${projectName}.md`;
+    const isSingleFile = !!this.app.vault.getAbstractFileByPath(singleFileCandidate);
+    return isSingleFile ? "single-file" : "multi-file";
+  }
+
+  /**
    * Reorder chapters in a draft. Accepts an array of chapter objects in the new order.
    * Each object must have { chapterName, order }.
    */
@@ -312,37 +348,9 @@ export class DraftService {
         await this.app.vault.create(`${newDraftFolder}/outline.md`, outlineContent);
       }
 
-      // Determine project type from meta.md frontmatter
-      const metaCandidate = `${projectPathResolved}/meta.md`;
-      let isSingleFileProject = false;
-      if (this.app.vault.getAbstractFileByPath(metaCandidate)) {
-        try {
-          const metaFile = this.app.vault.getAbstractFileByPath(metaCandidate);
-          if (metaFile instanceof TFile) {
-            const metaContent = await this.app.vault.read(metaFile);
-            const fmMatch = metaContent.match(/^---\n([\s\S]*?)\n---/);
-            if (fmMatch) {
-              const lines = fmMatch[1].split(/\r?\n/);
-              for (const line of lines) {
-                const mType = line.match(/^project_type:\s*(.*)$/i);
-                if (mType) {
-                  const val = mType[1].trim();
-                  if (val === "single-file") isSingleFileProject = true;
-                  if (val === "multi-file") isSingleFileProject = false;
-                  break;
-                }
-              }
-            }
-          }
-        } catch (_e) {
-          // ignore
-          // fallback: treat as multi-file
-        }
-      } else {
-        // fallback: old heuristic
-        const singleFileCandidate = `${projectPathResolved}/${projectName}.md`;
-        isSingleFileProject = !!this.app.vault.getAbstractFileByPath(singleFileCandidate);
-      }
+      // Determine project type
+      const projectType = await this.getProjectType(projectPathResolved);
+      const isSingleFileProject = projectType === "single-file";
 
       if (isSingleFileProject) {
         const slug = slugifyDraftName(
@@ -591,10 +599,74 @@ export class DraftService {
       }
       return true;
     } catch (_e) {
-      // ignore
       return false;
     }
   }
+
+  async generateManuscript(
+    projectPath: string,
+    draftName: string,
+    settings?: WriteAidSettings,
+  ): Promise<boolean> {
+    const project = this.resolveProjectPath(projectPath);
+    if (!project) return false;
+    const projectType = await this.getProjectType(project);
+    const draftFolder = `${project}/Drafts/${draftName}`;
+    const manuscriptFolder = `${project}/Manuscripts`;
+
+    if (!this.app.vault.getAbstractFileByPath(draftFolder)) {
+      new Notice(`Draft folder ${draftFolder} does not exist.`);
+      return false;
+    }
+
+    if (!this.app.vault.getAbstractFileByPath(manuscriptFolder)) {
+      await this.app.vault.createFolder(manuscriptFolder);
+    }
+
+    // Generate manuscript filename using template
+    const projectName = project.split("/").pop() || project;
+    const manuscriptNameTemplate = settings?.manuscriptNameTemplate || "{{draftName}}";
+    const manuscriptBaseName = await this.tpl.render(manuscriptNameTemplate, {
+      draftName,
+      projectName,
+    });
+    const manuscriptPath = `${manuscriptFolder}/${manuscriptBaseName}.md`;
+
+    if (this.app.vault.getAbstractFileByPath(manuscriptPath)) {
+      new Notice(`Manuscript file ${manuscriptPath} already exists. Please delete it first.`);
+      return false;
+    }
+
+    let manuscriptContent = `# Manuscript for ${draftName}\n\n`;
+
+    if (projectType === "single-file") {
+      const slug = slugifyDraftName(
+        draftName,
+        settings?.slugStyle as import("@/core/utils").DraftSlugStyle,
+      );
+      const draftFileName = `${slug}.md`;
+      const draftMainPath = `${draftFolder}/${draftFileName}`;
+      const draftFile = this.app.vault.getAbstractFileByPath(draftMainPath);
+      if (draftFile && draftFile instanceof TFile) {
+        const content = await this.app.vault.read(draftFile);
+        manuscriptContent += stripHeadings(stripFrontmatter(content));
+        this.app.vault.create(manuscriptPath, manuscriptContent);
+      } else {
+        new Notice(`Main draft file ${draftMainPath} not found.`);
+        return false;
+      }
+    }
+
+    return true;
+  }
+}
+
+function stripFrontmatter(content: string): string {
+  return content.replace(/^---\n([\s\S]*?)\n---/, "").trim();
+}
+
+function stripHeadings(content: string): string {
+  return content.replace(/^#{1,6} .*\n/, "").trim();
 }
 
 /**

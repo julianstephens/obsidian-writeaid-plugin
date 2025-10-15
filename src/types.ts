@@ -2,6 +2,7 @@ export interface WriteAidSettings {
   draftOutlineTemplate: string;
   planningTemplate: string;
   chapterTemplate: string;
+  manuscriptNameTemplate: string;
   // How to slugify per-draft main filenames
   slugStyle?: "compact" | "kebab";
   // Persist the currently active project path (optional)

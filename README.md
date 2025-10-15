@@ -1,19 +1,3 @@
-### Convert Single-File Project to Multi-File
-
-You can convert a single-file project to a multi-file project using the command palette:
-
-1. Open the command palette (Ctrl+P or Cmd+P).
-2. Search for "Convert Single-File Project to Multi-File".
-3. Run the command with your single-file project active.
-
-This will update the project type in `meta.md` and rename all draft files to `Chapter 1.md` in each draft folder.
-
-### Chapter Management
-
-For multi-file projects, you can manage chapters using the project panel.
-
-All chapter operations work on the currently active draft of the active project.
-
 # Obsidian WriteAid Plugin
 
 A novel writing plugin for Obsidian supporting multiple drafts per project. Organize, compare, and manage different versions of your novel drafts with ease.
@@ -79,5 +63,22 @@ The plugin registers the following commands (useable via the command palette or 
 | `switch-draft`                 | Switch Active Draft          | Open a modal to select and switch the active draft for the current project.                                                                                                                   | Ctrl/Cmd+Alt+S       |
 | `update-project-metadata`      | Update Project Metadata      | Prompt to choose a project and recompute/update the project's `meta.md` (runs metadata/statistics update).                                                                                    | Ctrl/Cmd+Alt+M       |
 | `select-active-project`        | Select Active Project        | Open a modal to choose and persist the active project; subsequent operations (metadata update) default to this project.                                                                       | Ctrl/Cmd+Alt+A       |
+| `generate-manuscript`          | Generate Manuscript          | Generate a new compiled manuscript for the active. draft.                                                                                                                                      | Ctrl/Cmd+Alt+M       |
 | `navigate-to-next-chapter`     | Navigate to Next Chapter     | If the current tab contains a chapter file, navigate to the next chapter in the draft. If no next chapter exists or the current file is not a chapter, do nothing or notify the user.         | Ctrl/Cmd+Alt+N       |
 | `navigate-to-previous-chapter` | Navigate to Previous Chapter | If the current tab contains a chapter file, navigate to the previous chapter in the draft. If no previous chapter exists or the current file is not a chapter, do nothing or notify the user. | Ctrl/Cmd+Alt+P       |
+
+### Convert Single-File Project to Multi-File
+
+You can convert a single-file project to a multi-file project using the command palette:
+
+1. Open the command palette (Ctrl+P or Cmd+P).
+2. Search for "Convert Single-File Project to Multi-File".
+3. Run the command with your single-file project active.
+
+This will update the project type in `meta.md` and rename all draft files to `Chapter 1.md` in each draft folder.
+
+### Chapter Management
+
+For multi-file projects, you can manage chapters using the project panel.
+
+All chapter operations work on the currently active draft of the active project.

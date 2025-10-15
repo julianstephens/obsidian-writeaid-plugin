@@ -104,6 +104,16 @@ export class WriteAidSettingTab extends PluginSettingTab {
         }),
       );
 
+    new Setting(containerEl)
+      .setName("Manuscript name template")
+      .setDesc("Template for manuscript filenames. Use {{draftName}}, {{projectName}}, and moment.js date qualifiers like {{YYYY-MM-DD}}")
+      .addText((t) =>
+        t.setValue(plugin.settings.manuscriptNameTemplate || "{{draftName}}").onChange((v) => {
+          plugin.settings.manuscriptNameTemplate = v;
+          plugin.saveSettings();
+        }),
+      );
+
     containerEl.createEl("h3", { text: "Filenames" });
 
     new Setting(containerEl)

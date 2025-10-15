@@ -34,6 +34,11 @@
       "hotkeys": [{ "modifiers": ["Mod", "Alt"], "key": "A" }]
     },
     {
+      "id": "generate-manuscript",
+      "name": "Generate Manuscript",
+      "hotkeys": [{ "modifiers": ["Mod", "Shift"], "key": "M" }]
+    },
+    {
       "id": "navigate-to-next-chapter",
       "name": "Navigate to Next Chapter",
       "hotkeys": [{ "modifiers": ["Mod", "Alt"], "key": "N" }]
