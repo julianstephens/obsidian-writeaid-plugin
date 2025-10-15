@@ -1,6 +1,6 @@
 import { TemplateService } from "@/core/TemplateService";
 import { readMetaFile, updateMetaStats } from "@/core/meta";
-import { debug, DEBUG_PREFIX, PROJECT_TYPE, slugifyDraftName, suppressAsync } from "@/core/utils";
+import { debug, DEBUG_PREFIX, getDraftsFolderName, getManuscriptsFolderName, getMetaFileName, getOutlineFileName, PROJECT_TYPE, slugifyDraftName, suppressAsync } from "@/core/utils";
 import type { WriteAidManager } from "@/manager";
 import type { WriteAidSettings } from "@/types";
 import { ConfirmOverwriteModal } from "@/ui/modals/ConfirmOverwriteModal";
@@ -35,42 +35,9 @@ export class DraftFileService {
     return projectPath || this.manager?.activeProject || null;
   }
 
-  private getFolderName(
-    key: keyof Pick<
-      WriteAidSettings,
-      "draftsFolderName" | "manuscriptsFolderName" | "backupsFolderName"
-    >,
-  ): string {
-    const settings = (this.manager?.settings || {}) as WriteAidSettings;
-    switch (key) {
-      case "draftsFolderName":
-        return settings.draftsFolderName || "drafts";
-      case "manuscriptsFolderName":
-        return settings.manuscriptsFolderName || "manuscripts";
-      case "backupsFolderName":
-        return settings.backupsFolderName || ".writeaid-backups";
-      default:
-        return "drafts";
-    }
-  }
-
-  private getFileName(
-    key: keyof Pick<WriteAidSettings, "metaFileName" | "outlineFileName">,
-  ): string {
-    const settings = (this.manager?.settings || {}) as WriteAidSettings;
-    switch (key) {
-      case "metaFileName":
-        return settings.metaFileName || "meta.md";
-      case "outlineFileName":
-        return settings.outlineFileName || "outline.md";
-      default:
-        return "meta.md";
-    }
-  }
-
   private getDraftsFolderName(project: string): string | null {
     const projectFolder = this.app.vault.getAbstractFileByPath(project);
-    const draftsName = this.getFolderName("draftsFolderName");
+    const draftsName = getDraftsFolderName(this.manager?.settings);
     if (projectFolder && projectFolder instanceof TFolder) {
       for (const child of projectFolder.children) {
         if (child instanceof TFolder && child.name.toLowerCase() === draftsName.toLowerCase()) {
@@ -87,7 +54,7 @@ export class DraftFileService {
   async suggestNextDraftName(projectPath?: string): Promise<string> {
     const project = this.resolveProjectPath(projectPath);
     if (!project) return "Draft 1";
-    const metaPath = `${project}/${this.getFileName("metaFileName")}`;
+    const metaPath = `${project}/${getMetaFileName(this.manager?.settings)}`;
     let totalDrafts = 0;
     await suppressAsync(async () => {
       const meta = await readMetaFile(this.app, metaPath);
@@ -112,7 +79,7 @@ export class DraftFileService {
 
     // Check for existing drafts folder (handles legacy "Drafts" vs standard "drafts")
     const existingDraftsFolderName = this.getDraftsFolderName(projectPathResolved);
-    const draftsFolderName = existingDraftsFolderName || this.getFolderName("draftsFolderName");
+    const draftsFolderName = existingDraftsFolderName || getDraftsFolderName(this.manager?.settings);
     const draftsFolder = `${projectPathResolved}/${draftsFolderName}`;
     const newDraftFolder = `${draftsFolder}/${draftName}`;
 
@@ -265,7 +232,7 @@ export class DraftFileService {
     if (!project) return false;
     const draftsFolderName = this.getDraftsFolderName(project);
     if (!draftsFolderName) return false;
-    const outlinePath = `${project}/${draftsFolderName}/${draftName}/${this.getFileName("outlineFileName")}`;
+    const outlinePath = `${project}/${draftsFolderName}/${draftName}/${getOutlineFileName(this.manager?.settings)}`;
     const outlineFile = this.app.vault.getAbstractFileByPath(outlinePath);
     const outlineOpened = await suppressAsync(async () => {
       if (outlineFile && outlineFile instanceof TFile) {
@@ -352,7 +319,7 @@ export class DraftFileService {
         await import("./meta").then((meta) => meta.updateMetaStats(this.app, project, newName, undefined, this.manager?.settings));
       });
       // Update meta.md in the renamed draft folder if it exists
-      const draftMetaPath = `${newFolder}/${this.getFileName("metaFileName")}`;
+      const draftMetaPath = `${newFolder}/${getMetaFileName(this.manager?.settings)}`;
       const draftMetaFile = this.app.vault.getAbstractFileByPath(draftMetaPath);
       if (draftMetaFile) {
         await suppressAsync(async () => {
@@ -424,7 +391,7 @@ export class DraftFileService {
       return false;
     }
 
-    const manuscriptFolder = `${project}/${this.getFolderName("manuscriptsFolderName")}`;
+    const manuscriptFolder = `${project}/${getManuscriptsFolderName(this.manager?.settings)}`;
     if (!this.app.vault.getAbstractFileByPath(manuscriptFolder)) {
       await this.app.vault.createFolder(manuscriptFolder);
     }

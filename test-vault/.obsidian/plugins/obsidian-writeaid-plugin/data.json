@@ -12,7 +12,7 @@
   "panelRefreshDebounceMs": 250,
   "debug": false,
   "includeDraftOutline": false,
-  "draftsFolderName": "drafts",
+  "draftsFolderName": "Drafts",
   "manuscriptsFolderName": "manuscripts",
   "backupsFolderName": ".writeaid-backups",
   "metaFileName": "meta.md",

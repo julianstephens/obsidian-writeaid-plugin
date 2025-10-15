@@ -51,6 +51,30 @@
     {
       "id": "convert-single-to-multi-file-project",
       "name": "Convert Single-File Project to Multi-File"
+    },
+    {
+      "id": "toggle-project-panel",
+      "name": "Toggle Project Panel"
+    },
+    {
+      "id": "create-backup",
+      "name": "Create Backup"
+    },
+    {
+      "id": "list-backups",
+      "name": "List Backups"
+    },
+    {
+      "id": "restore-backup",
+      "name": "Restore Latest Backup"
+    },
+    {
+      "id": "delete-backup",
+      "name": "Delete Oldest Backup"
+    },
+    {
+      "id": "clear-old-backups",
+      "name": "Clear Old Backups"
     }
   ]
 }

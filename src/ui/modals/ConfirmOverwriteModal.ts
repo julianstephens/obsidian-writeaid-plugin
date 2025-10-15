@@ -5,7 +5,8 @@ export class ConfirmOverwriteModal extends Modal {
 
   constructor(
     app: App,
-    private manuscriptPath: string,
+    private path: string,
+    private isDraft: boolean = false,
   ) {
     super(app);
     this.setTitle("Confirm Overwrite");
@@ -13,8 +14,9 @@ export class ConfirmOverwriteModal extends Modal {
 
   onOpen() {
     const { contentEl } = this;
+    const itemType = this.isDraft ? "draft folder" : "manuscript file";
     contentEl.createEl("p", {
-      text: `The manuscript file "${this.manuscriptPath}" already exists. Do you want to overwrite it?`,
+      text: `The ${itemType} "${this.path}" already exists. Do you want to overwrite it?`,
     });
 
     const buttonContainer = contentEl.createDiv({ cls: "modal-button-container" });

@@ -1,9 +1,14 @@
+import { clearOldBackupsCommand } from "@/commands/clearOldBackupsCommand";
 import { convertSingleToMultiFileProjectCommand } from "@/commands/convertSingleToMultiFileProjectCommand";
+import { createBackupCommand } from "@/commands/createBackupCommand";
 import { createNewDraftCommand } from "@/commands/createNewDraftCommand";
 import { createNewProjectCommand } from "@/commands/createNewProjectCommand";
+import { deleteBackupCommand } from "@/commands/deleteBackupCommand";
 import { generateManuscriptCommand } from "@/commands/generateManuscriptCommand";
+import { listBackupsCommand } from "@/commands/listBackupsCommand";
 import { navigateToNextChapterCommand } from "@/commands/navigateToNextChapterCommand";
 import { navigateToPreviousChapterCommand } from "@/commands/navigateToPreviousChapterCommand";
+import { restoreBackupCommand } from "@/commands/restoreBackupCommand";
 import { selectActiveProjectCommand } from "@/commands/selectActiveProjectCommand";
 import { switchDraftCommand } from "@/commands/switchDraftCommand";
 import { toggleProjectPanelCommand } from "@/commands/toggleProjectPanelCommand";
@@ -40,7 +45,7 @@ const DEFAULT_SETTINGS: WriteAidSettings = {
   panelRefreshDebounceMs: 250,
   debug: false,
   includeDraftOutline: false,
-  draftsFolderName: "drafts",
+  draftsFolderName: "Drafts",
   manuscriptsFolderName: "manuscripts",
   backupsFolderName: ".writeaid-backups",
   metaFileName: "meta.md",
@@ -368,6 +373,36 @@ export default class WriteAidPlugin extends Plugin {
       id: "navigate-to-previous-chapter",
       name: "Navigate to Previous Chapter",
       callback: navigateToPreviousChapterCommand(this.manager),
+    });
+
+    this.addCommand({
+      id: "create-backup",
+      name: "Create Backup",
+      callback: createBackupCommand(this.manager),
+    });
+
+    this.addCommand({
+      id: "list-backups",
+      name: "List Backups",
+      callback: listBackupsCommand(this.manager),
+    });
+
+    this.addCommand({
+      id: "restore-backup",
+      name: "Restore Latest Backup",
+      callback: restoreBackupCommand(this.manager),
+    });
+
+    this.addCommand({
+      id: "delete-backup",
+      name: "Delete Oldest Backup",
+      callback: deleteBackupCommand(this.manager),
+    });
+
+    this.addCommand({
+      id: "clear-old-backups",
+      name: "Clear Old Backups",
+      callback: clearOldBackupsCommand(this.manager),
     });
 
     this.addSettingTab(new WriteAidSettingTab(this.app, this));

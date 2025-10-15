@@ -1,4 +1,4 @@
-import { debug, DEBUG_PREFIX, slugifyDraftName, suppressAsync } from "@/core/utils";
+import { debug, DEBUG_PREFIX, getDraftsFolderName, slugifyDraftName, suppressAsync } from "@/core/utils";
 import type { WriteAidManager } from "@/manager";
 import type { WriteAidSettings } from "@/types";
 import { App, TFile, TFolder } from "obsidian";
@@ -9,7 +9,6 @@ export class ChapterFileService {
 
   constructor(app: App) {
     this.app = app;
-    // Get the manager from the app
     this.manager =
       (
         this.app as unknown as {
@@ -293,42 +292,9 @@ export class ChapterFileService {
     return projectPath || this.manager?.activeProject || null;
   }
 
-  private getFolderName(
-    key: keyof Pick<
-      WriteAidSettings,
-      "draftsFolderName" | "manuscriptsFolderName" | "backupsFolderName"
-    >,
-  ): string {
-    const settings = (this.manager?.settings || {}) as WriteAidSettings;
-    switch (key) {
-      case "draftsFolderName":
-        return settings.draftsFolderName || "drafts";
-      case "manuscriptsFolderName":
-        return settings.manuscriptsFolderName || "manuscripts";
-      case "backupsFolderName":
-        return settings.backupsFolderName || ".writeaid-backups";
-      default:
-        return "drafts";
-    }
-  }
-
-  private getFileName(
-    key: keyof Pick<WriteAidSettings, "metaFileName" | "outlineFileName">,
-  ): string {
-    const settings = (this.manager?.settings || {}) as WriteAidSettings;
-    switch (key) {
-      case "metaFileName":
-        return settings.metaFileName || "meta.md";
-      case "outlineFileName":
-        return settings.outlineFileName || "outline.md";
-      default:
-        return "meta.md";
-    }
-  }
-
   private getDraftsFolderName(project: string): string | null {
     const projectFolder = this.app.vault.getAbstractFileByPath(project);
-    const draftsName = this.getFolderName("draftsFolderName");
+    const draftsName = getDraftsFolderName(this.manager?.settings);
     if (projectFolder && projectFolder instanceof TFolder) {
       for (const child of projectFolder.children) {
         if (child instanceof TFolder && child.name.toLowerCase() === draftsName.toLowerCase()) {

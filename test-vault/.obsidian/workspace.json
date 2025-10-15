@@ -11,10 +11,14 @@
             "id": "5280a970130968c9",
             "type": "leaf",
             "state": {
-              "type": "empty",
-              "state": {},
+              "type": "markdown",
+              "state": {
+                "file": "Story/Drafts/Draft 3/draft3.md",
+                "mode": "source",
+                "source": false
+              },
               "icon": "lucide-file",
-              "title": "New tab"
+              "title": "draft3"
             }
           }
         ]
@@ -80,8 +84,7 @@
               "title": "WriteAid Projects"
             }
           }
-        ],
-        "currentTab": 3
+        ]
       }
     ],
     "direction": "horizontal",
@@ -175,8 +178,12 @@
       "bases:Create new base": false
     }
   },
-  "active": "36a4b021559a3158",
+  "active": "03e1d346535ab3d0",
   "lastOpenFiles": [
+    "Story/Drafts/Draft 2/draft2.md",
+    "Story/Drafts/Draft 3/draft3.md",
+    "Story/Drafts/Draft 2",
+    "Story/Drafts/Draft 3",
     "novel/Drafts/Draft 1/Chapter 2.md",
     "novel/Drafts/Draft 2/chapter1.md",
     "novel/Drafts/Draft 2",
@@ -191,13 +198,10 @@
     "Story/Manuscripts/3rpmftADpm223.md",
     "Story/Manuscripts/3rpmftADpm13.md",
     "Story/Manuscripts/3ramftADam123.md",
-    "Story/Drafts/Draft 3/draft3.md",
     "Story/Manuscripts",
     "novel/Drafts/Draft 3/The Rule.md",
     "novel/Drafts/Draft 3/Chapter 1.md",
     "novel/Drafts/Draft 3",
-    "Story/Drafts/Draft 2/draft2.md",
-    "Story/Drafts/Draft 3",
     "Story/Drafts/Draft 1/draft1.md",
     "Story/Drafts/Draft 4 Copy/draft2.md",
     "Story/Drafts/Draft 4/draft2.md",
@@ -207,11 +211,9 @@
     "Story/Drafts/Draft 2 Copy",
     "novel/Drafts/Draft 1/The Rule.md",
     "Story/Drafts/Test draft/testdraft.md",
-    "Story/Drafts/Test draft",
     "novel/Drafts/Draft 2/Chapter 1.md",
     "novel/meta.md",
     "Story/meta.md",
-    "novel/Drafts/Draft 1/Chapter 3.md",
-    "novel/Drafts/[object Promise]/Chapter 1.md"
+    "novel/Drafts/Draft 1/Chapter 3.md"
   ]
 }
