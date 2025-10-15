@@ -1,5 +1,4 @@
 export interface WriteAidSettings {
-  projectFileTemplate: string;
   draftOutlineTemplate: string;
   planningTemplate: string;
   chapterTemplate: string;

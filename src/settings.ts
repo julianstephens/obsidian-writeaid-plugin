@@ -52,25 +52,6 @@ export class WriteAidSettingTab extends PluginSettingTab {
       );
 
     new Setting(containerEl)
-      .setName("Project file template")
-      .setDesc("Template for the main project file. Use {{projectName}}")
-      .addTextArea((ta) =>
-        ta.setValue(plugin.settings.projectFileTemplate || "").onChange((v) => {
-          plugin.settings.projectFileTemplate = v;
-          plugin.saveSettings();
-        }),
-      )
-      .addButton((btn) =>
-        btn.setButtonText("Pick file...").onClick(() => {
-          new FilePickerModal(this.app, (path) => {
-            plugin.settings.projectFileTemplate = path;
-            plugin.saveSettings();
-            this.display();
-          }).open();
-        }),
-      );
-
-    new Setting(containerEl)
       .setName("Draft outline template")
       .setDesc("Template for new draft outline files. Use {{draftName}}")
       .addTextArea((ta) =>

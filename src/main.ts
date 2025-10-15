@@ -1,6 +1,7 @@
 import { convertSingleToMultiFileProjectCommand } from "@/commands/convertSingleToMultiFileProjectCommand";
 import { createNewDraftCommand } from "@/commands/createNewDraftCommand";
 import { createNewProjectCommand } from "@/commands/createNewProjectCommand";
+import { navigateToNextChapterCommand } from "@/commands/navigateToNextChapterCommand";
 import { selectActiveProjectCommand } from "@/commands/selectActiveProjectCommand";
 import { switchDraftCommand } from "@/commands/switchDraftCommand";
 import { toggleProjectPanelCommand } from "@/commands/toggleProjectPanelCommand";
@@ -35,7 +36,6 @@ function debug(...args: unknown[]) {
 }
 
 const DEFAULT_SETTINGS: WriteAidSettings = {
-  projectFileTemplate: "# {{projectName}}\n\nProject created with WriteAid",
   draftOutlineTemplate: "# Outline for {{draftName}}",
   planningTemplate: "# Planning: {{projectName}}\n\n- [ ] ...",
   chapterTemplate: "# {{chapterTitle}}\n\n",
@@ -379,6 +379,12 @@ export default class WriteAidPlugin extends Plugin {
           this.manager.activeProject || this.manager.getCurrentProjectPath?.() || undefined,
         ),
     });
+    this.addCommand({
+      id: "navigate-to-next-chapter",
+      name: "Navigate to Next Chapter",
+      callback: navigateToNextChapterCommand(this.manager),
+    });
+
     this.addSettingTab(new WriteAidSettingTab(this.app, this));
   }
 

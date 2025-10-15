@@ -2,10 +2,9 @@
 import { DraftService } from "@/core/DraftService";
 import { readMetaFile, updateMetaStats } from "@/core/meta";
 import { ProjectService } from "@/core/ProjectService";
-import { TemplateService } from "@/core/TemplateService";
 import { asyncFilter } from "@/core/utils";
 import type { PluginLike, WriteAidSettings } from "@/types";
-import { App, Notice, TFile } from "obsidian";
+import { App, Notice } from "obsidian";
 
 import { ConfirmExistingProjectModal } from "@/ui/modals/ConfirmExistingProjectModal";
 import { CreateDraftModal } from "@/ui/modals/CreateDraftModal";

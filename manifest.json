@@ -34,6 +34,11 @@
       "hotkeys": [{ "modifiers": ["Mod", "Alt"], "key": "A" }]
     },
     {
+      "id": "navigate-to-next-chapter",
+      "name": "Navigate to Next Chapter",
+      "hotkeys": [{ "modifiers": ["Mod", "Alt"], "key": "N" }]
+    },
+    {
       "id": "convert-single-to-multi-file-project",
       "name": "Convert Single-File Project to Multi-File"
     }

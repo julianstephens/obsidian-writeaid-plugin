@@ -327,8 +327,8 @@ export class DraftService {
         const draftMainPath = `${newDraftFolder}/${draftFileName}`;
         if (!this.app.vault.getAbstractFileByPath(draftMainPath)) {
           const fm = `---\ndraft: ${draftName}\nproject: ${projectName}\ncreated: ${new Date().toISOString()}\n---\n\n`;
-          const projectContent = await this.tpl.render(settings?.projectFileTemplate ?? "", {
-            projectName,
+          const projectContent = await this.tpl.render("# {{draftName}}", {
+            draftName,
           });
           await this.app.vault.create(draftMainPath, fm + projectContent);
         }
