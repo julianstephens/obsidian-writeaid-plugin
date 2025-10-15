@@ -10,9 +10,7 @@ This will update the project type in `meta.md` and rename all draft files to `Ch
 
 ### Chapter Management
 
-For multi-file projects, you can manage chapters using the command palette:
-
-- **Create New Chapter** (Ctrl/Cmd+Alt+C): Create a new chapter in the active draft
+For multi-file projects, you can manage chapters using the project panel.
 
 All chapter operations work on the currently active draft of the active project.
 

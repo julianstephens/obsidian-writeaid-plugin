@@ -8,8 +8,18 @@
   import "@/ui/components/components.css";
   import IconButton from "@/ui/components/IconButton.svelte";
   import { ConfirmDeleteModal } from "@/ui/modals/ConfirmDeleteModal";
+  import { DuplicateDraftModal } from "@/ui/modals/DuplicateDraftModal";
   import { RenameChapterModal } from "@/ui/modals/RenameChapterModal";
-  import { ArrowDown, ArrowUp, BookOpenCheck, Eye, Pencil, RotateCcw, Trash } from "@lucide/svelte";
+  import {
+    ArrowDown,
+    ArrowUp,
+    BookOpenCheck,
+    Copy,
+    Eye,
+    Pencil,
+    RotateCcw,
+    Trash,
+  } from "@lucide/svelte";
   import { onDestroy, onMount } from "svelte";
   import Select from "svelte-select";
   import { flip } from "svelte/animate";
@@ -247,6 +257,25 @@
     }
     await refreshDrafts();
     await refreshChapters();
+  }
+
+  async function duplicateDraft(draftName) {
+    if (!selectedValue) return;
+    const suggestedName = `${draftName} Copy`;
+    new DuplicateDraftModal(manager.app, {
+      sourceDraftName: draftName,
+      suggestedName,
+      onSubmit: async (newName) => {
+        try {
+          await manager.createNewDraft(newName, draftName, selectedValue);
+          await refreshDrafts();
+          new window.Notice(`Draft '${newName}' created as duplicate of '${draftName}'.`);
+        } catch (e) {
+          console.error("Failed to duplicate draft:", e);
+          new window.Notice("Failed to duplicate draft.");
+        }
+      },
+    }).open();
   }
 
   async function renameDraft(draftName) {
@@ -593,6 +622,13 @@
                   onclick={() => renameDraft(d)}
                 >
                   <Pencil size={18} />
+                </IconButton>
+                <IconButton
+                  ariaLabel="Duplicate draft"
+                  title={undefined}
+                  onclick={() => duplicateDraft(d)}
+                >
+                  <Copy size={18} />
                 </IconButton>
                 <IconButton
                   ariaLabel="Delete draft"

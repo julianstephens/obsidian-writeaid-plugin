@@ -257,6 +257,9 @@ export class DraftService {
     const draftsFolder = `${projectPathResolved}/Drafts`;
     const newDraftFolder = `${draftsFolder}/${draftName}`;
 
+    // Determine project name for metadata updates
+    const projectName = projectPathResolved.split("/").pop() || projectPathResolved;
+
     // Create drafts and draft folders if needed
     if (!this.app.vault.getAbstractFileByPath(draftsFolder)) {
       await this.app.vault.createFolder(draftsFolder);
@@ -269,10 +272,39 @@ export class DraftService {
     if (copyFromDraft) {
       const sourceFolder = `${draftsFolder}/${copyFromDraft}`;
       const files = this.app.vault.getFiles().filter((file) => file.path.startsWith(sourceFolder));
+
+      // Check if this might be a single-file project by looking for the main draft file
+      const sourceSlug = slugifyDraftName(
+        copyFromDraft,
+        settings?.slugStyle as import("@/core/utils").DraftSlugStyle,
+      );
+      const expectedSourceFile = `${sourceSlug}.md`;
+
       for (const file of files) {
-        const relPath = file.path.substring(sourceFolder.length + 1);
+        let relPath = file.path.substring(sourceFolder.length + 1);
+
+        // If this is the main draft file for a single-file project, rename it
+        if (relPath === expectedSourceFile) {
+          const newSlug = slugifyDraftName(
+            draftName,
+            settings?.slugStyle as import("@/core/utils").DraftSlugStyle,
+          );
+          relPath = `${newSlug}.md`;
+        }
+
         const destPath = `${newDraftFolder}/${relPath}`;
-        const content = await this.app.vault.read(file);
+
+        // Create any subfolders needed for the destination path
+        const destDir = destPath.substring(0, destPath.lastIndexOf("/"));
+        if (destDir !== newDraftFolder && !this.app.vault.getAbstractFileByPath(destDir)) {
+          await this.app.vault.createFolder(destDir);
+        }
+
+        let content = await this.app.vault.read(file);
+
+        // Update metadata for duplicated files
+        content = updateDuplicatedFileMetadata(content, draftName, projectName);
+
         await this.app.vault.create(destPath, content);
       }
     } else {
@@ -286,7 +318,6 @@ export class DraftService {
       }
 
       // Determine project type from meta.md frontmatter
-      const projectName = projectPathResolved.split("/").pop() || projectPathResolved;
       const metaCandidate = `${projectPathResolved}/meta.md`;
       let isSingleFileProject = false;
       if (this.app.vault.getAbstractFileByPath(metaCandidate)) {
@@ -571,4 +602,49 @@ export class DraftService {
       return false;
     }
   }
+}
+
+/**
+ * Update metadata in duplicated files to reflect the new draft
+ */
+function updateDuplicatedFileMetadata(
+  content: string,
+  draftName: string,
+  projectName: string,
+): string {
+  // Check if the content has frontmatter
+  const fmMatch = content.match(/^---\n([\s\S]*?)\n---/);
+  if (!fmMatch) {
+    return content; // No frontmatter to update
+  }
+
+  const frontmatter = fmMatch[1];
+  const body = content.substring(fmMatch[0].length);
+
+  // Split frontmatter into lines
+  const lines = frontmatter.split("\n");
+  const updatedLines: string[] = [];
+
+  for (const line of lines) {
+    // Update draft name
+    if (line.match(/^draft:/i)) {
+      updatedLines.push(`draft: ${draftName}`);
+    }
+    // Update project name
+    else if (line.match(/^project:/i)) {
+      updatedLines.push(`project: ${projectName}`);
+    }
+    // Update created date to current timestamp
+    else if (line.match(/^created:/i)) {
+      updatedLines.push(`created: ${new Date().toISOString()}`);
+    }
+    // Keep other lines as-is
+    else {
+      updatedLines.push(line);
+    }
+  }
+
+  // Reconstruct the content
+  const updatedFrontmatter = updatedLines.join("\n");
+  return `---\n${updatedFrontmatter}\n---${body}`;
 }
