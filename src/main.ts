@@ -39,6 +39,12 @@ const DEFAULT_SETTINGS: WriteAidSettings = {
   activeProject: undefined,
   panelRefreshDebounceMs: 250,
   debug: false,
+  includeDraftOutline: false,
+  draftsFolderName: "drafts",
+  manuscriptsFolderName: "manuscripts",
+  backupsFolderName: ".writeaid-backups",
+  metaFileName: "meta.md",
+  outlineFileName: "outline.md",
 };
 
 function normalizeSettings(data?: Partial<WriteAidSettings>): WriteAidSettings {
@@ -147,10 +153,10 @@ export default class WriteAidPlugin extends Plugin {
         const lastActive = lastActiveRaw?.trim().replace(/^\/+/, "").replace(/\/+$/, "");
         const isValidProject = await projectService.isProjectFolder(lastActiveRaw || "");
         if (isValidProject) {
-            debug(
-              `${DEBUG_PREFIX} activating saved project '${lastActive}' as it exists and has valid meta.md`,
-            );
-            toActivate = lastActive ?? null;
+          debug(
+            `${DEBUG_PREFIX} activating saved project '${lastActive}' as it exists and has valid meta.md`,
+          );
+          toActivate = lastActive ?? null;
         }
       }
       debug(`${DEBUG_PREFIX} toActivate='${toActivate}'`);

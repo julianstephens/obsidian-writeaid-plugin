@@ -1,29 +1,28 @@
+export class BackupService {
+  backupIntervalMinutes = 10;
+  maxBackups = 5;
+  maxBackupAgeDays = 30;
 
+  constructor() {}
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  async createBackup(draftFolder: string) {}
 
-class BackupService {
-    backupIntervalMinutes = 10;
-    maxBackups = 5;
-    maxBackupAgeDays = 30;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  async listBackups(draftFolder: string): Promise<string[]> {
+    return [];
+  }
 
-    constructor() {
-    }
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  async restoreBackup(draftFolder: string, timestamp: string): Promise<boolean> {
+    return false;
+  }
 
-    async createBackup(draftFolder: string) {
-    }
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  async deleteBackup(draftFolder: string, timestamp: string): Promise<boolean> {
+    return false;
+  }
 
-    async listBackups(draftFolder: string): Promise<string[]> {
-        return [];
-    }
-
-    async restoreBackup(draftFolder: string, timestamp: string): Promise<boolean> {
-        return false;
-    }
-
-    async deleteBackup(draftFolder: string, timestamp: string): Promise<boolean> {
-        return false;
-    }
-
-    async clearOldBackups(draftFolder: string, maxAgeDays: number): Promise<void> {
-    }
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  async clearOldBackups(draftFolder: string, maxAgeDays: number): Promise<void> {}
 }

@@ -215,6 +215,63 @@ export class WriteAidSettingTab extends PluginSettingTab {
     );
     previewEl.setText(`Example: ${sampleName} → ${initialSlug}.md`);
 
+    containerEl.createEl("h3", { text: "Folders & Files" });
+
+    new Setting(containerEl)
+      .setName("Drafts folder name")
+      .setDesc("Name of the folder containing draft subfolders (default: drafts)")
+      .addText((t) =>
+        t.setValue(plugin.settings.draftsFolderName || "drafts").onChange((v) => {
+          debug(`${DEBUG_PREFIX} Drafts folder name changed: ${v}`);
+          plugin.settings.draftsFolderName = v || "drafts";
+          plugin.saveSettings();
+        }),
+      );
+
+    new Setting(containerEl)
+      .setName("Manuscripts folder name")
+      .setDesc("Name of the folder containing generated manuscripts (default: manuscripts)")
+      .addText((t) =>
+        t.setValue(plugin.settings.manuscriptsFolderName || "manuscripts").onChange((v) => {
+          debug(`${DEBUG_PREFIX} Manuscripts folder name changed: ${v}`);
+          plugin.settings.manuscriptsFolderName = v || "manuscripts";
+          plugin.saveSettings();
+        }),
+      );
+
+    new Setting(containerEl)
+      .setName("Backups folder name")
+      .setDesc("Name of the folder containing draft backups (default: .writeaid-backups)")
+      .addText((t) =>
+        t.setValue(plugin.settings.backupsFolderName || ".writeaid-backups").onChange((v) => {
+          debug(`${DEBUG_PREFIX} Backups folder name changed: ${v}`);
+          plugin.settings.backupsFolderName = v || ".writeaid-backups";
+          plugin.saveSettings();
+        }),
+      );
+
+    new Setting(containerEl)
+      .setName("Meta file name")
+      .setDesc("Name of the project metadata file (default: meta.md)")
+      .addText((t) =>
+        t.setValue(plugin.settings.metaFileName || "meta.md").onChange((v) => {
+          debug(`${DEBUG_PREFIX} Meta file name changed: ${v}`);
+          plugin.settings.metaFileName = v || "meta.md";
+          plugin.saveSettings();
+        }),
+      );
+
+    new Setting(containerEl)
+      .setName("Outline file name")
+      .setDesc("Name of the draft outline file (default: outline.md)")
+      .addText((t) =>
+        t.setValue(plugin.settings.outlineFileName || "outline.md").onChange((v) => {
+          debug(`${DEBUG_PREFIX} Outline file name changed: ${v}`);
+          plugin.settings.outlineFileName = v || "outline.md";
+          plugin.saveSettings();
+        }),
+      );
+
     containerEl.createEl("h3", { text: "UI & Startup" });
 
     containerEl.createEl("p", {

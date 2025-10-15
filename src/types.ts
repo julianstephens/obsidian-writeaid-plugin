@@ -24,6 +24,15 @@ export interface WriteAidSettings {
 
   // If true, create an outline.md file when creating a new draft
   includeDraftOutline?: boolean;
+
+  // Customizable folder names
+  draftsFolderName?: string;
+  manuscriptsFolderName?: string;
+  backupsFolderName?: string;
+
+  // Customizable file names
+  metaFileName?: string;
+  outlineFileName?: string;
 }
 
 // Minimal plugin-like interface used for typing in services

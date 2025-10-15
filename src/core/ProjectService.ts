@@ -3,7 +3,15 @@ import { TemplateService } from "@/core/TemplateService";
 import type { WriteAidSettings } from "@/types";
 import { App, normalizePath, Notice, TFile, TFolder } from "obsidian";
 import { readMetaFile } from "./meta";
-import { asyncFilter, debug, DEBUG_PREFIX, FILES, FOLDERS, PROJECT_TYPE, type ProjectType } from "./utils";
+import {
+  asyncFilter,
+  debug,
+  DEBUG_PREFIX,
+  FILES,
+  FOLDERS,
+  PROJECT_TYPE,
+  type ProjectType,
+} from "./utils";
 
 export class ProjectService {
   app: App;
@@ -13,7 +21,7 @@ export class ProjectService {
   constructor(app: App) {
     this.app = app;
     this.tpl = new TemplateService(app);
-    this.projectFileService = new ProjectFileService(app);
+    this.projectFileService = new ProjectFileService(app, this);
   }
 
   /** Create a project folder, drafts folder and initial draft folder(s). Returns the project path. */
@@ -128,12 +136,21 @@ export class ProjectService {
   }
 
   /** Get the Drafts folder TFolder object, or null if not found */
-  async getDraftsFolder(projectPath: string): Promise<TFolder | null> {
+  getDraftsFolder(projectPath: string): TFolder | null {
+    // First try the standard lowercase "drafts"
     const draftsPath = `${projectPath}/${FOLDERS.DRAFTS}`;
-    const draftsFolder = this.app.vault.getAbstractFileByPath(draftsPath);
+    let draftsFolder = this.app.vault.getAbstractFileByPath(draftsPath);
     if (draftsFolder && draftsFolder instanceof TFolder) {
       return draftsFolder;
     }
+
+    // If not found, try capitalized "Drafts" for backward compatibility
+    const capitalizedDraftsPath = `${projectPath}/Drafts`;
+    draftsFolder = this.app.vault.getAbstractFileByPath(capitalizedDraftsPath);
+    if (draftsFolder && draftsFolder instanceof TFolder) {
+      return draftsFolder;
+    }
+
     return null;
   }
 
@@ -147,35 +164,47 @@ export class ProjectService {
     return null;
   }
 
-
   // Simple heuristic to determine whether a folder looks like a project managed by WriteAid
-  // We consider a folder a project if it contains a meta.md or a Drafts/ subfolder.
+  // We consider a folder a project if it contains a meta.md file or a Drafts/ subfolder.
   async isProjectFolder(path: string): Promise<boolean> {
     if (!path || typeof path !== "string") return false;
     const base = path.trim().replace(/\\/g, "/").replace(/\/+$/, "");
     try {
       const metaPath = normalizePath(`${base}/${FILES.META}`);
       const hasMeta = await this.app.vault.adapter.exists(metaPath);
-      const hasDrafts = await this.app.vault.adapter.exists(
-        normalizePath(`${base}/${FOLDERS.DRAFTS}`),
-      );
-      if (!hasMeta || !hasDrafts) return false;
 
-      try {
-        // Dynamically import to avoid circular deps
-        const { readMetaFile } = await import("./meta");
-        const { VALID_PROJECT_TYPES } = await import("./utils");
-        const meta = await readMetaFile(this.app, metaPath);
-        if (
-          !meta ||
-          !VALID_PROJECT_TYPES.includes(meta.project_type as import("./utils").ProjectType)
-        ) {
+      // Check for drafts folder case-insensitively
+      const draftsPath = normalizePath(`${base}/${FOLDERS.DRAFTS}`);
+      let hasDrafts = await this.app.vault.adapter.exists(draftsPath);
+
+      // If standard lowercase "drafts" doesn't exist, check for capitalized "Drafts"
+      if (!hasDrafts) {
+        const capitalizedDraftsPath = normalizePath(`${base}/Drafts`);
+        hasDrafts = await this.app.vault.adapter.exists(capitalizedDraftsPath);
+      }
+
+      // Accept folder as project if it has meta.md OR drafts folder
+      if (!hasMeta && !hasDrafts) return false;
+
+      // If it has meta.md, validate its content
+      if (hasMeta) {
+        try {
+          // Dynamically import to avoid circular deps
+          const { readMetaFile } = await import("./meta");
+          const { VALID_PROJECT_TYPES } = await import("./utils");
+          const meta = await readMetaFile(this.app, metaPath);
+          if (
+            !meta ||
+            !VALID_PROJECT_TYPES.includes(meta.project_type as import("./utils").ProjectType)
+          ) {
+            return false;
+          }
+        } catch {
+          // ignore
           return false;
         }
-      } catch {
-        // ignore
-        return false;
       }
+
       return true;
     } catch {
       // ignore

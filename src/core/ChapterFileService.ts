@@ -5,16 +5,17 @@ import { App, TFile, TFolder } from "obsidian";
 
 export class ChapterFileService {
   app: App;
-  manager: WriteAidManager;
+  manager: WriteAidManager | null;
 
   constructor(app: App) {
     this.app = app;
     // Get the manager from the app
-    this.manager = (
-      this.app as unknown as {
-        plugins: { getPlugin?: (id: string) => { manager?: WriteAidManager } };
-      }
-    ).plugins.getPlugin?.("obsidian-writeaid-plugin")?.manager!;
+    this.manager =
+      (
+        this.app as unknown as {
+          plugins: { getPlugin?: (id: string) => { manager?: WriteAidManager } };
+        }
+      ).plugins.getPlugin?.("obsidian-writeaid-plugin")?.manager ?? null;
   }
 
   /**
@@ -28,7 +29,9 @@ export class ChapterFileService {
   ) {
     const project = this.resolveProjectPath(projectPath);
     if (!project) return false;
-    const draftFolder = `${project}/drafts/${draftName}`;
+    const draftsFolderName = this.getDraftsFolderName(project);
+    if (!draftsFolderName) return false;
+    const draftFolder = `${project}/${draftsFolderName}/${draftName}`;
     for (let i = 0; i < newOrder.length; i++) {
       const { chapterName } = newOrder[i];
       const filePath = `${draftFolder}/${chapterName}.md`;
@@ -56,39 +59,40 @@ export class ChapterFileService {
     projectPath: string,
     draftName: string,
   ): Promise<Array<{ name: string; chapterName?: string }>> {
-    debug(`${DEBUG_PREFIX} ChapterFileService.listChapters: projectPath=${projectPath}, draftName=${draftName}`);
+    debug(
+      `${DEBUG_PREFIX} ChapterFileService.listChapters: projectPath=${projectPath}, draftName=${draftName}`,
+    );
     const project = this.resolveProjectPath(projectPath);
     if (!project) {
       debug(`${DEBUG_PREFIX} ChapterFileService.listChapters: no project resolved`);
       return [];
     }
     // Find the drafts folder, case-insensitively
-    const projectFolder = this.app.vault.getAbstractFileByPath(project);
-    let draftsFolderName: string | null = null;
-    if (projectFolder && projectFolder instanceof TFolder) {
-      for (const child of projectFolder.children) {
-        if (child instanceof TFolder && child.name.toLowerCase() === 'drafts') {
-          draftsFolderName = child.name;
-          break;
-        }
-      }
-    }
+    const draftsFolderName = this.getDraftsFolderName(project);
     if (!draftsFolderName) {
-      debug(`${DEBUG_PREFIX} ChapterFileService.listChapters: no drafts folder found in project ${project}`);
+      debug(
+        `${DEBUG_PREFIX} ChapterFileService.listChapters: no drafts folder found in project ${project}`,
+      );
       return [];
     }
     const draftFolder = `${project}/${draftsFolderName}/${draftName}`;
-    debug(`${DEBUG_PREFIX} ChapterFileService.listChapters: resolved project=${project}, draftsFolder=${draftsFolderName}, draftFolder=${draftFolder}`);
+    debug(
+      `${DEBUG_PREFIX} ChapterFileService.listChapters: resolved project=${project}, draftsFolder=${draftsFolderName}, draftFolder=${draftFolder}`,
+    );
     const folder = this.app.vault.getAbstractFileByPath(draftFolder);
     const chapters: Array<{ name: string; chapterName?: string; order: number }> = [];
     if (folder && folder instanceof TFolder) {
-      debug(`${DEBUG_PREFIX} ChapterFileService.listChapters: found folder with ${folder.children.length} children`);
+      debug(
+        `${DEBUG_PREFIX} ChapterFileService.listChapters: found folder with ${folder.children.length} children`,
+      );
       for (const file of folder.children) {
         if (file instanceof TFile && file.extension === "md") {
           debug(`${DEBUG_PREFIX} ChapterFileService.listChapters: processing file ${file.path}`);
           await suppressAsync(async () => {
             const content = await this.app.vault.read(file);
-            debug(`${DEBUG_PREFIX} ChapterFileService.listChapters: content length ${content.length}`);
+            debug(
+              `${DEBUG_PREFIX} ChapterFileService.listChapters: content length ${content.length}`,
+            );
             const fmMatch = content.match(/^---\n([\s\S]*?)\n---/);
             let order: number | undefined = undefined;
             let chapterName: string | undefined = undefined;
@@ -113,11 +117,20 @@ export class ChapterFileService {
             } else {
               debug(`${DEBUG_PREFIX} ChapterFileService.listChapters: no frontmatter`);
             }
-            debug(`${DEBUG_PREFIX} ChapterFileService.listChapters: parsed order=${order}, chapterName=${chapterName}`);
-            const chapName = chapterName && chapterName.length > 0 ? chapterName : file.name.replace(/\.md$/, "");
-            const chapOrder = (typeof order === "number" && !isNaN(order)) ? order : 0;
-            debug(`${DEBUG_PREFIX} ChapterFileService.listChapters: adding chapter ${file.name} with name ${chapName}, order ${chapOrder}`);
-            chapters.push({ name: file.name.replace(/\.md$/, ""), chapterName: chapName, order: chapOrder });
+            debug(
+              `${DEBUG_PREFIX} ChapterFileService.listChapters: parsed order=${order}, chapterName=${chapterName}`,
+            );
+            const chapName =
+              chapterName && chapterName.length > 0 ? chapterName : file.name.replace(/\.md$/, "");
+            const chapOrder = typeof order === "number" && !isNaN(order) ? order : 0;
+            debug(
+              `${DEBUG_PREFIX} ChapterFileService.listChapters: adding chapter ${file.name} with name ${chapName}, order ${chapOrder}`,
+            );
+            chapters.push({
+              name: file.name.replace(/\.md$/, ""),
+              chapterName: chapName,
+              order: chapOrder,
+            });
           });
         }
       }
@@ -139,16 +152,7 @@ export class ChapterFileService {
     const project = this.resolveProjectPath(projectPath);
     if (!project) return false;
     // Find the drafts folder, case-insensitively
-    const projectFolder = this.app.vault.getAbstractFileByPath(project);
-    let draftsFolderName: string | null = null;
-    if (projectFolder && projectFolder instanceof TFolder) {
-      for (const child of projectFolder.children) {
-        if (child instanceof TFolder && child.name.toLowerCase() === 'drafts') {
-          draftsFolderName = child.name;
-          break;
-        }
-      }
-    }
+    const draftsFolderName = this.getDraftsFolderName(project);
     if (!draftsFolderName) return false;
     const draftFolder = `${project}/${draftsFolderName}/${draftName}`;
     const slug = slugifyDraftName(
@@ -192,16 +196,7 @@ export class ChapterFileService {
     const project = this.resolveProjectPath(projectPath);
     if (!project) return false;
     // Find the drafts folder, case-insensitively
-    const projectFolder = this.app.vault.getAbstractFileByPath(project);
-    let draftsFolderName: string | null = null;
-    if (projectFolder && projectFolder instanceof TFolder) {
-      for (const child of projectFolder.children) {
-        if (child instanceof TFolder && child.name.toLowerCase() === 'drafts') {
-          draftsFolderName = child.name;
-          break;
-        }
-      }
-    }
+    const draftsFolderName = this.getDraftsFolderName(project);
     if (!draftsFolderName) return false;
     const draftFolder = `${project}/${draftsFolderName}/${draftName}`;
     const fileName = `${chapterName}.md`;
@@ -238,16 +233,7 @@ export class ChapterFileService {
     const project = this.resolveProjectPath(projectPath);
     if (!project) return false;
     // Find the drafts folder, case-insensitively
-    const projectFolder = this.app.vault.getAbstractFileByPath(project);
-    let draftsFolderName: string | null = null;
-    if (projectFolder && projectFolder instanceof TFolder) {
-      for (const child of projectFolder.children) {
-        if (child instanceof TFolder && child.name.toLowerCase() === 'drafts') {
-          draftsFolderName = child.name;
-          break;
-        }
-      }
-    }
+    const draftsFolderName = this.getDraftsFolderName(project);
     if (!draftsFolderName) return false;
     const draftFolder = `${project}/${draftsFolderName}/${draftName}`;
     const oldFile = `${draftFolder}/${oldName}.md`;
@@ -289,17 +275,7 @@ export class ChapterFileService {
   ): Promise<boolean> {
     const project = this.resolveProjectPath(projectPath);
     if (!project) return false;
-    // Find the drafts folder, case-insensitively
-    const projectFolder = this.app.vault.getAbstractFileByPath(project);
-    let draftsFolderName: string | null = null;
-    if (projectFolder && projectFolder instanceof TFolder) {
-      for (const child of projectFolder.children) {
-        if (child instanceof TFolder && child.name.toLowerCase() === 'drafts') {
-          draftsFolderName = child.name;
-          break;
-        }
-      }
-    }
+    const draftsFolderName = this.getDraftsFolderName(project);
     if (!draftsFolderName) return false;
     const filePath = `${project}/${draftsFolderName}/${draftName}/${chapterName}.md`;
     const file = this.app.vault.getAbstractFileByPath(filePath);
@@ -314,6 +290,52 @@ export class ChapterFileService {
   }
 
   private resolveProjectPath(projectPath?: string): string | null {
-    return projectPath || this.manager.activeProject || null;
+    return projectPath || this.manager?.activeProject || null;
+  }
+
+  private getFolderName(
+    key: keyof Pick<
+      WriteAidSettings,
+      "draftsFolderName" | "manuscriptsFolderName" | "backupsFolderName"
+    >,
+  ): string {
+    const settings = (this.manager?.settings || {}) as WriteAidSettings;
+    switch (key) {
+      case "draftsFolderName":
+        return settings.draftsFolderName || "drafts";
+      case "manuscriptsFolderName":
+        return settings.manuscriptsFolderName || "manuscripts";
+      case "backupsFolderName":
+        return settings.backupsFolderName || ".writeaid-backups";
+      default:
+        return "drafts";
+    }
+  }
+
+  private getFileName(
+    key: keyof Pick<WriteAidSettings, "metaFileName" | "outlineFileName">,
+  ): string {
+    const settings = (this.manager?.settings || {}) as WriteAidSettings;
+    switch (key) {
+      case "metaFileName":
+        return settings.metaFileName || "meta.md";
+      case "outlineFileName":
+        return settings.outlineFileName || "outline.md";
+      default:
+        return "meta.md";
+    }
+  }
+
+  private getDraftsFolderName(project: string): string | null {
+    const projectFolder = this.app.vault.getAbstractFileByPath(project);
+    const draftsName = this.getFolderName("draftsFolderName");
+    if (projectFolder && projectFolder instanceof TFolder) {
+      for (const child of projectFolder.children) {
+        if (child instanceof TFolder && child.name.toLowerCase() === draftsName.toLowerCase()) {
+          return child.name;
+        }
+      }
+    }
+    return null;
   }
 }

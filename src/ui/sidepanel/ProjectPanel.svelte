@@ -212,7 +212,11 @@
     if (!selectedValue || !newDraftName.trim()) return;
     try {
       // Use the new projectFileService for creating drafts
-      await projectFileService.drafts.createDraft(newDraftName.trim(), copyFrom || undefined, selectedValue);
+      await projectFileService.drafts.createDraft(
+        newDraftName.trim(),
+        copyFrom || undefined,
+        selectedValue,
+      );
     } catch (e) {
       // ignore
     }

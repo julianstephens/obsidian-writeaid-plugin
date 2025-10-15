@@ -49,7 +49,7 @@ export class WriteAidManager {
     }
     this.activeProject = (this.settings as WriteAidSettings | undefined)?.activeProject || null;
     this.projectService = new ProjectService(app);
-    this.projectFileService = new ProjectFileService(app);
+    this.projectFileService = new ProjectFileService(app, this.projectService);
   }
 
   /**
@@ -485,6 +485,47 @@ export class WriteAidManager {
     const ok = await this.projectFileService.drafts.deleteDraft(project, draftName, createBackup);
     if (ok) {
       new Notice(`Deleted draft ${draftName}`);
+
+      // Handle active draft management after deletion
+      const remainingDrafts = this.listDrafts(project);
+      if (remainingDrafts.length > 0) {
+        // If the deleted draft was active, or if no active draft is set, set a new active draft
+        if (this.activeDraft === draftName || !this.activeDraft) {
+          let nextActiveDraft: string;
+
+          if (remainingDrafts.length === 1) {
+            // Only one draft remains, set it as active
+            nextActiveDraft = remainingDrafts[0];
+          } else {
+            // Multiple drafts remain, find the next one in alphabetical order
+            // Sort drafts alphabetically (ascending, like the UI default)
+            const sortedDrafts = [...remainingDrafts].sort((a, b) => a.localeCompare(b));
+
+            if (this.activeDraft === draftName) {
+              // Find the position of the deleted draft in the sorted list
+              const deletedIndex = sortedDrafts.findIndex((d) => d === draftName);
+              if (deletedIndex !== -1) {
+                // Set the next draft in alphabetical order, or the first one if it was the last
+                const nextIndex = deletedIndex < sortedDrafts.length - 1 ? deletedIndex : 0;
+                nextActiveDraft = sortedDrafts[nextIndex];
+              } else {
+                // Fallback: set the first draft alphabetically
+                nextActiveDraft = sortedDrafts[0];
+              }
+            } else {
+              // Keep the current active draft if it's still available
+              nextActiveDraft = this.activeDraft!;
+            }
+          }
+
+          await this.setActiveDraft(nextActiveDraft, project, false);
+        }
+      } else {
+        // No drafts remain, clear active draft
+        this.activeDraft = null;
+        this.notifyActiveDraftListeners(null);
+      }
+
       return true;
     }
     new Notice("Failed to delete draft.");
