@@ -29,3 +29,13 @@ export interface WriteAidSettings {
 export interface PluginLike {
   settings?: WriteAidSettings;
 }
+
+export interface WriteAidPluginManager {
+  activeProject?: unknown;
+  addActiveProjectListener?: (cb: (active: unknown) => void) => void;
+}
+
+export interface Chapter {
+  name: string;
+  chapterName?: string;
+}

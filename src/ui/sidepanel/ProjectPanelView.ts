@@ -1,17 +1,14 @@
 import { DraftService } from "@/core/DraftService";
 import { ProjectService } from "@/core/ProjectService";
+import type { WriteAidManager } from "@/manager";
 import { WRITE_AID_ICON_NAME } from "@/ui/components/icons";
 import ProjectPanel from "@/ui/sidepanel/ProjectPanel.svelte";
 import { ItemView, Notice, type App, type WorkspaceLeaf } from "obsidian";
 import { mount } from "svelte";
 
-interface WriteAidPluginManager {
-  activeProject?: unknown;
-  addActiveProjectListener?: (cb: (active: unknown) => void) => void;
-}
 
 interface WriteAidPlugin {
-  manager?: WriteAidPluginManager;
+  manager?: WriteAidManager;
 }
 
 export const VIEW_TYPE_PROJECT_PANEL = "writeaid-project-panel";
@@ -67,12 +64,21 @@ export class ProjectPanelView extends ItemView {
         new Notice("WriteAid: failed to load project panel component.");
         return;
       }
+      // Get the manager
+      const manager = (
+        this.app as unknown as { plugins: { getPlugin?: (id: string) => { manager?: WriteAidManager } } }
+      ).plugins.getPlugin?.("obsidian-writeaid-plugin")?.manager;
+
+      // Ensure manager exists before mounting
+      if (!manager) {
+        new Notice("WriteAid: manager not available, cannot mount project panel.");
+        return;
+      }
+
       // dynamic constructor: Svelte component or custom element
       const props = {
         app: this.app,
-        manager: (
-          this.app as unknown as { plugins: { getPlugin?: (id: string) => { manager?: unknown } } }
-        ).plugins.getPlugin?.("obsidian-writeaid-plugin")?.manager,
+        manager,
         projectService: this.projectService,
         draftService: this.draftService,
       };

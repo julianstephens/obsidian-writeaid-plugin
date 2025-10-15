@@ -1,9 +1,13 @@
-<script>
+<script lang="ts">
   // Compile this Svelte component as a custom element so it can be mounted
   // reliably inside the Obsidian ItemView using DOM APIs.
   // The tag name chosen is <wa-project-panel>.
   // Note: the Vite/Svelte build must enable customElement or svelte config.
+  import type { DraftService } from "@/core/DraftService";
   import { readMetaFile } from "@/core/meta";
+  import type { ProjectService } from "@/core/ProjectService";
+  import type { WriteAidManager } from "@/manager";
+  import type { Chapter } from "@/types";
   import BaseButton from "@/ui/components/BaseButton.svelte";
   import "@/ui/components/components.css";
   import IconButton from "@/ui/components/IconButton.svelte";
@@ -20,37 +24,38 @@
     RotateCcw,
     Trash,
   } from "@lucide/svelte";
+  import { Notice } from "obsidian";
   import { onDestroy, onMount } from "svelte";
   import Select from "svelte-select";
   import { flip } from "svelte/animate";
   import { cubicOut } from "svelte/easing";
 
-  export let draftService;
-  export let projectService;
-  export let manager;
-  export let activeProject = null;
+  export let draftService: DraftService;
+  export let projectService: ProjectService;
+  export let manager: WriteAidManager;
+  export let activeProject: string | null = null;
 
   // Local UI state
-  let projects = [];
-  let selected = undefined; // bind target for svelte-select
-  let selectedValue = undefined; // primitive project path
-  let drafts = [];
+  let projects: string[] = [];
+  let selected: any = undefined; // bind target for svelte-select
+  let selectedValue: string | null = null; // primitive project path
+  let drafts: string[] = [];
   let loadingProjects = false;
-  let projectOptions = [];
+  let projectOptions: Array<{ value: string; label: string }> = [];
   let disabled = false;
   let loadingDrafts = false;
   let showCreateInline = false;
   let newDraftName = "";
-  let copyFromSelected = undefined;
+  let copyFromSelected: any = undefined;
   let copyFrom = "";
-  let draftMeta = {};
+  let draftMeta: any = {};
   let sortAsc = true;
   // Local reactive copy of manager.activeDraft for Svelte reactivity
-  let activeDraft = manager?.activeDraft ?? null;
-  let activeProjectListener = null;
+  let activeDraft: string | null = manager?.activeDraft ?? null;
+  let activeProjectListener: ((p: string | null) => void) | null = null;
 
   // Chapter management state
-  let chapters = [];
+  let chapters: Array<Chapter> = [];
   let loadingChapters = false;
   let showCreateChapter = false;
   let newChapterName = "";
@@ -63,8 +68,8 @@
     const minSpin = new Promise((resolve) => setTimeout(resolve, 400));
     const prevProjects = [...projects];
     const prevActive = activeProject;
-    let allFolders = [];
-    let newProjects = [];
+    let allFolders: string[] = [];
+    let newProjects: string[] = [];
     try {
       allFolders = projectService.listAllFolders();
       // Filter only valid project folders
@@ -79,10 +84,10 @@
     const added = newProjects.filter((p) => !prevProjects.includes(p));
     const removed = prevProjects.filter((p) => !newProjects.includes(p));
     if (showNotifications && added.length > 0) {
-      new window.Notice(`${added.length} new project${added.length > 1 ? "s" : ""} discovered.`);
+      new Notice(`${added.length} new project${added.length > 1 ? "s" : ""} discovered.`);
     }
     if (showNotifications && removed.length > 0) {
-      new window.Notice(`${removed.length} project${removed.length > 1 ? "s" : ""} removed.`);
+      new Notice(`${removed.length} project${removed.length > 1 ? "s" : ""} removed.`);
     }
     projects = newProjects;
     projectOptions = newProjects.map((p) => ({ value: p, label: p }));
@@ -91,7 +96,7 @@
     if (newProjects.length === 0) {
       activeProject = null;
       selected = undefined;
-      selectedValue = undefined;
+      selectedValue = null;
     } else if (newProjects.length === 1) {
       // If only one project exists, always set it as active
       activeProject = newProjects[0];
@@ -137,7 +142,7 @@
       } else {
         activeProject = null;
         selected = undefined;
-        selectedValue = undefined;
+        selectedValue = null;
       }
     }
 
@@ -190,7 +195,7 @@
       }
       // Check project type
       const metaPath = `${selectedValue}/meta.md`;
-      const meta = await readMetaFile(app, metaPath);
+      const meta = await readMetaFile(manager.app, metaPath);
       isMultiFileProject = meta?.project_type === "multi-file";
       if (!isMultiFileProject) {
         chapters = [];
@@ -201,7 +206,7 @@
         return;
       }
       // Prefer draftService for chapter listing
-      let ch = [];
+      let ch: Chapter[] = [];
       if (draftService && typeof draftService.listChapters === "function") {
         ch = await draftService.listChapters(selectedValue, manager.activeDraft);
       } else if (manager && typeof manager.listChapters === "function") {
@@ -267,12 +272,12 @@
       suggestedName,
       onSubmit: async (newName) => {
         try {
-          await manager.createNewDraft(newName, draftName, selectedValue);
+          await manager.createNewDraft(newName, draftName, selectedValue || undefined);
           await refreshDrafts();
-          new window.Notice(`Draft '${newName}' created as duplicate of '${draftName}'.`);
+          new Notice(`Draft '${newName}' created as duplicate of '${draftName}'.`);
         } catch (e) {
           console.error("Failed to duplicate draft:", e);
-          new window.Notice("Failed to duplicate draft.");
+          new Notice("Failed to duplicate draft.");
         }
       },
     }).open();
@@ -294,12 +299,11 @@
 
   async function deleteDraftHandler(draftName) {
     if (!selectedValue) return;
-    const app = window && window.app ? window.app : manager?.app;
     const modal = new ConfirmDeleteModal(
-      app,
+      manager.app,
       draftName,
       async () => {
-        await manager.deleteDraft(draftName, selectedValue);
+        await manager.deleteDraft(draftName, selectedValue || undefined);
         await refreshDrafts();
       },
       "draft",
@@ -345,7 +349,7 @@
     await refreshChapters();
   }
   // activeDraft listener placeholder (populated in onMount)
-  let activeDraftListener = null;
+  let activeDraftListener: any | null = null;
 
   onMount(async () => {
     // Initial refresh to populate projects and drafts
@@ -455,11 +459,9 @@
   <div class="wa-row" style="margin: 18px 0 10px 0;">
     <BaseButton
       onclick={async () => {
-      const beforeProjects = [...projects];
-      const app = (window && window.app) ? window.app : manager.app;
+      const app = manager.app;
       const { CreateProjectModal } = await import('@/ui/modals/CreateProjectModal');
-      const initialDraftName = 'Draft 1';
-      let projectPath = null;
+      let projectPath: string | null = null;
       const modal = new CreateProjectModal(app, async (projectName, singleFile, initialDraftName) => {
         if (!projectName) return;
         projectPath = await projectService.createProject(
@@ -471,8 +473,8 @@
         );
         if (!projectPath) return;
         // Wait for the new project to appear in the list
-  let newProjects = [];
-  let newProject = null;
+  let newProjects: string[] = [];
+  let newProject: string | null = null;
         for (let i = 0; i < 20; i++) {
           await new Promise(res => setTimeout(res, 100));
           newProjects = await refresh();
@@ -488,7 +490,7 @@
           if (manager.setActiveDraft) {
             await manager.setActiveDraft(newProject, initialDraftName);
           } else {
-            manager.activeDraft = initialDraftName;
+            manager.activeDraft = initialDraftName ?? null;
           }
           await refreshDrafts();
           await refreshChapters();
@@ -576,7 +578,7 @@
             type="text"
             placeholder="Draft name"
             value={newDraftName}
-            on:input={(e) => {
+            on:input={(e: any) => {
               const t = e.target;
               if (t) newDraftName = t.value;
             }}
@@ -664,7 +666,7 @@
             type="text"
             placeholder="Chapter name"
             value={newChapterName}
-            on:input={(e) => {
+            on:input={(e: any) => {
               const t = e.target;
               if (t) newChapterName = t.value;
             }}
@@ -712,8 +714,8 @@
                     const newOrder = chapters.slice();
                     [newOrder[i - 1], newOrder[i]] = [newOrder[i], newOrder[i - 1]];
                     // Ensure order property is correct
-                    const ordered = newOrder.map((ch, idx) => ({ ...ch, order: idx + 1 }));
-                    await manager.reorderChapters(selectedValue, manager.activeDraft, ordered);
+                    const ordered = newOrder.map((ch, idx) => ({ chapterName: ch.chapterName!, order: idx + 1 }));
+                    await manager.reorderChapters(selectedValue as string, manager.activeDraft!, ordered);
                     await refreshChapters();
                   }}
                   disabled={i === 0}>↑</BaseButton
@@ -725,8 +727,8 @@
                     const newOrder = chapters.slice();
                     [newOrder[i], newOrder[i + 1]] = [newOrder[i + 1], newOrder[i]];
                     // Ensure order property is correct
-                    const ordered = newOrder.map((ch, idx) => ({ ...ch, order: idx + 1 }));
-                    await manager.reorderChapters(selectedValue, manager.activeDraft, ordered);
+                    const ordered = newOrder.map((ch, idx) => ({ chapterName: ch.chapterName!, order: idx + 1 }));
+                    await manager.reorderChapters(selectedValue as string, manager.activeDraft!, ordered);
                     await refreshChapters();
                   }}
                   disabled={i === chapters.length - 1}>↓</BaseButton
@@ -736,7 +738,7 @@
                   title="Open chapter"
                   onclick={async () => {
                     if (!selectedValue || !manager?.activeDraft) return;
-                    await manager.openChapter(selectedValue, manager.activeDraft, ch.chapterName);
+                    await manager.openChapter(selectedValue as string, manager.activeDraft!, ch.chapterName!);
                   }}
                 >
                   <Eye size={18} />
@@ -746,12 +748,11 @@
                   title="Rename chapter"
                   onclick={() => {
                     if (!selectedValue || !manager?.activeDraft) return;
-                    const app = window && window.app ? window.app : manager.app;
-                    const modal = new RenameChapterModal(app, ch.chapterName, async (newName) => {
+                    const modal = new RenameChapterModal(manager.app, ch.chapterName!, async (newName) => {
                       await manager.renameChapter(
-                        selectedValue,
-                        manager.activeDraft,
-                        ch.chapterName,
+                        selectedValue as string,
+                        manager.activeDraft!,
+                        ch.chapterName!,
                         newName,
                       );
                       await refreshChapters();
@@ -766,15 +767,14 @@
                   title="Delete chapter"
                   onclick={async () => {
                     if (!selectedValue || !manager?.activeDraft) return;
-                    const app = window && window.app ? window.app : manager.app;
                     const modal = new ConfirmDeleteModal(
-                      app,
-                      ch.chapterName,
+                      manager.app,
+                      ch.chapterName!,
                       async () => {
                         await manager.deleteChapter(
-                          selectedValue,
-                          manager.activeDraft,
-                          ch.chapterName,
+                          selectedValue as string,
+                          manager.activeDraft!,
+                          ch.chapterName!,
                         );
                         await refreshChapters();
                       },
