@@ -1,7 +1,7 @@
 import { DraftFileService } from "@/core/DraftFileService";
 import { ProjectFileService } from "@/core/ProjectFileService";
 import { ProjectService } from "@/core/ProjectService";
-import { APP_NAME, suppress } from "@/core/utils";
+import { APP_NAME, debug, DEBUG_PREFIX, suppress } from "@/core/utils";
 import type { WriteAidManager } from "@/manager";
 import { WRITE_AID_ICON_NAME } from "@/ui/components/icons";
 import ProjectPanel from "@/ui/sidepanel/ProjectPanel.svelte";
@@ -125,7 +125,7 @@ export class ProjectPanelView extends ItemView {
           this.svelteComponent = el;
           mounted = true;
         } catch (elErr) {
-          console.warn(`${APP_NAME}: creating custom element instance failed:`, elErr);
+          debug(`${DEBUG_PREFIX} creating custom element instance failed:`, elErr);
         }
       }
 
@@ -167,7 +167,7 @@ export class ProjectPanelView extends ItemView {
             mounted = true;
           }
         } catch (tagErr) {
-          console.warn(`${APP_NAME}: attempting to create by tag failed:`, tagErr);
+          debug(`${DEBUG_PREFIX} attempting to create by tag failed:`, tagErr);
         }
       }
 
@@ -181,7 +181,7 @@ export class ProjectPanelView extends ItemView {
           });
           mounted = true;
         } catch (mountErr) {
-          console.warn(`${APP_NAME}: svelte.mount failed; trying constructor:`, mountErr);
+          debug(`${DEBUG_PREFIX} svelte.mount failed; trying constructor:`, mountErr);
           try {
             this.svelteComponent = new (Component as {
               new (args: { target: HTMLElement; props: object }): unknown;
@@ -191,12 +191,12 @@ export class ProjectPanelView extends ItemView {
             }) as typeof this.svelteComponent;
             mounted = true;
           } catch (ctorErr) {
-            console.error(
-              `${APP_NAME}: failed to mount ProjectPanel (mount + constructor failed)`,
+            debug(
+              `${DEBUG_PREFIX} Failed to mount ProjectPanel (mount + constructor failed)`,
               ctorErr,
             );
             suppress(() => {
-              console.error(`${APP_NAME}: component snapshot:`, Component);
+              debug(`${DEBUG_PREFIX} Component snapshot:`, Component);
             });
             new Notice(`${APP_NAME}: error mounting project panel component. See console.`);
             return;

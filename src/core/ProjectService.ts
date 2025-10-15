@@ -11,7 +11,7 @@ import {
   getManuscriptsFolderName,
   getMetaFileName,
   PROJECT_TYPE,
-  type ProjectType
+  type ProjectType,
 } from "./utils";
 
 export class ProjectService {

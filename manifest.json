@@ -61,12 +61,8 @@
       "name": "Create Backup"
     },
     {
-      "id": "list-backups",
-      "name": "List Backups"
-    },
-    {
-      "id": "restore-backup",
-      "name": "Restore Latest Backup"
+      "id": "list-and-restore-backups",
+      "name": "List and Restore Backups"
     },
     {
       "id": "delete-backup",

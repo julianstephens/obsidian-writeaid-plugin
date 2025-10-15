@@ -19,7 +19,7 @@ export function clearOldBackupsCommand(manager: WriteAidManager) {
     const draftFolder = `${activeProjectPath}/${draftsFolderName}/${activeDraftName}`;
     const maxAgeDays = manager.projectFileService.backups.maxBackupAgeDays;
 
-    await manager.projectFileService.backups.clearOldBackups(draftFolder, maxAgeDays, manager.settings);
+    await manager.projectFileService.backups.clearOldBackups(draftFolder, manager.settings);
 
     new Notice(`Old backups cleared (older than ${maxAgeDays} days).`);
   };

@@ -308,6 +308,42 @@ export class WriteAidSettingTab extends PluginSettingTab {
           }),
       );
 
+    containerEl.createEl("h3", { text: "Backup Settings" });
+
+    new Setting(containerEl)
+      .setName("Maximum number of backups per draft")
+      .setDesc("Maximum number of backup files to keep per draft (default: 5)")
+      .addText((t) =>
+        t
+          .setValue(String(plugin.settings.maxBackups ?? 5))
+          .setPlaceholder("5")
+          .onChange((v) => {
+            const num = parseInt(v, 10);
+            if (!isNaN(num) && num >= 0) {
+              debug(`${DEBUG_PREFIX} Max backups changed: ${num}`);
+              plugin.settings.maxBackups = num;
+              plugin.saveSettings();
+            }
+          }),
+      );
+
+    new Setting(containerEl)
+      .setName("Maximum backup age (days)")
+      .setDesc("Automatically delete backups older than this many days (default: 30)")
+      .addText((t) =>
+        t
+          .setValue(String(plugin.settings.maxBackupAgeDays ?? 30))
+          .setPlaceholder("30")
+          .onChange((v) => {
+            const num = parseInt(v, 10);
+            if (!isNaN(num) && num >= 0) {
+              debug(`${DEBUG_PREFIX} Max backup age changed: ${num}`);
+              plugin.settings.maxBackupAgeDays = num;
+              plugin.saveSettings();
+            }
+          }),
+      );
+
     containerEl.createEl("h3", { text: "UI & Startup" });
 
     containerEl.createEl("p", {

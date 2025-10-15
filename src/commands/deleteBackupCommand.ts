@@ -17,7 +17,10 @@ export function deleteBackupCommand(manager: WriteAidManager) {
 
     const draftsFolderName = getDraftsFolderName(manager.settings);
     const draftFolder = `${activeProjectPath}/${draftsFolderName}/${activeDraftName}`;
-    const backups = await manager.projectFileService.backups.listBackups(draftFolder, manager.settings);
+    const backups = await manager.projectFileService.backups.listBackups(
+      draftFolder,
+      manager.settings,
+    );
 
     if (backups.length === 0) {
       new Notice("No backups found for the current draft.");
@@ -26,7 +29,11 @@ export function deleteBackupCommand(manager: WriteAidManager) {
 
     // Delete the oldest backup
     const oldestBackup = backups[backups.length - 1];
-    const success = await manager.projectFileService.backups.deleteBackup(draftFolder, oldestBackup, manager.settings);
+    const success = await manager.projectFileService.backups.deleteBackup(
+      draftFolder,
+      oldestBackup,
+      manager.settings,
+    );
 
     if (success) {
       new Notice(`Backup deleted successfully: ${oldestBackup}.`);

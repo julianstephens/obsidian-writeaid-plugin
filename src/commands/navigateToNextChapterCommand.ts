@@ -1,4 +1,4 @@
-import { getDraftsFolderName } from "@/core/utils";
+import { debug, DEBUG_PREFIX, getDraftsFolderName } from "@/core/utils";
 import type { WriteAidManager } from "@/manager";
 import { Notice } from "obsidian";
 
@@ -40,7 +40,7 @@ export function navigateToNextChapterCommand(manager: WriteAidManager) {
       const nextChapter = chapters[currentIndex + 1];
       await manager.openChapter(projectPath, draftName, nextChapter.name);
     } catch (error) {
-      console.error("Failed to navigate to next chapter:", error);
+      debug(`${DEBUG_PREFIX} Failed to navigate to next chapter:`, error);
       new Notice("Failed to navigate to next chapter.");
     }
   };

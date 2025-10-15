@@ -3,7 +3,11 @@ import { getDraftsFolderName, PROJECT_TYPE, slugifyDraftName } from "@/core/util
 import type { WriteAidSettings } from "@/types";
 import { Notice, TFile, TFolder, type App } from "obsidian";
 
-async function convertSingleToMultiFileProject(app: App, projectPath: string, settings?: WriteAidSettings) {
+async function convertSingleToMultiFileProject(
+  app: App,
+  projectPath: string,
+  settings?: WriteAidSettings,
+) {
   const metaPath = `${projectPath}/meta.md`;
   const meta = await readMetaFile(app, metaPath);
   if (!meta || meta.project_type !== PROJECT_TYPE.SINGLE) {

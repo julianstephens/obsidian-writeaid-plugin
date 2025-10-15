@@ -9,7 +9,7 @@ import {
   DEBUG_PREFIX,
   getDraftsFolderName,
   suppress,
-  suppressAsync
+  suppressAsync,
 } from "@/core/utils";
 import type { PluginLike, WriteAidSettings } from "@/types";
 import { App, Notice } from "obsidian";
@@ -49,7 +49,7 @@ export class WriteAidManager {
     }
     this.activeProject = (this.settings as WriteAidSettings | undefined)?.activeProject || null;
     this.projectService = new ProjectService(app);
-    this.projectFileService = new ProjectFileService(app, this.projectService);
+    this.projectFileService = new ProjectFileService(app, this.projectService, this.settings);
   }
 
   /**

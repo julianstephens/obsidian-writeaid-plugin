@@ -255,7 +255,7 @@
           await refreshDrafts();
           new Notice(`Draft '${newName}' created as duplicate of '${draftName}'.`);
         } catch (e) {
-          console.error("Failed to duplicate draft:", e);
+          debug(`${DEBUG_PREFIX} Failed to duplicate draft:`, e);
           new Notice("Failed to duplicate draft.");
         }
       },

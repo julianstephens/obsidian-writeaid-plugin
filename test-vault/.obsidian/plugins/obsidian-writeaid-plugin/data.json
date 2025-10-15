@@ -8,7 +8,7 @@
   "ribbonAlwaysShow": false,
   "autoOpenPanelOnStartup": true,
   "autoSelectProjectOnStartup": true,
-  "activeProject": "Story",
+  "activeProject": "novel",
   "panelRefreshDebounceMs": 250,
   "debug": false,
   "includeDraftOutline": false,
@@ -16,5 +16,7 @@
   "manuscriptsFolderName": "manuscripts",
   "backupsFolderName": ".writeaid-backups",
   "metaFileName": "meta.md",
-  "outlineFileName": "outline.md"
+  "outlineFileName": "outline.md",
+  "maxBackups": 5,
+  "maxBackupAgeDays": 30
 }

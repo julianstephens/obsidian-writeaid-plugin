@@ -37,6 +37,10 @@ export interface WriteAidSettings {
   // Default target word counts for new projects
   defaultMultiTargetWordCount?: number;
   defaultSingleTargetWordCount?: number;
+
+  // Backup settings
+  maxBackups?: number;
+  maxBackupAgeDays?: number;
 }
 
 // Minimal plugin-like interface used for typing in services

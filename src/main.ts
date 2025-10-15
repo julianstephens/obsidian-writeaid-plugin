@@ -8,20 +8,27 @@ import { generateManuscriptCommand } from "@/commands/generateManuscriptCommand"
 import { listBackupsCommand } from "@/commands/listBackupsCommand";
 import { navigateToNextChapterCommand } from "@/commands/navigateToNextChapterCommand";
 import { navigateToPreviousChapterCommand } from "@/commands/navigateToPreviousChapterCommand";
-import { restoreBackupCommand } from "@/commands/restoreBackupCommand";
 import { selectActiveProjectCommand } from "@/commands/selectActiveProjectCommand";
 import { switchDraftCommand } from "@/commands/switchDraftCommand";
 import { toggleProjectPanelCommand } from "@/commands/toggleProjectPanelCommand";
 import { updateProjectMetadataCommand } from "@/commands/updateProjectMetadataCommand";
 import { ProjectService } from "@/core/ProjectService";
-import { APP_NAME, asyncFilter, debug, DEBUG_PREFIX, suppress, suppressAsync } from "@/core/utils";
+import {
+  APP_NAME,
+  asyncFilter,
+  debug,
+  DEBUG_PREFIX,
+  getDraftsFolderName,
+  suppress,
+  suppressAsync,
+} from "@/core/utils";
 import { WriteAidManager } from "@/manager";
 import { WriteAidSettingTab } from "@/settings";
 import stylesText from "@/styles/writeaid.css?inline";
 import type { WriteAidSettings } from "@/types";
 import { WRITE_AID_ICON_NAME } from "@/ui/components/icons";
 import { ProjectPanelView, VIEW_TYPE_PROJECT_PANEL } from "@/ui/sidepanel/ProjectPanelView";
-import { Plugin } from "obsidian";
+import { Plugin, TFolder } from "obsidian";
 
 // Helper function to truncate long project names for status bar display
 function truncateProjectName(projectName: string, maxLength: number = 20): string {
@@ -50,6 +57,8 @@ const DEFAULT_SETTINGS: WriteAidSettings = {
   backupsFolderName: ".writeaid-backups",
   metaFileName: "meta.md",
   outlineFileName: "outline.md",
+  maxBackups: 5,
+  maxBackupAgeDays: 30,
 };
 
 function normalizeSettings(data?: Partial<WriteAidSettings>): WriteAidSettings {
@@ -81,7 +90,7 @@ export default class WriteAidPlugin extends Plugin {
       try {
         callback();
       } catch (error) {
-        console.error("Error in settings changed callback:", error);
+        debug(`${DEBUG_PREFIX} Error in settings changed callback:`, error);
       }
     });
   }
@@ -111,7 +120,7 @@ export default class WriteAidPlugin extends Plugin {
       try {
         callback();
       } catch (error) {
-        console.error("Error in settings changed callback:", error);
+        debug(`${DEBUG_PREFIX} Error in settings changed callback:`, error);
       }
     });
   }
@@ -119,6 +128,45 @@ export default class WriteAidPlugin extends Plugin {
   // Method to register callbacks that should be called when settings change
   registerSettingsChangedCallback(callback: () => void) {
     this.settingsChangedCallbacks.push(callback);
+  }
+
+  // Run backup cleanup for all projects and drafts
+  private async runBackupCleanup(): Promise<void> {
+    if (!this.manager) {
+      return;
+    }
+
+    try {
+      const projectService = new ProjectService(this.app);
+      const projects = await projectService.listProjects();
+
+      for (const projectPath of projects) {
+        const draftsFolderName = getDraftsFolderName(this.settings);
+        const draftsFolderPath = `${projectPath}/${draftsFolderName}`;
+
+        // Check if drafts folder exists
+        const draftsFolder = this.app.vault.getAbstractFileByPath(draftsFolderPath);
+        if (!draftsFolder || !(draftsFolder instanceof TFolder)) {
+          continue;
+        }
+
+        // Clean up backups for each draft in the project
+        for (const draftFolder of draftsFolder.children) {
+          if (draftFolder instanceof TFolder) {
+            const draftPath = `${draftsFolderPath}/${draftFolder.name}`;
+            await this.manager.projectFileService.backups.clearOldBackups(
+              draftPath,
+              this.manager.settings,
+            );
+          }
+        }
+      }
+
+      debug(`${DEBUG_PREFIX} Backup cleanup completed on startup`);
+    } catch (error) {
+      debug(`${DEBUG_PREFIX} Error during backup cleanup:`, error);
+      // Don't throw - cleanup failure shouldn't prevent plugin from working
+    }
   }
 
   async onload() {
@@ -198,6 +246,11 @@ export default class WriteAidPlugin extends Plugin {
     });
     this.statusBarEl = this.addStatusBarItem();
     this.statusBarEl.setText(`${APP_NAME}: No active project`);
+
+    // Run backup cleanup on startup (non-blocking)
+    this.runBackupCleanup().catch((error) => {
+      debug(`${DEBUG_PREFIX} Failed to run backup cleanup on startup:`, error);
+    });
 
     // Defer verbose loading message until persisted debug setting is applied below
     // Inject plugin styles into the document head so the compiled CSS is
@@ -382,15 +435,9 @@ export default class WriteAidPlugin extends Plugin {
     });
 
     this.addCommand({
-      id: "list-backups",
-      name: "List Backups",
+      id: "list-and-restore-backups",
+      name: "List and Restore Backups",
       callback: listBackupsCommand(this.manager),
-    });
-
-    this.addCommand({
-      id: "restore-backup",
-      name: "Restore Latest Backup",
-      callback: restoreBackupCommand(this.manager),
     });
 
     this.addCommand({

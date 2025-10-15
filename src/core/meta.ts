@@ -1,6 +1,6 @@
 import type { WriteAidSettings } from "@/types";
 import { App, TFile, TFolder } from "obsidian";
-import { getDraftsFolderName, type ProjectType } from "./utils";
+import { debug, DEBUG_PREFIX, getDraftsFolderName, type ProjectType } from "./utils";
 
 /**
  * Project metadata tracked in meta.md
@@ -33,7 +33,7 @@ export async function readMetaFile(app: App, filePath: string): Promise<ProjectM
     const metadata = parseFrontmatter(content);
     return metadata;
   } catch (error) {
-    console.error("Error reading meta file:", error);
+    debug(`${DEBUG_PREFIX} Error reading meta file:`, error);
     return null;
   }
 }

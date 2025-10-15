@@ -1,4 +1,10 @@
-import { debug, DEBUG_PREFIX, getDraftsFolderName, slugifyDraftName, suppressAsync } from "@/core/utils";
+import {
+  debug,
+  DEBUG_PREFIX,
+  getDraftsFolderName,
+  slugifyDraftName,
+  suppressAsync,
+} from "@/core/utils";
 import type { WriteAidManager } from "@/manager";
 import type { WriteAidSettings } from "@/types";
 import { App, TFile, TFolder } from "obsidian";

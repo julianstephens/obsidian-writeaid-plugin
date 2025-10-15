@@ -18,14 +18,14 @@ export class RestoreBackupModal extends SuggestModal<BackupItem> {
 
   constructor(
     app: App,
-    private manager: WriteAidManager
+    private manager: WriteAidManager,
   ) {
     super(app);
     this.setPlaceholder("Select a backup to restore...");
     this.setInstructions([
       { command: "↑↓", purpose: "to navigate" },
       { command: "↵", purpose: "to restore" },
-      { command: "esc", purpose: "to cancel" }
+      { command: "esc", purpose: "to cancel" },
     ]);
   }
 
@@ -59,13 +59,13 @@ export class RestoreBackupModal extends SuggestModal<BackupItem> {
   }
 
   private async getBackupDetails(): Promise<BackupItem[]> {
-    const projectName = this.draftFolder.split('/')[0] || 'unknown';
+    const projectName = this.draftFolder.split("/")[0] || "unknown";
     const backupProjectDir = `${getBackupsFolderName(this.manager.settings)}/${projectName}`;
 
     try {
       // First, list all items in the project backup directory
-      const projectItems = await this.app.vault.adapter.list(backupProjectDir);
-      
+      // const projectItems = await this.app.vault.adapter.list(backupProjectDir);
+
       const backupDetails: BackupItem[] = [];
       const draftsFolderName = getDraftsFolderName(this.manager.settings);
 
@@ -76,20 +76,22 @@ export class RestoreBackupModal extends SuggestModal<BackupItem> {
       // For each draft folder in backups
       for (const draftFolderFullPath of draftsItems.folders) {
         // Extract just the folder name from the full path
-        const draftFolderName = draftFolderFullPath.split('/').pop() || draftFolderFullPath;
-        
+        const draftFolderName = draftFolderFullPath.split("/").pop() || draftFolderFullPath;
+
         const draftBackupDir = `${draftsBackupDir}/${draftFolderName}`;
         const draftItems = await this.app.vault.adapter.list(draftBackupDir);
-        
+
         // Get the actual draft folder path for restoration
         const draftFolderPath = `${projectName}/${draftsFolderName}/${draftFolderName}`;
 
         for (const fileName of draftItems.files) {
           // adapter.list() returns full paths, extract just the filename
-          const baseName = fileName.split('/').pop() || fileName;
+          const baseName = fileName.split("/").pop() || fileName;
           // More flexible matching: look for files that contain the draft name followed by underscore and timestamp
-          const draftNamePattern = draftFolderName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // Escape special regex chars
-          const backupPattern = new RegExp(`^${draftNamePattern}_(\\d{4}-\\d{2}-\\d{2}T\\d{2}-\\d{2}-\\d{2})\\.zip$`);
+          const draftNamePattern = draftFolderName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); // Escape special regex chars
+          const backupPattern = new RegExp(
+            `^${draftNamePattern}_(\\d{4}-\\d{2}-\\d{2}T\\d{2}-\\d{2}-\\d{2})\\.zip$`,
+          );
           const match = baseName.match(backupPattern);
 
           if (match) {
@@ -100,7 +102,7 @@ export class RestoreBackupModal extends SuggestModal<BackupItem> {
 
             // Format the display text
             // Convert timestamp format from "2025-10-15T21-45-12" to "2025-10-15T21:45:12"
-            const dateString = timestamp.replace(/T(\d{2})-(\d{2})-(\d{2})/, 'T$1:$2:$3');
+            const dateString = timestamp.replace(/T(\d{2})-(\d{2})-(\d{2})/, "T$1:$2:$3");
             const date = new Date(dateString);
             const formattedDate = date.toLocaleString();
             const sizeText = this.formatFileSize(size);
@@ -110,7 +112,7 @@ export class RestoreBackupModal extends SuggestModal<BackupItem> {
               size,
               displayText: `${draftFolderName}: ${formattedDate} (${sizeText})`,
               draftName: draftFolderName,
-              draftFolder: draftFolderPath
+              draftFolder: draftFolderPath,
             });
           }
         }
@@ -118,7 +120,6 @@ export class RestoreBackupModal extends SuggestModal<BackupItem> {
 
       // Sort by timestamp (newest first)
       return backupDetails.sort((a, b) => b.timestamp.localeCompare(a.timestamp));
-
     } catch (error) {
       debug(`${DEBUG_PREFIX} Failed to list backup directory '${backupProjectDir}': ${error}`);
       return [];
@@ -126,16 +127,16 @@ export class RestoreBackupModal extends SuggestModal<BackupItem> {
   }
 
   private formatFileSize(bytes: number): string {
-    if (bytes === 0) return '0 B';
+    if (bytes === 0) return "0 B";
     const k = 1024;
-    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const sizes = ["B", "KB", "MB", "GB"];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + " " + sizes[i];
   }
 
   getSuggestions(query: string): BackupItem[] {
-    return this.backups.filter(backup =>
-      backup.displayText.toLowerCase().includes(query.toLowerCase())
+    return this.backups.filter((backup) =>
+      backup.displayText.toLowerCase().includes(query.toLowerCase()),
     );
   }
 
@@ -143,7 +144,8 @@ export class RestoreBackupModal extends SuggestModal<BackupItem> {
     el.createEl("div", { text: backup.displayText });
   }
 
-  async onChooseSuggestion(backup: BackupItem, evt: MouseEvent | KeyboardEvent) {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  async onChooseSuggestion(backup: BackupItem, _evt: MouseEvent | KeyboardEvent) {
     // Check if the draft folder already exists
     const draftFolderExists = this.app.vault.getAbstractFileByPath(backup.draftFolder);
 
@@ -161,11 +163,13 @@ export class RestoreBackupModal extends SuggestModal<BackupItem> {
     const success = await this.manager.projectFileService.backups.restoreBackup(
       backup.draftFolder,
       backup.timestamp,
-      this.manager.settings
+      this.manager.settings,
     );
 
     if (success) {
-      new Notice(`Backup restored successfully for "${backup.draftName}" from ${backup.displayText.split(': ')[1].split(' (')[0]}.`);
+      new Notice(
+        `Backup restored successfully for "${backup.draftName}" from ${backup.displayText.split(": ")[1].split(" (")[0]}.`,
+      );
     } else {
       new Notice("Failed to restore backup.");
     }

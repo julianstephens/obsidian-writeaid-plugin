@@ -1,6 +1,16 @@
 import { TemplateService } from "@/core/TemplateService";
 import { readMetaFile, updateMetaStats } from "@/core/meta";
-import { debug, DEBUG_PREFIX, getDraftsFolderName, getManuscriptsFolderName, getMetaFileName, getOutlineFileName, PROJECT_TYPE, slugifyDraftName, suppressAsync } from "@/core/utils";
+import {
+  debug,
+  DEBUG_PREFIX,
+  getDraftsFolderName,
+  getManuscriptsFolderName,
+  getMetaFileName,
+  getOutlineFileName,
+  PROJECT_TYPE,
+  slugifyDraftName,
+  suppressAsync,
+} from "@/core/utils";
 import type { WriteAidManager } from "@/manager";
 import type { WriteAidSettings } from "@/types";
 import { ConfirmOverwriteModal } from "@/ui/modals/ConfirmOverwriteModal";
@@ -17,7 +27,12 @@ export class DraftFileService {
   chapters: ChapterFileService;
   manager: WriteAidManager | null;
 
-  constructor(app: App, chapters: ChapterFileService, projectSvc: ProjectService, backupSvc: BackupService) {
+  constructor(
+    app: App,
+    chapters: ChapterFileService,
+    projectSvc: ProjectService,
+    backupSvc: BackupService,
+  ) {
     this.app = app;
     this.tpl = new TemplateService(app);
     this.projectSvc = projectSvc;
@@ -79,7 +94,8 @@ export class DraftFileService {
 
     // Check for existing drafts folder (handles legacy "Drafts" vs standard "drafts")
     const existingDraftsFolderName = this.getDraftsFolderName(projectPathResolved);
-    const draftsFolderName = existingDraftsFolderName || getDraftsFolderName(this.manager?.settings);
+    const draftsFolderName =
+      existingDraftsFolderName || getDraftsFolderName(this.manager?.settings);
     const draftsFolder = `${projectPathResolved}/${draftsFolderName}`;
     const newDraftFolder = `${draftsFolder}/${draftName}`;
 
@@ -190,7 +206,13 @@ export class DraftFileService {
       }
     }
 
-    await updateMetaStats(this.app, projectPathResolved, draftName, undefined, this.manager?.settings);
+    await updateMetaStats(
+      this.app,
+      projectPathResolved,
+      draftName,
+      undefined,
+      this.manager?.settings,
+    );
   }
 
   /**
@@ -316,7 +338,9 @@ export class DraftFileService {
       }
       // Update meta.md in the project root
       await suppressAsync(async () => {
-        await import("./meta").then((meta) => meta.updateMetaStats(this.app, project, newName, undefined, this.manager?.settings));
+        await import("./meta").then((meta) =>
+          meta.updateMetaStats(this.app, project, newName, undefined, this.manager?.settings),
+        );
       });
       // Update meta.md in the renamed draft folder if it exists
       const draftMetaPath = `${newFolder}/${getMetaFileName(this.manager?.settings)}`;

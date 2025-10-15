@@ -17,7 +17,10 @@ export function createBackupCommand(manager: WriteAidManager) {
 
     const draftsFolderName = getDraftsFolderName(manager.settings);
     const draftFolder = `${activeProjectPath}/${draftsFolderName}/${activeDraftName}`;
-    const success = await manager.projectFileService.backups.createBackup(draftFolder, manager.settings);
+    const success = await manager.projectFileService.backups.createBackup(
+      draftFolder,
+      manager.settings,
+    );
 
     if (success) {
       new Notice("Backup created successfully.");
