@@ -81,7 +81,8 @@ export class ProjectPanelView extends ItemView {
       // calling into minified Svelte factory shapes and works well when the
       // component is compiled with `customElement: true`.
       let mounted = false;
-      let looksLikeHTMLElementClass = false;
+      let looksLikeHTMLElementClass =
+        typeof Component === "function" && Component.prototype instanceof HTMLElement;
 
       if (looksLikeHTMLElementClass) {
         try {
