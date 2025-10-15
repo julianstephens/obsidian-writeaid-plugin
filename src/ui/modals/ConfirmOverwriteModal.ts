@@ -3,7 +3,10 @@ import { App, ButtonComponent, Modal } from "obsidian";
 export class ConfirmOverwriteModal extends Modal {
   private resolve!: (value: boolean) => void;
 
-  constructor(app: App, private manuscriptPath: string) {
+  constructor(
+    app: App,
+    private manuscriptPath: string,
+  ) {
     super(app);
     this.setTitle("Confirm Overwrite");
   }

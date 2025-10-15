@@ -90,7 +90,9 @@ export default class WriteAidPlugin extends Plugin {
     // Update manager's settings reference to point to the new settings object
     if (this.manager) {
       this.manager.settings = this.settings;
-      debug(`${DEBUG_PREFIX} Updated manager settings reference, manuscript template: ${this.settings.manuscriptNameTemplate}`);
+      debug(
+        `${DEBUG_PREFIX} Updated manager settings reference, manuscript template: ${this.settings.manuscriptNameTemplate}`,
+      );
     }
 
     // Notify any registered callbacks that settings have changed

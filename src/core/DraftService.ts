@@ -637,7 +637,7 @@ export class DraftService {
       if (draftFile && draftFile instanceof TFile) {
         const content = await this.app.vault.read(draftFile);
         manuscriptContent += stripHeadings(stripFrontmatter(content));
-        
+
         // Create or overwrite the manuscript file
         const existingFile = this.app.vault.getAbstractFileByPath(manuscriptPath);
         if (existingFile && existingFile instanceof TFile) {
