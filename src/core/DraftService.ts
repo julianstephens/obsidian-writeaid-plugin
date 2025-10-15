@@ -618,20 +618,22 @@ export class DraftService {
     );
     debug(`${DEBUG_PREFIX} DraftService.generateManuscript - settings object:`, settings);
 
+    const draftSlug = slugifyDraftName(
+      draftName,
+      settings?.slugStyle as import("@/core/utils").DraftSlugStyle,
+    );
+
     const manuscriptBaseName = await this.tpl.render(manuscriptNameTemplate, {
       draftName,
       projectName,
+      draftSlug,
     });
     const manuscriptPath = `${manuscriptFolder}/${manuscriptBaseName}.md`;
 
     let manuscriptContent = `# Manuscript for ${draftName}\n\n`;
 
     if (projectType === PROJECT_TYPE.SINGLE) {
-      const slug = slugifyDraftName(
-        draftName,
-        settings?.slugStyle as import("@/core/utils").DraftSlugStyle,
-      );
-      const draftFileName = `${slug}.md`;
+      const draftFileName = `${draftSlug}.md`;
       const draftMainPath = `${draftFolder}/${draftFileName}`;
       const draftFile = this.app.vault.getAbstractFileByPath(draftMainPath);
       if (draftFile && draftFile instanceof TFile) {
