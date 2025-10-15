@@ -8,7 +8,6 @@ export function toggleProjectPanelCommand(manager: WriteAidManager, app: App) {
       type: VIEW_TYPE_PROJECT_PANEL,
       active: true,
     };
-    // try to find an existing leaf with our view
     const existing = app.workspace.getLeavesOfType(VIEW_TYPE_PROJECT_PANEL);
     if (existing.length > 0) {
       const leaf = existing[0];

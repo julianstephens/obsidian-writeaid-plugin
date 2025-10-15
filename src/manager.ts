@@ -16,7 +16,6 @@ import { SwitchDraftModal } from "@/ui/modals/SwitchDraftModal";
 export class WriteAidManager {
   app: App;
   activeDraft: string | null = null;
-  // track the currently selected active project path
   activeProject: string | null = null;
   private activeProjectListeners: Array<(p: string | null) => void> = [];
   private activeDraftListeners: Array<(d: string | null) => void> = [];
@@ -40,7 +39,6 @@ export class WriteAidManager {
     if (typeof panelRefreshDebounceMs === "number" && Number.isFinite(panelRefreshDebounceMs)) {
       this._panelRefreshDebounceMs = Math.max(0, Math.floor(panelRefreshDebounceMs));
     }
-    // initialize activeProject from persisted settings if present
     this.activeProject = (this.settings as WriteAidSettings | undefined)?.activeProject || null;
     this.projectService = new ProjectService(app);
     this.draftService = new DraftService(app);
@@ -60,14 +58,16 @@ export class WriteAidManager {
     return await this.draftService.reorderChapters(projectPath, draftName, newOrder);
   }
 
-  /** Get the current panel refresh debounce timeout in milliseconds */
-
-  // Chapter management API
   async listChapters(projectPath: string, draftName: string) {
     return await this.draftService.listChapters(projectPath, draftName);
   }
   async createChapter(projectPath: string, draftName: string, chapterName: string) {
-    return await this.draftService.createChapter(projectPath, draftName, chapterName);
+    return await this.draftService.createChapter(
+      projectPath,
+      draftName,
+      chapterName,
+      this.settings,
+    );
   }
   async deleteChapter(projectPath: string, draftName: string, chapterName: string) {
     return await this.draftService.deleteChapter(projectPath, draftName, chapterName);
@@ -107,7 +107,6 @@ export class WriteAidManager {
       try {
         fn(draft);
       } catch (_e) {
-        // ignore }
         // ignore
       }
     }
@@ -122,7 +121,6 @@ export class WriteAidManager {
   }
 
   notifyPanelRefresh() {
-    // Debounce multiple notifications into a single refresh
     try {
       if (this._panelRefreshTimer) {
         clearTimeout(this._panelRefreshTimer);
@@ -132,21 +130,19 @@ export class WriteAidManager {
           try {
             fn();
           } catch (_e) {
-            // ignore }
-            // Ignore errors in panel refresh listeners
+            // ignore
           }
         }
         this._panelRefreshTimer = null;
       }, this._panelRefreshDebounceMs);
     } catch (_e) {
-      // ignore }
+      // ignore
       // fallback: immediate notify
       for (const fn of this.panelRefreshListeners) {
         try {
           fn();
         } catch (_e) {
-          // ignore }
-          // Ignore errors in panel refresh listeners
+          // ignore
         }
       }
     }
@@ -157,25 +153,20 @@ export class WriteAidManager {
   }
 
   async setActiveProject(path: string | null) {
-    // Normalize path: trim and remove leading/trailing slashes
     if (path) {
       path = path.trim().replace(/^\/+/, "").replace(/\/+$/, "");
     }
-    // Debug: log when setActiveProject is called
     try {
       const dbg = (this.settings as WriteAidSettings | undefined)?.debug || false;
       if (dbg) {
         console.debug(`WriteAid debug: setActiveProject called with '${path}'`);
       }
     } catch (_e) {
-      // ignore }
       // ignore
     }
     this.activeProject = path;
-    // Persist into plugin settings if available
     try {
       if (this.plugin) {
-        // Use type guard to check for settings property
         const pluginWithSettings = this.plugin as {
           settings?: WriteAidSettings;
           saveSettings?: () => Promise<void>;
@@ -187,15 +178,13 @@ export class WriteAidManager {
         }
       }
     } catch (_e) {
-      // ignore }
-      // Ignore save errors
+      // ignore
     }
     for (const l of this.activeProjectListeners) {
       try {
         l(path);
       } catch (_e) {
-        // ignore }
-        // Ignore errors in active project listeners
+        // ignore
       }
     }
 
@@ -203,11 +192,9 @@ export class WriteAidManager {
     try {
       if (!path) {
         this.activeDraft = null;
-        // notify listeners that active draft cleared
         try {
           this.notifyActiveDraftListeners(null);
         } catch (_e) {
-          // ignore }
           // ignore
         }
         return;
@@ -219,7 +206,6 @@ export class WriteAidManager {
       }
       if (drafts.length === 1) {
         await this.setActiveDraft(drafts[0], path, false);
-        // Debug: log single draft selection
         try {
           const dbg = (this.settings as WriteAidSettings | undefined)?.debug || false;
           if (dbg) {
@@ -228,7 +214,6 @@ export class WriteAidManager {
             );
           }
         } catch (_e) {
-          // ignore }
           // ignore
         }
         return;
@@ -239,7 +224,6 @@ export class WriteAidManager {
         const meta = await readMetaFile(this.app, `${path}/meta.md`);
         if (meta && meta.current_active_draft && drafts.includes(meta.current_active_draft)) {
           await this.setActiveDraft(meta.current_active_draft, path, false);
-          // Debug: log meta draft selection
           try {
             const dbg = (this.settings as WriteAidSettings | undefined)?.debug || false;
             if (dbg) {
@@ -248,14 +232,12 @@ export class WriteAidManager {
               );
             }
           } catch (_e) {
-            // ignore }
             // ignore
           }
           return;
         }
       } catch (_e) {
-        // ignore }
-        // ignore and fall back
+        // ignore
       }
 
       // Fallback: choose the draft with the most recently modified file inside it
@@ -286,12 +268,12 @@ export class WriteAidManager {
           console.debug(`WriteAid debug: auto-selected draft '${bestDraft}' for project '${path}'`);
         }
       } catch (_e) {
-        // ignore }
+        // ignore
         // ignore
       }
       await this.setActiveDraft(bestDraft, path, false);
     } catch (_e) {
-      // ignore }
+      // ignore
       // Ignore errors selecting active draft
     }
   }
@@ -377,7 +359,7 @@ export class WriteAidManager {
       try {
         this.notifyPanelRefresh();
       } catch (_e) {
-        // ignore }
+        // ignore
         // Ignore errors in notifyPanelRefresh
       }
     }
@@ -478,7 +460,7 @@ export class WriteAidManager {
     try {
       this.notifyPanelRefresh();
     } catch (_e) {
-      // ignore }
+      // ignore
       // Ignore errors in notifyPanelRefresh
     }
     return res;
@@ -502,14 +484,14 @@ export class WriteAidManager {
     try {
       await updateMetaStats(this.app, project, draftName);
     } catch (_e) {
-      // ignore }
+      // ignore
       // Ignore errors in updateMetaStats
     }
     // notify listeners about the active draft change
     try {
       this.notifyActiveDraftListeners(this.activeDraft);
     } catch (_e) {
-      // ignore }
+      // ignore
       // ignore
     }
     if (showNotice) new Notice(`Active draft set to ${draftName}`);

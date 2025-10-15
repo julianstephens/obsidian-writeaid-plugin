@@ -10,7 +10,6 @@ async function convertSingleToMultiFileProject(app: App, projectPath: string) {
     return false;
   }
 
-  // Update meta.md project_type
   meta.project_type = "multi-file";
   await writeMetaFile(app, metaPath, meta);
 

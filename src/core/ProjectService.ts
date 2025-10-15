@@ -31,17 +31,14 @@ export class ProjectService {
       parentFolder && parentFolder !== "" ? `${parentFolder}/${projectName}` : projectName;
     const draftsFolder = `${projectPath}/Drafts`;
 
-    // Create project folder if it doesn't exist
     if (!this.app.vault.getAbstractFileByPath(projectPath)) {
       await this.app.vault.createFolder(projectPath);
     }
 
-    // Create Drafts folder
     if (!this.app.vault.getAbstractFileByPath(draftsFolder)) {
       await this.app.vault.createFolder(draftsFolder);
     }
 
-    // Create meta.md with project_type frontmatter
     const metaPath = `${projectPath}/meta.md`;
     if (!this.app.vault.getAbstractFileByPath(metaPath)) {
       const projectType = singleFile ? "single-file" : "multi-file";
@@ -49,7 +46,6 @@ export class ProjectService {
       await this.app.vault.create(metaPath, metaContent);
     }
 
-    // Create initial draft using DraftService
     const draftName = initialDraftName || "Draft 1";
     await this.draftService.createDraft(draftName, undefined, projectPath, settings);
 
@@ -58,7 +54,6 @@ export class ProjectService {
 
   /** Try to open a sensible file in the project. Returns true if opened. */
   async openProject(projectPath: string) {
-    // Always try meta.md first
     const metaPath = `${projectPath}/meta.md`;
     const metaFile = this.app.vault.getAbstractFileByPath(metaPath);
     if (metaFile && metaFile instanceof TFile) {
@@ -106,7 +101,6 @@ export class ProjectService {
   // Simple heuristic to determine whether a folder looks like a project managed by WriteAid
   // We consider a folder a project if it contains a meta.md or a Drafts/ subfolder.
   async isProjectFolder(path: string): Promise<boolean> {
-    // Normalize path: trim whitespace and strip trailing slashes
     if (!path || typeof path !== "string") return false;
     const base = path.trim().replace(/\\/g, "/").replace(/\/+$/, "");
     try {
@@ -115,7 +109,6 @@ export class ProjectService {
       const hasDrafts = await this.app.vault.adapter.exists(normalizePath(`${base}/Drafts`));
       if (!hasMeta || !hasDrafts) return false;
 
-      // Check meta.md for valid project_type
       try {
         // Dynamically import to avoid circular deps
         const { readMetaFile, VALID_PROJECT_TYPES } = await import("./meta");
@@ -127,12 +120,12 @@ export class ProjectService {
           return false;
         }
       } catch (_e) {
-        // ignore }
+        // ignore
         return false;
       }
       return true;
     } catch (_e) {
-      // ignore }
+      // ignore
       return false;
     }
   }

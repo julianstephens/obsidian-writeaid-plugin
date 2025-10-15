@@ -18,7 +18,6 @@ export class RenameChapterModal extends Modal {
     contentEl.empty();
     contentEl.createEl("h3", { text: `Rename Chapter` });
     contentEl.createEl("div", { text: `Current name: '${this.oldName}'`, cls: "wa-rename-info" });
-    // Label and input
     const label = contentEl.createEl("label", { text: "New chapter name", cls: "wa-rename-label" });
     this.inputEl = contentEl.createEl("input", {
       type: "text",
@@ -28,23 +27,19 @@ export class RenameChapterModal extends Modal {
       attr: { "aria-label": "New chapter name" },
     });
     label.appendChild(this.inputEl);
-    // Error message
     this.errorEl = contentEl.createEl("div", { cls: "wa-rename-error" });
     this.errorEl.style.color = "var(--color-red, #d43c3c)";
     this.errorEl.style.display = "none";
 
-    // Button row
     const btnRow = contentEl.createEl("div", { cls: "wa-rename-btn-row" });
     const confirmBtn = btnRow.createEl("button", { text: "Rename", cls: "mod-cta" });
     this.cancelBtn = btnRow.createEl("button", { text: "Cancel", cls: "mod-cancel" });
 
-    // Focus/select input
     setTimeout(() => {
       this.inputEl?.focus();
       this.inputEl?.select();
     }, 0);
 
-    // Keyboard accessibility
     this.inputEl?.addEventListener("keydown", (e) => {
       if (e.key === "Enter") {
         this.submit();

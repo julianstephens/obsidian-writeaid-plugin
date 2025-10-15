@@ -26,7 +26,6 @@ export class RenameDraftModal extends Modal {
     contentEl.empty();
     contentEl.createEl("h3", { text: `Rename Draft` });
     contentEl.createEl("div", { text: `Current name: '${this.oldName}'`, cls: "wa-rename-info" });
-    // Label and input
     const label = contentEl.createEl("label", { text: "New draft name", cls: "wa-rename-label" });
     this.inputEl = contentEl.createEl("input", {
       type: "text",
@@ -36,30 +35,25 @@ export class RenameDraftModal extends Modal {
       attr: { "aria-label": "New draft name" },
     });
     label.appendChild(this.inputEl);
-    // Error message
     this.errorEl = contentEl.createEl("div", { cls: "wa-rename-error" });
     this.errorEl.style.color = "var(--color-red, #d43c3c)";
     this.errorEl.style.display = "none";
 
-    // Checkbox for single-file
     if (this.isSingleFile) {
       const cbLabel = contentEl.createEl("label", { cls: "wa-rename-checkbox-label" });
       this.checkboxEl = cbLabel.createEl("input", { type: "checkbox" });
       cbLabel.appendText(" Also rename the main draft file (filename)");
     }
 
-    // Button row
     const btnRow = contentEl.createEl("div", { cls: "wa-rename-btn-row" });
     const confirmBtn = btnRow.createEl("button", { text: "Rename", cls: "mod-cta" });
     this.cancelBtn = btnRow.createEl("button", { text: "Cancel", cls: "mod-cancel" });
 
-    // Focus/select input
     setTimeout(() => {
       this.inputEl?.focus();
       this.inputEl?.select();
     }, 0);
 
-    // Keyboard accessibility
     this.inputEl?.addEventListener("keydown", (e) => {
       if (e.key === "Enter") {
         this.submit();

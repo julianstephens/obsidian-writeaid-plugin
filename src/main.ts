@@ -16,24 +16,25 @@ import { WRITE_AID_ICON_NAME } from "@/ui/components/icons";
 import { ProjectPanelView, VIEW_TYPE_PROJECT_PANEL } from "@/ui/sidepanel/ProjectPanelView";
 import { Plugin } from "obsidian";
 
-// Import the plugin CSS as inline text so we can inject it into the host
-// document at runtime. Vite supports '?inline' to return the file contents
-// as a string. This ensures the plugin styles are applied when the plugin
-// is loaded in Obsidian even though the build emits a separate CSS asset.
 // @ts-expect-error - import CSS as raw text via Vite
 import stylesText from "@/styles/writeaid.css?inline";
 
-// Local debug helper for plugin-level logs. Uses the same runtime flag as the
-// panel mount helper: window.__WRITEAID_DEBUG__
 function debug(...args: unknown[]) {
   try {
     if ((window as unknown as { __WRITEAID_DEBUG__?: boolean }).__WRITEAID_DEBUG__) {
       (console.debug || console.log).apply(console, args as []);
     }
   } catch (_e) {
-    // ignore }
-    // Ignore errors in debug logging
+    // ignore
   }
+}
+
+// Helper function to truncate long project names for status bar display
+function truncateProjectName(projectName: string, maxLength: number = 20): string {
+  if (projectName.length <= maxLength) {
+    return projectName;
+  }
+  return projectName.substring(0, maxLength - 3) + "...";
 }
 
 const DEFAULT_SETTINGS: WriteAidSettings = {
@@ -45,11 +46,8 @@ const DEFAULT_SETTINGS: WriteAidSettings = {
   ribbonAlwaysShow: false,
   autoOpenPanelOnStartup: true,
   autoSelectProjectOnStartup: true,
-  // Persisted active project (may be undefined)
   activeProject: undefined,
-  // Debounce timeout for panel refresh notifications. 0 disables debouncing.
   panelRefreshDebounceMs: 250,
-  // Developer debug logs disabled by default
   debug: false,
 };
 
@@ -67,29 +65,24 @@ export default class WriteAidPlugin extends Plugin {
   async loadSettings() {
     const data = await this.loadData();
     this.settings = normalizeSettings(data);
-    // Ensure activeProject is set correctly
     if (data && data.activeProject !== undefined) {
       this.settings.activeProject = data.activeProject;
     }
   }
 
   async saveSettings() {
-    // Normalize before saving to ensure all expected keys are present
     try {
       const toSave = normalizeSettings(this.settings);
       await this.saveData(toSave);
-      // keep the in-memory settings object in sync with what we saved
       this.settings = toSave;
     } catch (_e) {
-      // ignore }
-      // fallback to direct save if normalization fails
+      // ignore
       await this.saveData(this.settings);
     }
   }
 
   async onload() {
     await this.loadSettings();
-    // instantiate manager, passing configured debounce value from settings
     this.manager = new WriteAidManager(
       this.app,
       this,
@@ -101,7 +94,6 @@ export default class WriteAidPlugin extends Plugin {
     // Only instantiate ProjectService once
     const projectService = new ProjectService(this.app);
 
-    // Wait for layout to be ready before checking for projects
     this.app.workspace.onLayoutReady(async () => {
       // Ensure an active project is always selected on startup if projects exist
       const allFolders: string[] = projectService.listAllFolders();
@@ -117,7 +109,6 @@ export default class WriteAidPlugin extends Plugin {
           );
         }
       } catch (_e) {
-        // ignore }
         // ignore
       }
       let toActivate: string | null = null;
@@ -134,7 +125,6 @@ export default class WriteAidPlugin extends Plugin {
             );
           }
         } catch (_e) {
-          // ignore }
           // ignore
         }
         if (lastActive && projects.includes(lastActive)) {
@@ -156,7 +146,6 @@ export default class WriteAidPlugin extends Plugin {
                 );
               }
             } catch (_e) {
-              // ignore }
               // ignore
             }
             toActivate = lastActive;
@@ -168,7 +157,6 @@ export default class WriteAidPlugin extends Plugin {
           console.debug(`WriteAid debug: toActivate='${toActivate}'`);
         }
       } catch (_e) {
-        // ignore }
         // ignore
       }
       if (toActivate) {
@@ -202,7 +190,6 @@ export default class WriteAidPlugin extends Plugin {
         await this.saveSettings();
       }
     });
-    // Add status bar item for active project
     this.statusBarEl = this.addStatusBarItem();
     this.statusBarEl.setText("WriteAid: No active project");
 
@@ -230,28 +217,24 @@ export default class WriteAidPlugin extends Plugin {
         (this.settings as WriteAidSettings).debug,
       );
     } catch (_e) {
-      // ignore }
-      // Ignore errors in debug flag assignment
+      // ignore
     }
     // Log load message only when debug is enabled so users don't see this in normal runs
     try {
       debug("Loading WriteAid Novel Multi-Draft Plugin");
     } catch (_e) {
-      // ignore }
-      // Ignore errors in debug logging
+      // ignore
     }
 
-    // Listen for active project changes to update status bar
     this.manager.addActiveProjectListener((project) => {
       if (this.statusBarEl) {
         if (project) {
-          this.statusBarEl.setText(`WriteAid: ${project}`);
+          this.statusBarEl.setText(`WriteAid: ${truncateProjectName(project)}`);
           try {
             if (this.settings && (this.settings as WriteAidSettings).debug) {
               console.debug(`WriteAid debug: active project updated -> ${project}`);
             }
           } catch (_e) {
-            // ignore }
             // ignore
           }
         } else {
@@ -262,7 +245,7 @@ export default class WriteAidPlugin extends Plugin {
 
     // Set initial status bar text if a project is already active
     if (this.manager.activeProject) {
-      this.statusBarEl.setText(`WriteAid: ${this.manager.activeProject}`);
+      this.statusBarEl.setText(`WriteAid: ${truncateProjectName(this.manager.activeProject)}`);
     }
 
     // register side panel view
@@ -306,7 +289,7 @@ export default class WriteAidPlugin extends Plugin {
           ribbonEl.style.display = "none";
         }
       } catch (_e) {
-        // ignore }
+        // ignore
         ribbonEl.style.display = "";
       }
     };
@@ -410,7 +393,7 @@ export default class WriteAidPlugin extends Plugin {
         leftRibbon.appendChild(this.ribbonEl);
       }
     } catch (_e) {
-      // ignore }
+      // ignore
       // Ignore errors in moveRibbon
     }
   }
@@ -422,7 +405,7 @@ export default class WriteAidPlugin extends Plugin {
     try {
       debug("Unloading WriteAid Novel Multi-Draft Plugin");
     } catch (_e) {
-      // ignore }
+      // ignore
       // Ignore errors in debug logging
     }
     if (this.waStyleEl && this.waStyleEl.parentElement)

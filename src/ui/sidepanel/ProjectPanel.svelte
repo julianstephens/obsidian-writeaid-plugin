@@ -676,7 +676,6 @@
                 selectedValue,
                 manager.activeDraft,
                 newChapterName.trim(),
-                newChapterNameValue.trim() || undefined,
               );
               newChapterName = "";
               newChapterNameValue = "";

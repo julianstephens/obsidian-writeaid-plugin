@@ -8,13 +8,11 @@ import { App, Modal, Notice, PluginSettingTab, Setting, TFile, TFolder } from "o
 export interface MinimalPlugin {
   settings: WriteAidSettings;
   saveSettings: () => Promise<void> | void;
-  // Optional helpers the UI calls directly
   manager?: { panelRefreshDebounceMs?: number };
   moveRibbon?: (to: "left" | "right") => void;
   refreshRibbonVisibility?: () => void;
 }
 
-// Debounce configuration bounds and default
 const PANEL_DEBOUNCE_MIN = 0;
 const PANEL_DEBOUNCE_MAX = 5000;
 const PANEL_DEBOUNCE_DEFAULT = 250;
@@ -35,10 +33,8 @@ export class WriteAidSettingTab extends PluginSettingTab {
 
     const plugin = this.plugin;
 
-    // Templates group
     containerEl.createEl("h3", { text: "Templates" });
 
-    // Draft outline toggle
     new Setting(containerEl)
       .setName("Include outline file on draft creation")
       .setDesc(
@@ -108,7 +104,6 @@ export class WriteAidSettingTab extends PluginSettingTab {
         }),
       );
 
-    // Filenames & slugging
     containerEl.createEl("h3", { text: "Filenames" });
 
     new Setting(containerEl)
@@ -121,14 +116,12 @@ export class WriteAidSettingTab extends PluginSettingTab {
         d.onChange((v) => {
           plugin.settings.slugStyle = v as WriteAidSettings["slugStyle"];
           plugin.saveSettings();
-          // update preview
           const prev = containerEl.querySelector(".wat-slug-preview");
           if (prev)
             prev.textContent = `Example: Draft 1 → ${slugifyDraftName("Draft 1", v as WriteAidSettings["slugStyle"])}.md`;
         });
       });
 
-    // Preview line for slug style
     let sampleName = "Draft 1";
     new Setting(containerEl)
       .setName("Sample draft name")
@@ -157,7 +150,6 @@ export class WriteAidSettingTab extends PluginSettingTab {
     );
     previewEl.setText(`Example: ${sampleName} → ${initialSlug}.md`);
 
-    // UI placement & startup
     containerEl.createEl("h3", { text: "UI & Startup" });
 
     new Setting(containerEl)
@@ -170,7 +162,6 @@ export class WriteAidSettingTab extends PluginSettingTab {
         d.onChange((v) => {
           plugin.settings.ribbonPlacement = v as WriteAidSettings["ribbonPlacement"];
           plugin.saveSettings();
-          // move ribbon immediately
           if (typeof this.plugin.moveRibbon === "function" && (v === "left" || v === "right")) {
             this.plugin.moveRibbon(v);
           }
@@ -187,7 +178,6 @@ export class WriteAidSettingTab extends PluginSettingTab {
         t.setValue(Boolean(plugin.settings.ribbonAlwaysShow)).onChange((v) => {
           plugin.settings.ribbonAlwaysShow = v;
           plugin.saveSettings();
-          // update visibility of ribbon immediately
           if (typeof this.plugin.refreshRibbonVisibility === "function") {
             this.plugin.refreshRibbonVisibility();
           }
@@ -218,7 +208,6 @@ export class WriteAidSettingTab extends PluginSettingTab {
         }),
       );
 
-    // Developer / debug
     new Setting(containerEl)
       .setName("Enable WriteAid debug logs")
       .setDesc(
@@ -241,7 +230,6 @@ export class WriteAidSettingTab extends PluginSettingTab {
         }),
       );
 
-    // Panel performance
     containerEl.createEl("h3", { text: "Panel performance" });
 
     const debounceSetting = new Setting(containerEl)
@@ -261,7 +249,6 @@ export class WriteAidSettingTab extends PluginSettingTab {
         // range element (declared here so closures can access it)
         let rangeEl: HTMLInputElement | null = null;
 
-        // helper to apply a numeric value: clamp, persist, update manager and UI
         const applyValue = (raw: number) => {
           const n = Number(raw);
           if (!Number.isFinite(n) || n < PANEL_DEBOUNCE_MIN) {
@@ -273,14 +260,11 @@ export class WriteAidSettingTab extends PluginSettingTab {
           try {
             const res = plugin.saveSettings();
             if (res && typeof (res as Promise<unknown>).catch === "function") {
-              // swallow save errors
               (res as Promise<unknown>).catch(() => {});
             }
           } catch (_e) {
-            // ignore }
-            // Ignore errors in saveSettings
+            // ignore
           }
-          // apply immediately to manager if available
           if (
             this.plugin.manager &&
             typeof this.plugin.manager === "object" &&
@@ -307,7 +291,7 @@ export class WriteAidSettingTab extends PluginSettingTab {
           try {
             inputEl.insertAdjacentHTML("afterend", '<span class="wa-unit">ms</span>');
           } catch (_e) {
-            // ignore }
+            // ignore
             // Ignore errors in saveSettings
           }
 
@@ -328,7 +312,7 @@ export class WriteAidSettingTab extends PluginSettingTab {
               inputEl.insertAdjacentElement("afterend", rangeEl);
             }
           } catch (_e) {
-            // ignore }
+            // ignore
             // fallback: append to the Setting's container element
             // Find the closest .setting-item container
             let settingItem = t.inputEl.closest(".setting-item");
@@ -352,7 +336,7 @@ export class WriteAidSettingTab extends PluginSettingTab {
             applyValue(v);
           });
         } catch (_e) {
-          // ignore }
+          // ignore
           // if anything fails, fall back to simple text behavior
           t.onChange((v: string) => {
             const n = Number(v);

@@ -38,7 +38,6 @@ export class ConfirmReorderModal extends Modal {
     const prop = contentEl.createEl("ol");
     this.opts.proposedOrder.forEach((n) => prop.createEl("li", { text: n }));
 
-    // Backup option
     new Setting(contentEl)
       .addToggle((t) =>
         t

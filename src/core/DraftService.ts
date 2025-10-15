@@ -31,7 +31,6 @@ export class DraftService {
       const file = this.app.vault.getAbstractFileByPath(filePath);
       if (file && file instanceof TFile) {
         let content = await this.app.vault.read(file);
-        // Replace order in frontmatter
         if (content.match(/^---\n([\s\S]*?)\n---/)) {
           content = content.replace(/^---\n([\s\S]*?)\n---/, (match, fm) => {
             let cleanedFm = fm.replace(/^order:.*\n?/gm, "");
@@ -60,8 +59,7 @@ export class DraftService {
         totalDrafts = meta.total_drafts;
       }
     } catch (_e) {
-      // ignore }
-      // ignore error
+      // ignore
     }
     return `Draft ${totalDrafts + 1}`;
   }
@@ -83,7 +81,6 @@ export class DraftService {
         if (file instanceof TFile && file.extension === "md") {
           try {
             const content = await this.app.vault.read(file);
-            // Parse frontmatter for 'order' and 'chapter_name'
             const fmMatch = content.match(/^---\n([\s\S]*?)\n---/);
             let order: number | undefined = undefined;
             let chapterName: string | undefined = undefined;
@@ -94,7 +91,6 @@ export class DraftService {
                 if (mOrder) order = parseInt(mOrder[1], 10);
                 const mChapterName = line.match(/^chapter_name:\s*(.*)$/i);
                 if (mChapterName) {
-                  // Remove quotes if present
                   let val = mChapterName[1].trim();
                   if (
                     (val.startsWith('"') && val.endsWith('"')) ||
@@ -115,8 +111,7 @@ export class DraftService {
               chapters.push({ name: file.name.replace(/\.md$/, ""), chapterName, order });
             }
           } catch (_e) {
-            // ignore }
-            // ignore error
+            // ignore
           }
         }
       }
@@ -126,14 +121,22 @@ export class DraftService {
   }
 
   /** Create a new chapter file in a draft folder. */
-  async createChapter(projectPath: string, draftName: string, chapterName: string) {
+  async createChapter(
+    projectPath: string,
+    draftName: string,
+    chapterName: string,
+    settings?: WriteAidSettings,
+  ) {
     const project = this.resolveProjectPath(projectPath);
     if (!project) return false;
     const draftFolder = `${project}/Drafts/${draftName}`;
-    const fileName = `${chapterName}.md`;
+    const slug = slugifyDraftName(
+      chapterName,
+      settings?.slugStyle as import("@/core/utils").DraftSlugStyle,
+    );
+    const fileName = `${slug}.md`;
     const filePath = `${draftFolder}/${fileName}`;
     if (this.app.vault.getAbstractFileByPath(filePath)) return false;
-    // Find max order among existing chapters
     let maxOrder = 0;
     const folder = this.app.vault.getAbstractFileByPath(draftFolder);
     if (folder && folder instanceof TFolder) {
@@ -153,8 +156,7 @@ export class DraftService {
               }
             }
           } catch (_e) {
-            // ignore }
-            /* ignore */
+            // ignore
           }
         }
       }
@@ -184,7 +186,6 @@ export class DraftService {
         const chapterFile = this.app.vault.getAbstractFileByPath(chapterFilePath);
         if (chapterFile && chapterFile instanceof TFile) {
           let content = await this.app.vault.read(chapterFile);
-          // Replace order in frontmatter
           if (content.match(/^---\n([\s\S]*?)\n---/)) {
             content = content.replace(/^---\n([\s\S]*?)\n---/, (match, fm) => {
               let cleanedFm = fm.replace(/^order:.*\n?/gm, "");
@@ -215,11 +216,8 @@ export class DraftService {
 
     if (content.match(/^---\n([\s\S]*?)\n---/)) {
       content = content.replace(/^---\n([\s\S]*?)\n---/, (match, fm) => {
-        // Remove all chapter_name lines
         let cleanedFm = fm.replace(/^chapter_name:.*\n?/gm, "");
-        // Ensure cleanedFm ends with a newline
         if (!cleanedFm.endsWith("\n")) cleanedFm += "\n";
-        // Add the new chapter_name at the end
         cleanedFm += `chapter_name: ${JSON.stringify(newName)}\n`;
         return `---\n${cleanedFm}---`;
       });
@@ -257,10 +255,8 @@ export class DraftService {
     const draftsFolder = `${projectPathResolved}/Drafts`;
     const newDraftFolder = `${draftsFolder}/${draftName}`;
 
-    // Determine project name for metadata updates
     const projectName = projectPathResolved.split("/").pop() || projectPathResolved;
 
-    // Create drafts and draft folders if needed
     if (!this.app.vault.getAbstractFileByPath(draftsFolder)) {
       await this.app.vault.createFolder(draftsFolder);
     }
@@ -302,7 +298,6 @@ export class DraftService {
 
         let content = await this.app.vault.read(file);
 
-        // Update metadata for duplicated files
         content = updateDuplicatedFileMetadata(content, draftName, projectName);
 
         await this.app.vault.create(destPath, content);
@@ -340,7 +335,7 @@ export class DraftService {
             }
           }
         } catch (_e) {
-          // ignore }
+          // ignore
           // fallback: treat as multi-file
         }
       } else {
@@ -384,7 +379,7 @@ export class DraftService {
                   }
                 }
               } catch (_e) {
-                // ignore }
+                // ignore
                 /* ignore */
               }
               if (hasChapter) break;
@@ -393,12 +388,11 @@ export class DraftService {
         }
         if (!hasChapter) {
           // Create Chapter 1
-          await this.createChapter(projectPathResolved, draftName, "Chapter 1");
+          await this.createChapter(projectPathResolved, draftName, "Chapter 1", settings);
         }
       }
     }
 
-    // Update meta.md statistics after creating a draft
     await updateMetaStats(this.app, projectPathResolved, draftName);
   }
 
@@ -431,8 +425,7 @@ export class DraftService {
         return true;
       }
     } catch (_e) {
-      // ignore }
-      // ignore and try fallback
+      // ignore
     }
 
     // fallback: open first file inside the draft folder
@@ -469,7 +462,7 @@ export class DraftService {
         return true;
       }
     } catch (_e) {
-      // ignore }
+      // ignore
       // ignore
     }
     return false;
@@ -536,7 +529,7 @@ export class DraftService {
       try {
         await import("./meta").then((meta) => meta.updateMetaStats(this.app, project, newName));
       } catch (_e) {
-        // ignore }
+        // ignore
         // Ignore errors updating project meta
       }
       // Update meta.md in the renamed draft folder if it exists
@@ -552,13 +545,13 @@ export class DraftService {
             await writeMetaFile(this.app, draftMetaPath, meta);
           }
         } catch (_e) {
-          // ignore }
+          // ignore
           // Ignore errors updating draft meta
         }
       }
       return true;
     } catch (_e) {
-      // ignore }
+      // ignore
       return false;
     }
   }
@@ -592,13 +585,13 @@ export class DraftService {
         try {
           await this.app.vault.delete(file);
         } catch (_e) {
-          // ignore }
+          // ignore
           // Ignore errors when deleting files
         }
       }
       return true;
     } catch (_e) {
-      // ignore }
+      // ignore
       return false;
     }
   }

@@ -19,8 +19,7 @@ export class TemplateService {
         tpl = await this.app.vault.read(f);
       }
     } catch (_e) {
-      // ignore }
-      // ignore and treat as inline template
+      // ignore
     }
 
     return tpl.replace(/{{\s*(\w+)\s*}}/g, (_m, k) => {

@@ -29,7 +29,6 @@ export function navigateToPreviousChapterCommand(manager: WriteAidManager) {
       }
 
       if (currentIndex <= 0) {
-        // No previous chapter
         return;
       }
 
