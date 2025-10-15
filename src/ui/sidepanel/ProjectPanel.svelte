@@ -8,6 +8,7 @@
   import "@/ui/components/components.css";
   import IconButton from "@/ui/components/IconButton.svelte";
   import { ConfirmDeleteModal } from "@/ui/modals/ConfirmDeleteModal";
+  import { RenameChapterModal } from "@/ui/modals/RenameChapterModal";
   import { ArrowDown, ArrowUp, BookOpenCheck, Eye, Pencil, RotateCcw, Trash } from "@lucide/svelte";
   import { onDestroy, onMount } from "svelte";
   import Select from "svelte-select";
@@ -44,9 +45,6 @@
   let showCreateChapter = false;
   let newChapterName = "";
   let newChapterNameValue = "";
-  let editingChapterIndex = null;
-  let editingChapterNameValue = "";
-  let editingName = "";
   let isMultiFileProject = false;
 
   // Load all projects and update UI
@@ -712,9 +710,22 @@
                   ariaLabel="Rename chapter"
                   title="Rename chapter"
                   onclick={() => {
-                    editingChapterIndex = i;
-                    editingName = ch.chapterName;
-                    editingChapterNameValue = ch.chapterName || "";
+                    if (!selectedValue || !manager?.activeDraft) return;
+                    const app = window && window.app ? window.app : manager.app;
+                    const modal = new RenameChapterModal(
+                      app,
+                      ch.chapterName,
+                      async (newName) => {
+                        await manager.renameChapter(
+                          selectedValue,
+                          manager.activeDraft,
+                          ch.chapterName,
+                          newName,
+                        );
+                        await refreshChapters();
+                      },
+                    );
+                    modal.open();
                   }}
                 >
                   <Pencil size={18} />
@@ -744,40 +755,6 @@
                   <Trash size={18} />
                 </IconButton>
               </div>
-              {#if editingChapterIndex === i}
-                <div class="create-inline wa-row">
-                  <input
-                    class="wa-chapter-rename-input"
-                    type="text"
-                    placeholder="Chapter name"
-                    value={editingName}
-                    on:input={(e) => {
-                      const t = e.target;
-                      if (t) editingName = t.value;
-                    }}
-                  />
-                  <BaseButton
-                    onclick={async () => {
-                      if (!selectedValue || !manager?.activeDraft) return;
-                      await manager.renameChapter(
-                        selectedValue,
-                        manager.activeDraft,
-                        ch.chapterName,
-                        editingName.trim(),
-                        editingChapterNameValue.trim() || undefined,
-                      );
-                      editingChapterIndex = null;
-                      await refreshChapters();
-                    }}
-                    variant="primary">Save</BaseButton
-                  >
-                  <BaseButton
-                    onclick={() => {
-                      editingChapterIndex = null;
-                    }}>Cancel</BaseButton
-                  >
-                </div>
-              {/if}
             </div>
           {/each}
         </div>
@@ -821,24 +798,5 @@
     100% {
       transform: rotate(360deg);
     }
-  }
-  .wa-chapter-rename-input {
-    padding: 6px 12px;
-    font-size: 1em;
-    border: 2px solid var(--color-accent, #3b82f6);
-    border-radius: 6px;
-    outline: none;
-    background: var(--background-secondary, #f8fafc);
-    color: var(--text-normal, #222);
-    transition:
-      border 0.2s,
-      box-shadow 0.2s;
-    box-shadow: 0 1px 4px rgba(60, 120, 240, 0.07);
-    margin-right: 8px;
-  }
-  .wa-chapter-rename-input:focus {
-    border-color: var(--color-accent, #2563eb);
-    box-shadow: 0 0 0 2px var(--color-accent, #2563eb33);
-    background: var(--background-modifier-hover, #e0e7ef);
   }
 </style>
