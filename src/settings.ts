@@ -295,7 +295,8 @@ export class WriteAidSettingTab extends PluginSettingTab {
               // swallow save errors
               (res as Promise<unknown>).catch(() => {});
             }
-          } catch (_e) { // ignore }
+          } catch (_e) {
+            // ignore }
             // Ignore errors in saveSettings
           }
           // apply immediately to manager if available
@@ -324,7 +325,8 @@ export class WriteAidSettingTab extends PluginSettingTab {
           // append a small unit suffix after the input for clarity (CSS handles spacing)
           try {
             inputEl.insertAdjacentHTML("afterend", '<span class="wa-unit">ms</span>');
-          } catch (_e) { // ignore }
+          } catch (_e) {
+            // ignore }
             // Ignore errors in saveSettings
           }
 
@@ -344,7 +346,8 @@ export class WriteAidSettingTab extends PluginSettingTab {
             } else {
               inputEl.insertAdjacentElement("afterend", rangeEl);
             }
-          } catch (_e) { // ignore }
+          } catch (_e) {
+            // ignore }
             // fallback: append to the Setting's container element
             // Find the closest .setting-item container
             let settingItem = t.inputEl.closest(".setting-item");
@@ -367,7 +370,8 @@ export class WriteAidSettingTab extends PluginSettingTab {
             (t.inputEl as HTMLInputElement).value = String(v);
             applyValue(v);
           });
-        } catch (_e) { // ignore }
+        } catch (_e) {
+          // ignore }
           // if anything fails, fall back to simple text behavior
           t.onChange((v: string) => {
             const n = Number(v);

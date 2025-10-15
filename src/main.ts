@@ -29,7 +29,8 @@ function debug(...args: unknown[]) {
     if ((window as unknown as { __WRITEAID_DEBUG__?: boolean }).__WRITEAID_DEBUG__) {
       (console.debug || console.log).apply(console, args as []);
     }
-  } catch (_e) { // ignore }
+  } catch (_e) {
+    // ignore }
     // Ignore errors in debug logging
   }
 }
@@ -79,7 +80,8 @@ export default class WriteAidPlugin extends Plugin {
       await this.saveData(toSave);
       // keep the in-memory settings object in sync with what we saved
       this.settings = toSave;
-    } catch (_e) { // ignore }
+    } catch (_e) {
+      // ignore }
       // fallback to direct save if normalization fails
       await this.saveData(this.settings);
     }
@@ -114,7 +116,8 @@ export default class WriteAidPlugin extends Plugin {
             projects,
           );
         }
-      } catch (_e) { // ignore }
+      } catch (_e) {
+        // ignore }
         // ignore
       }
       let toActivate: string | null = null;
@@ -130,7 +133,8 @@ export default class WriteAidPlugin extends Plugin {
               `WriteAid debug: lastActiveRaw='${lastActiveRaw}', normalized='${lastActive}', includes=${lastActive && projects.includes(lastActive)}`,
             );
           }
-        } catch (_e) { // ignore }
+        } catch (_e) {
+          // ignore }
           // ignore
         }
         if (lastActive && projects.includes(lastActive)) {
@@ -151,7 +155,8 @@ export default class WriteAidPlugin extends Plugin {
                   `WriteAid debug: activating saved project '${lastActive}' as it exists and has meta.md`,
                 );
               }
-            } catch (_e) { // ignore }
+            } catch (_e) {
+              // ignore }
               // ignore
             }
             toActivate = lastActive;
@@ -162,7 +167,8 @@ export default class WriteAidPlugin extends Plugin {
         if ((this.settings as WriteAidSettings).debug) {
           console.debug(`WriteAid debug: toActivate='${toActivate}'`);
         }
-      } catch (_e) { // ignore }
+      } catch (_e) {
+        // ignore }
         // ignore
       }
       if (toActivate) {
@@ -211,7 +217,8 @@ export default class WriteAidPlugin extends Plugin {
         this.waStyleEl.classList.add("writeaid-plugin-style");
         document.head.appendChild(this.waStyleEl);
       }
-    } catch (_e) { // ignore
+    } catch (_e) {
+      // ignore
       console.warn("WriteAid: failed to inject styles into document head", _e);
     }
     await this.loadSettings();
@@ -222,13 +229,15 @@ export default class WriteAidPlugin extends Plugin {
       (window as unknown as { __WRITEAID_DEBUG__?: boolean }).__WRITEAID_DEBUG__ = Boolean(
         (this.settings as WriteAidSettings).debug,
       );
-    } catch (_e) { // ignore }
+    } catch (_e) {
+      // ignore }
       // Ignore errors in debug flag assignment
     }
     // Log load message only when debug is enabled so users don't see this in normal runs
     try {
       debug("Loading WriteAid Novel Multi-Draft Plugin");
-    } catch (_e) { // ignore }
+    } catch (_e) {
+      // ignore }
       // Ignore errors in debug logging
     }
 
@@ -241,7 +250,8 @@ export default class WriteAidPlugin extends Plugin {
             if (this.settings && (this.settings as WriteAidSettings).debug) {
               console.debug(`WriteAid debug: active project updated -> ${project}`);
             }
-          } catch (_e) { // ignore }
+          } catch (_e) {
+            // ignore }
             // ignore
           }
         } else {
@@ -295,7 +305,8 @@ export default class WriteAidPlugin extends Plugin {
         } else {
           ribbonEl.style.display = "none";
         }
-      } catch (_e) { // ignore }
+      } catch (_e) {
+        // ignore }
         ribbonEl.style.display = "";
       }
     };
@@ -392,7 +403,8 @@ export default class WriteAidPlugin extends Plugin {
       } else if (to === "left" && leftRibbon) {
         leftRibbon.appendChild(this.ribbonEl);
       }
-    } catch (_e) { // ignore }
+    } catch (_e) {
+      // ignore }
       // Ignore errors in moveRibbon
     }
   }
@@ -403,7 +415,8 @@ export default class WriteAidPlugin extends Plugin {
     }
     try {
       debug("Unloading WriteAid Novel Multi-Draft Plugin");
-    } catch (_e) { // ignore }
+    } catch (_e) {
+      // ignore }
       // Ignore errors in debug logging
     }
     if (this.waStyleEl && this.waStyleEl.parentElement)

@@ -18,7 +18,8 @@ export class TemplateService {
       if (f && f instanceof TFile) {
         tpl = await this.app.vault.read(f);
       }
-    } catch (_e) { // ignore }
+    } catch (_e) {
+      // ignore }
       // ignore and treat as inline template
     }
 
