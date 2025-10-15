@@ -66,6 +66,12 @@ The plugin registers the following commands (useable via the command palette or 
 | `generate-manuscript`          | Generate Manuscript          | Generate a new compiled manuscript for the active draft.                                                                                                                                      | Ctrl/Cmd+Alt+M       |
 | `navigate-to-next-chapter`     | Navigate to Next Chapter     | If the current tab contains a chapter file, navigate to the next chapter in the draft. If no next chapter exists or the current file is not a chapter, do nothing or notify the user.         | Ctrl/Cmd+Alt+N       |
 | `navigate-to-previous-chapter` | Navigate to Previous Chapter | If the current tab contains a chapter file, navigate to the previous chapter in the draft. If no previous chapter exists or the current file is not a chapter, do nothing or notify the user. | Ctrl/Cmd+Alt+P       |
+| `convert-single-to-multi-file-project` | Convert Single-File Project to Multi-File | Convert a single-file project to a multi-file project structure. Updates the project type in `meta.md` and renames draft files to chapter files. | |
+| `toggle-project-panel` | Toggle Project Panel | Show or hide the project panel sidebar for managing chapters and project structure. | |
+| `create-backup` | Create Backup | Create a backup of the current active draft. Backups are stored hierarchically by project and draft. | |
+| `list-and-restore-backups` | List and Restore Backups | Open a modal to browse and restore from available backups for all drafts in the current project. | |
+| `delete-backup` | Delete Oldest Backup | Delete the oldest backup for the current active draft to manage backup storage. | |
+| `clear-old-backups` | Clear Old Backups | Clear all backups older than the configured retention period (default: 30 days). | |
 
 ### Convert Single-File Project to Multi-File
 
@@ -82,3 +88,13 @@ This will update the project type in `meta.md` and rename all draft files to `Ch
 For multi-file projects, you can manage chapters using the project panel.
 
 All chapter operations work on the currently active draft of the active project.
+
+### Backup Management
+
+The plugin provides comprehensive backup functionality to protect your writing work:
+
+- **Hierarchical Storage**: Backups are organized by project and draft in `.writeaid-backups/projectName/draftsFolderName/draftName/`
+- **Automatic Cleanup**: Old backups are automatically cleared on plugin startup based on the configured retention period (default: 30 days)
+- **Manual Management**: Create backups manually, browse all project backups, restore from any backup, or delete old backups as needed
+
+All backup operations work on the currently active draft of the active project, but the list/restore command shows backups for all drafts in the project.

@@ -120,8 +120,8 @@ export class RestoreBackupModal extends SuggestModal<BackupItem> {
 
       // Sort by timestamp (newest first)
       return backupDetails.sort((a, b) => b.timestamp.localeCompare(a.timestamp));
-    } catch (error) {
-      debug(`${DEBUG_PREFIX} Failed to list backup directory '${backupProjectDir}': ${error}`);
+    } catch {
+      debug(`${DEBUG_PREFIX} Backup directory does not exist yet for project '${backupProjectDir}' (this is normal for new projects)`);
       return [];
     }
   }
