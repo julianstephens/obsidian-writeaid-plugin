@@ -2,6 +2,7 @@ import { convertSingleToMultiFileProjectCommand } from "@/commands/convertSingle
 import { createNewDraftCommand } from "@/commands/createNewDraftCommand";
 import { createNewProjectCommand } from "@/commands/createNewProjectCommand";
 import { navigateToNextChapterCommand } from "@/commands/navigateToNextChapterCommand";
+import { navigateToPreviousChapterCommand } from "@/commands/navigateToPreviousChapterCommand";
 import { selectActiveProjectCommand } from "@/commands/selectActiveProjectCommand";
 import { switchDraftCommand } from "@/commands/switchDraftCommand";
 import { toggleProjectPanelCommand } from "@/commands/toggleProjectPanelCommand";
@@ -383,6 +384,12 @@ export default class WriteAidPlugin extends Plugin {
       id: "navigate-to-next-chapter",
       name: "Navigate to Next Chapter",
       callback: navigateToNextChapterCommand(this.manager),
+    });
+
+    this.addCommand({
+      id: "navigate-to-previous-chapter",
+      name: "Navigate to Previous Chapter",
+      callback: navigateToPreviousChapterCommand(this.manager),
     });
 
     this.addSettingTab(new WriteAidSettingTab(this.app, this));
