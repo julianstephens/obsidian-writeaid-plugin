@@ -1,4 +1,3 @@
-import { convertIndexToPlanningCommand } from "@/commands/convertIndexToPlanningCommand";
 import { convertSingleToMultiFileProjectCommand } from "@/commands/convertSingleToMultiFileProjectCommand";
 import { createNewDraftCommand } from "@/commands/createNewDraftCommand";
 import { createNewProjectCommand } from "@/commands/createNewProjectCommand";
@@ -11,6 +10,8 @@ import { asyncFilter } from "@/core/utils";
 import { WriteAidManager } from "@/manager";
 import { WriteAidSettingTab } from "@/settings";
 import type { WriteAidSettings } from "@/types";
+import { WRITE_AID_ICON_NAME } from "@/ui/components/icons";
+import { ProjectPanelView, VIEW_TYPE_PROJECT_PANEL } from "@/ui/sidepanel/ProjectPanelView";
 import { Plugin } from "obsidian";
 
 // Import the plugin CSS as inline text so we can inject it into the host
@@ -19,8 +20,6 @@ import { Plugin } from "obsidian";
 // is loaded in Obsidian even though the build emits a separate CSS asset.
 // @ts-expect-error - import CSS as raw text via Vite
 import stylesText from "@/styles/writeaid.css?inline";
-import { WRITE_AID_ICON_NAME } from "@/ui/components/icons";
-import { ProjectPanelView, VIEW_TYPE_PROJECT_PANEL } from "@/ui/sidepanel/ProjectPanelView";
 
 // Local debug helper for plugin-level logs. Uses the same runtime flag as the
 // panel mount helper: window.__WRITEAID_DEBUG__
@@ -346,12 +345,6 @@ export default class WriteAidPlugin extends Plugin {
       id: "create-new-project",
       name: "Create New Project",
       callback: createNewProjectCommand(this.manager),
-    });
-
-    this.addCommand({
-      id: "convert-index-to-planning",
-      name: "Convert Index to Planning Document",
-      callback: convertIndexToPlanningCommand(this.manager),
     });
 
     this.addCommand({

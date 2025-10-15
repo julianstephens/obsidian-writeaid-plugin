@@ -19,11 +19,6 @@
       "hotkeys": [{ "modifiers": ["Mod", "Shift"], "key": "P" }]
     },
     {
-      "id": "convert-index-to-planning",
-      "name": "Convert Index to Planning Document",
-      "hotkeys": [{ "modifiers": ["Mod", "Alt"], "key": "L" }]
-    },
-    {
       "id": "switch-draft",
       "name": "Switch Active Draft",
       "hotkeys": [{ "modifiers": ["Mod", "Alt"], "key": "S" }]

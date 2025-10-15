@@ -8,7 +8,6 @@ import type { PluginLike, WriteAidSettings } from "@/types";
 import { App, Notice, TFile } from "obsidian";
 
 import { ConfirmExistingProjectModal } from "@/ui/modals/ConfirmExistingProjectModal";
-import { ConvertIndexModal } from "@/ui/modals/ConvertIndexModal";
 import { CreateDraftModal } from "@/ui/modals/CreateDraftModal";
 import { CreateProjectModal } from "@/ui/modals/CreateProjectModal";
 import { PostCreateModal } from "@/ui/modals/PostCreateModal";
@@ -389,72 +388,6 @@ export class WriteAidManager {
   // Helper to list all folder paths in the vault for the parent-folder chooser
   listAllFolders(): string[] {
     return this.projectService.listAllFolders();
-  }
-
-  async convertIndexToPlanningPrompt() {
-    new ConvertIndexModal(this.app, {
-      folders: this.listAllFolders(),
-      onSubmit: async (projectPath: string, asChecklist: boolean) => {
-        await this.convertIndexToPlanning(projectPath, asChecklist);
-        new Notice(`Planning document created for ${projectPath}`);
-      },
-    }).open();
-  }
-
-  async convertIndexToPlanning(projectPath: string, asChecklist = true) {
-    // Locate index file: projectName.md or outline.md
-    const projectName = projectPath.split("/").pop() || projectPath;
-    const candidates = [`${projectPath}/${projectName}.md`, `${projectPath}/outline.md`];
-    let sourceFile: TFile | null = null;
-    for (const c of candidates) {
-      const f = this.app.vault.getAbstractFileByPath(c);
-      if (f && f instanceof TFile) {
-        sourceFile = f;
-        break;
-      }
-    }
-
-    if (!sourceFile) {
-      new Notice("No index or outline file found for project " + projectPath);
-      return;
-    }
-
-    const content = await this.app.vault.read(sourceFile);
-
-    // Simple transform: extract H1/H2 headings and create planning sections
-    const lines = content.split(/\r?\n/);
-    const autoPlanLines: string[] = [];
-    autoPlanLines.push(`# Planning: ${projectName}`);
-    autoPlanLines.push("");
-
-    for (const line of lines) {
-      const m = line.match(/^(#{1,3})\s+(.*)/);
-      if (m) {
-        const level = m[1].length;
-        const text = m[2].trim();
-        if (asChecklist && level <= 2) {
-          autoPlanLines.push(`- [ ] ${text}`);
-        } else if (level <= 2) {
-          autoPlanLines.push(`## ${text}`);
-        } else {
-          autoPlanLines.push(`${"  ".repeat(level - 3)}- ${text}`);
-        }
-      }
-    }
-
-    const planningTemplateSetting = this.settings?.planningTemplate || `{{content}}`;
-    const tplSvc = new TemplateService(this.app);
-
-    // If the template contains a {{content}} placeholder we'll inject the autoPlan
-    let finalContent = await tplSvc.render(planningTemplateSetting, {
-      projectName,
-    });
-    if (finalContent.includes("{{content}}")) {
-      finalContent = finalContent.replace(/{{\s*content\s*}}/g, autoPlanLines.join("\n"));
-    }
-
-    const outPath = `${projectPath}/Planning.md`;
-    await this.app.vault.create(outPath, finalContent);
   }
 
   async createNewDraftPrompt() {
