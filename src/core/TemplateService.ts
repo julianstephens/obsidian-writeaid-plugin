@@ -57,8 +57,7 @@ export class TemplateService {
       'HH', 'H', 'hh', 'h', 'mm', 'm', 'ss', 's', 'A', 'a', 'X', 'x', 'Z', 'zz', 'ZZ'
     ];
 
-    // Check if the string contains only moment tokens, separators, and alphanumeric chars
-    return momentTokens.some(token => str.includes(token)) ||
-           /^[A-Za-z0-9\-_/:.\s]+$/.test(str);
+    // Check if the string contains any moment.js format token
+    return momentTokens.some(token => str.includes(token));
   }
 }
