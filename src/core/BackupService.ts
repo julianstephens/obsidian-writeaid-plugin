@@ -1,7 +1,7 @@
 import type { WriteAidSettings } from "@/types";
 import * as JSZip from "jszip";
 import { App, TFile, TFolder } from "obsidian";
-import { debug, DEBUG_PREFIX, getBackupsFolderName } from "./utils";
+import { BACKUP_FILE_EXTENSION, BACKUP_TIMESTAMP_REGEX, debug, DEBUG_PREFIX, getBackupsFolderName } from "./utils";
 
 export class BackupService {
   constructor(
@@ -47,7 +47,7 @@ export class BackupService {
 
       // Generate timestamp for backup filename
       const timestamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, -5);
-      const backupFileName = `${draftName}_${timestamp}.zip`;
+      const backupFileName = `${draftName}_${timestamp}${BACKUP_FILE_EXTENSION}`;
       const backupPath = `${backupDir}/${backupFileName}`;
 
       // Create zip archive
@@ -100,10 +100,10 @@ export class BackupService {
         if (
           child instanceof TFile &&
           child.name.startsWith(`${draftName}_`) &&
-          child.name.endsWith(".zip")
+          child.name.endsWith(BACKUP_FILE_EXTENSION)
         ) {
           // Extract timestamp from filename (format: draftName_YYYY-MM-DDTHH-MM-SS.zip)
-          const timestampMatch = child.name.match(/_(\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2})\.zip$/);
+          const timestampMatch = child.name.match(BACKUP_TIMESTAMP_REGEX);
           if (timestampMatch) {
             backups.push(timestampMatch[1]);
           }
@@ -128,7 +128,7 @@ export class BackupService {
       const draftsFolderName = draftFolder.split("/")[1] || "drafts";
       const draftName = draftFolder.split("/").pop() || "unknown";
       const backupDir = `${getBackupsFolderName(settings)}/${projectName}/${draftsFolderName}/${draftName}`;
-      const backupFileName = `${draftName}_${timestamp}.zip`;
+      const backupFileName = `${draftName}_${timestamp}${BACKUP_FILE_EXTENSION}`;
       const backupPath = `${backupDir}/${backupFileName}`;
 
       // Check if backup file exists using adapter
@@ -197,7 +197,7 @@ export class BackupService {
       const draftsFolderName = draftFolder.split("/")[1] || "drafts";
       const draftName = draftFolder.split("/").pop() || "unknown";
       const backupDir = `${getBackupsFolderName(settings)}/${projectName}/${draftsFolderName}/${draftName}`;
-      const backupFileName = `${draftName}_${timestamp}.zip`;
+      const backupFileName = `${draftName}_${timestamp}${BACKUP_FILE_EXTENSION}`;
       const backupPath = `${backupDir}/${backupFileName}`;
 
       // Check if backup file exists using adapter

@@ -1,4 +1,4 @@
-import { debug, DEBUG_PREFIX, getDraftsFolderName } from "@/core/utils";
+import { debug, DEBUG_PREFIX, getDraftsFolderName, MARKDOWN_FILE_EXTENSION } from "@/core/utils";
 import type { WriteAidManager } from "@/manager";
 import { Notice } from "obsidian";
 
@@ -12,7 +12,7 @@ export function navigateToNextChapterCommand(manager: WriteAidManager) {
 
     const path = activeFile.path;
     const draftsFolderName = getDraftsFolderName(manager.settings);
-    const match = path.match(new RegExp(`^(.+)/${draftsFolderName}/(.+)/(.+)\\.md$`));
+    const match = path.match(new RegExp(`^(.+)/${draftsFolderName}/(.+)/(.+)\\${MARKDOWN_FILE_EXTENSION}$`));
     if (!match) {
       new Notice("The current file is not a chapter.");
       return;

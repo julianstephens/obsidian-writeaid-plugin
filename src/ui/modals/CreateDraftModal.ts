@@ -1,4 +1,4 @@
-import type { CreateDraftModalProps } from "@/ui/modals/modalTypes";
+import type { CreateDraftModalProps } from "@/types";
 import { Modal, Setting } from "obsidian";
 
 export class CreateDraftModal extends Modal {

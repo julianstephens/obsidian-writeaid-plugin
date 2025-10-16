@@ -13,8 +13,8 @@ A novel writing plugin for Obsidian supporting multiple drafts per project. Orga
 ## Getting Started
 
 1. Clone or download this repository.
-2. Run `npm install` in the plugin folder.
-3. Build with `npm run build`.
+2. Run `pnpm install` in the plugin folder.
+3. Build with `pnpm build`.
 4. Load the dist folder as a community plugin in Obsidian.
 
 ## Example Project Structure

@@ -1,32 +1,34 @@
-import { clearOldBackupsCommand } from "@/commands/clearOldBackupsCommand";
-import { convertSingleToMultiFileProjectCommand } from "@/commands/convertSingleToMultiFileProjectCommand";
-import { createBackupCommand } from "@/commands/createBackupCommand";
-import { createNewDraftCommand } from "@/commands/createNewDraftCommand";
-import { createNewProjectCommand } from "@/commands/createNewProjectCommand";
-import { deleteBackupCommand } from "@/commands/deleteBackupCommand";
-import { generateManuscriptCommand } from "@/commands/generateManuscriptCommand";
-import { listBackupsCommand } from "@/commands/listBackupsCommand";
-import { navigateToNextChapterCommand } from "@/commands/navigateToNextChapterCommand";
-import { navigateToPreviousChapterCommand } from "@/commands/navigateToPreviousChapterCommand";
-import { selectActiveProjectCommand } from "@/commands/selectActiveProjectCommand";
-import { switchDraftCommand } from "@/commands/switchDraftCommand";
-import { toggleProjectPanelCommand } from "@/commands/toggleProjectPanelCommand";
-import { updateProjectMetadataCommand } from "@/commands/updateProjectMetadataCommand";
+import { clearOldBackupsCommand } from "@/commands/backup/clearOldBackupsCommand";
+import { createBackupCommand } from "@/commands/backup/createBackupCommand";
+import { deleteBackupCommand } from "@/commands/backup/deleteBackupCommand";
+import { listBackupsCommand } from "@/commands/backup/listBackupsCommand";
+import { createNewDraftCommand } from "@/commands/draft/createNewDraftCommand";
+import { generateManuscriptCommand } from "@/commands/draft/generateManuscriptCommand";
+import { switchDraftCommand } from "@/commands/draft/switchDraftCommand";
+import { navigateToNextChapterCommand } from "@/commands/navigation/navigateToNextChapterCommand";
+import { navigateToPreviousChapterCommand } from "@/commands/navigation/navigateToPreviousChapterCommand";
+import { convertSingleToMultiFileProjectCommand } from "@/commands/project/convertSingleToMultiFileProjectCommand";
+import { createNewProjectCommand } from "@/commands/project/createNewProjectCommand";
+import { selectActiveProjectCommand } from "@/commands/project/selectActiveProjectCommand";
+import { toggleProjectPanelCommand } from "@/commands/project/toggleProjectPanelCommand";
+import { updateProjectMetadataCommand } from "@/commands/project/updateProjectMetadataCommand";
 import { ProjectService } from "@/core/ProjectService";
 import {
   APP_NAME,
   asyncFilter,
   debug,
   DEBUG_PREFIX,
+  FILES,
+  FOLDERS,
   getDraftsFolderName,
   suppress,
   suppressAsync,
+  WRITE_AID_ICON_NAME,
 } from "@/core/utils";
 import { WriteAidManager } from "@/manager";
 import { WriteAidSettingTab } from "@/settings";
 import stylesText from "@/styles/writeaid.css?inline";
 import type { WriteAidSettings } from "@/types";
-import { WRITE_AID_ICON_NAME } from "@/ui/components/icons";
 import { ProjectPanelView, VIEW_TYPE_PROJECT_PANEL } from "@/ui/sidepanel/ProjectPanelView";
 import { Plugin, TFolder } from "obsidian";
 
@@ -52,11 +54,11 @@ const DEFAULT_SETTINGS: WriteAidSettings = {
   panelRefreshDebounceMs: 250,
   debug: false,
   includeDraftOutline: false,
-  draftsFolderName: "Drafts",
-  manuscriptsFolderName: "manuscripts",
-  backupsFolderName: ".writeaid-backups",
-  metaFileName: "meta.md",
-  outlineFileName: "outline.md",
+  draftsFolderName: FOLDERS.DRAFTS,
+  manuscriptsFolderName: FOLDERS.MANUSCRIPTS,
+  backupsFolderName: FOLDERS.BACKUPS,
+  metaFileName: FILES.META,
+  outlineFileName: FILES.OUTLINE,
   maxBackups: 5,
   maxBackupAgeDays: 30,
 };
@@ -207,7 +209,7 @@ export default class WriteAidPlugin extends Plugin {
         const isValidProject = await projectService.isProjectFolder(lastActiveRaw || "");
         if (isValidProject) {
           debug(
-            `${DEBUG_PREFIX} activating saved project '${lastActive}' as it exists and has valid meta.md`,
+            `${DEBUG_PREFIX} activating saved project '${lastActive}' as it exists and has valid meta file`,
           );
           toActivate = lastActive ?? null;
         }
@@ -408,7 +410,7 @@ export default class WriteAidPlugin extends Plugin {
     });
     this.addCommand({
       id: "convert-single-to-multi-file-project",
-      name: "Convert Single-File Project to Multi-File",
+      name: `Convert Single-File Project to Multi-File`,
       callback: () =>
         convertSingleToMultiFileProjectCommand(
           this.app,

@@ -6,7 +6,7 @@
   import { readMetaFile } from "@/core/meta";
   import type { ProjectFileService } from "@/core/ProjectFileService";
   import type { ProjectService } from "@/core/ProjectService";
-  import { APP_NAME, debug, DEBUG_PREFIX } from "@/core/utils";
+  import { APP_NAME, debug, DEBUG_PREFIX, getMetaFileName } from "@/core/utils";
   import type { WriteAidManager } from "@/manager";
   import type { Chapter } from "@/types";
   import BaseButton from "@/ui/components/BaseButton.svelte";
@@ -183,7 +183,7 @@
         return;
       }
       // Check project type
-      const metaPath = `${selectedValue}/meta.md`;
+      const metaPath = `${selectedValue}/${getMetaFileName(manager?.settings)}`;
       const meta = await readMetaFile(manager.app, metaPath);
       isMultiFileProject = meta?.project_type === "multi-file";
       if (!isMultiFileProject) {

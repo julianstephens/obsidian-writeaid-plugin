@@ -3,10 +3,13 @@ import { readMetaFile, updateMetaStats } from "@/core/meta";
 import {
   debug,
   DEBUG_PREFIX,
+  FRONTMATTER_DELIMITER,
+  FRONTMATTER_REGEX,
   getDraftsFolderName,
   getManuscriptsFolderName,
   getMetaFileName,
   getOutlineFileName,
+  MARKDOWN_FILE_EXTENSION,
   PROJECT_TYPE,
   slugifyDraftName,
   suppressAsync,
@@ -118,7 +121,7 @@ export class DraftFileService {
         copyFromDraft,
         settings?.slugStyle as import("@/core/utils").DraftSlugStyle,
       );
-      const expectedSourceFile = `${sourceSlug}.md`;
+      const expectedSourceFile = `${sourceSlug}${MARKDOWN_FILE_EXTENSION}`;
 
       for (const file of files) {
         let relPath = file.path.substring(sourceFolder.length + 1);
@@ -129,7 +132,7 @@ export class DraftFileService {
             draftName,
             settings?.slugStyle as import("@/core/utils").DraftSlugStyle,
           );
-          relPath = `${newSlug}.md`;
+          relPath = `${newSlug}${MARKDOWN_FILE_EXTENSION}`;
         }
 
         const destPath = `${newDraftFolder}/${relPath}`;
@@ -153,7 +156,7 @@ export class DraftFileService {
         const outlineContent = await this.tpl.render(draftOutlineTemplate, {
           draftName,
         });
-        await this.app.vault.create(`${newDraftFolder}/outline.md`, outlineContent);
+        await this.app.vault.create(`${newDraftFolder}/${getOutlineFileName(this.manager?.settings)}`, outlineContent);
       }
 
       // Determine project type
@@ -165,10 +168,10 @@ export class DraftFileService {
           draftName,
           settings?.slugStyle as import("@/core/utils").DraftSlugStyle,
         );
-        const draftFileName = `${slug}.md`;
+        const draftFileName = `${slug}${MARKDOWN_FILE_EXTENSION}`;
         const draftMainPath = `${newDraftFolder}/${draftFileName}`;
         if (!this.app.vault.getAbstractFileByPath(draftMainPath)) {
-          const fm = `---\ndraft: ${draftName}\nproject: ${projectName}\ncreated: ${new Date().toISOString()}\n---\n\n`;
+          const fm = `${FRONTMATTER_DELIMITER}\ndraft: ${draftName}\nproject: ${projectName}\ncreated: ${new Date().toISOString()}\n${FRONTMATTER_DELIMITER}\n\n`;
           const projectContent = await this.tpl.render("# {{draftName}}", {
             draftName,
           });
@@ -180,10 +183,10 @@ export class DraftFileService {
         let hasChapter = false;
         if (folder && folder instanceof TFolder) {
           for (const file of folder.children) {
-            if (file instanceof TFile && file.extension === "md") {
+            if (file instanceof TFile && file.extension === MARKDOWN_FILE_EXTENSION.slice(1)) {
               await suppressAsync(async () => {
                 const content = await this.app.vault.read(file);
-                const fmMatch = content.match(/^---\n([\s\S]*?)\n---/);
+                const fmMatch = content.match(FRONTMATTER_REGEX);
                 if (fmMatch) {
                   const lines = fmMatch[1].split(/\r?\n/);
                   for (const line of lines) {
@@ -312,20 +315,20 @@ export class DraftFileService {
         let rel = file.path.substring(oldFolder.length + 1);
         let dest = `${newFolder}/${rel}`;
         // Only rename the main draft file (oldSlug.md) if requested
-        if (renameFile && oldSlug && newSlug && rel === `${oldSlug}.md`) {
-          rel = `${newSlug}.md`;
+        if (renameFile && oldSlug && newSlug && rel === `${oldSlug}${MARKDOWN_FILE_EXTENSION}`) {
+          rel = `${newSlug}${MARKDOWN_FILE_EXTENSION}`;
           dest = `${newFolder}/${rel}`;
         }
         let content = await this.app.vault.read(file);
         // If this is a Markdown file, update its frontmatter draft property
-        if (file.extension === "md") {
+        if (file.extension === MARKDOWN_FILE_EXTENSION.slice(1)) {
           // Replace or insert draft: <newName> in YAML frontmatter
-          content = content.replace(/^(---\s*\n[\s\S]*?\n)(draft:.*\n)?/m, (match, p1) => {
+          content = content.replace(new RegExp(`^(${FRONTMATTER_DELIMITER}\\s*\\n[\\s\\S]*?\\n)(draft:.*\\n)?`, 'm'), (match, p1) => {
             // Remove any existing draft: line
             let fm = p1.replace(/^draft:.*\n/m, "");
             // Insert new draft line after ---\n
             // If there's already a draft: line, replace it; otherwise, insert after ---\n
-            return fm.replace(/^(---\s*\n)/, `$1draft: ${newName}\n`);
+            return fm.replace(new RegExp(`^(${FRONTMATTER_DELIMITER}\\s*\\n)`), `$1draft: ${newName}\n`);
           });
         }
         await this.app.vault.create(dest, content);
@@ -439,12 +442,12 @@ export class DraftFileService {
       projectName,
       draftSlug,
     });
-    const manuscriptPath = `${manuscriptFolder}/${manuscriptBaseName}.md`;
+    const manuscriptPath = `${manuscriptFolder}/${manuscriptBaseName}${MARKDOWN_FILE_EXTENSION}`;
 
     let manuscriptContent = `# Manuscript for ${draftName}\n\n`;
 
     if (projectType === PROJECT_TYPE.SINGLE) {
-      const draftFileName = `${draftSlug}.md`;
+      const draftFileName = `${draftSlug}${MARKDOWN_FILE_EXTENSION}`;
       const draftMainPath = `${draftFolder}/${draftFileName}`;
       const draftFile = this.app.vault.getAbstractFileByPath(draftMainPath);
       if (draftFile && draftFile instanceof TFile) {
@@ -477,7 +480,7 @@ export class DraftFileService {
 
 /** Remove frontmatter from a string */
 function stripFrontmatter(content: string): string {
-  return content.replace(/^---\n([\s\S]*?)\n---/, "").trim();
+  return content.replace(FRONTMATTER_REGEX, "").trim();
 }
 
 /** Remove top-level headings from a string */
@@ -494,7 +497,7 @@ function updateDuplicatedFileMetadata(
   projectName: string,
 ): string {
   // Check if the content has frontmatter
-  const fmMatch = content.match(/^---\n([\s\S]*?)\n---/);
+  const fmMatch = content.match(FRONTMATTER_REGEX);
   if (!fmMatch) {
     return content; // No frontmatter to update
   }
@@ -527,5 +530,5 @@ function updateDuplicatedFileMetadata(
 
   // Reconstruct the content
   const updatedFrontmatter = updatedLines.join("\n");
-  return `---\n${updatedFrontmatter}\n---${body}`;
+  return `${FRONTMATTER_DELIMITER}\n${updatedFrontmatter}\n${FRONTMATTER_DELIMITER}${body}`;
 }

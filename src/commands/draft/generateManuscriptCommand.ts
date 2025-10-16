@@ -1,4 +1,4 @@
-import { debug, DEBUG_PREFIX } from "@/core/utils";
+import { checkActive, debug, DEBUG_PREFIX } from "@/core/utils";
 import type { WriteAidManager } from "@/manager";
 import { Notice } from "obsidian";
 
@@ -14,14 +14,13 @@ export function generateManuscriptCommand(manager: WriteAidManager) {
       `${DEBUG_PREFIX} Manager settings manuscript template: ${manager.settings?.manuscriptNameTemplate}`,
     );
 
-    if (!activeProjectPath || !activeDraftName) {
-      new Notice("No active project or draft found.");
+    if (!checkActive(activeProjectPath, activeDraftName)) {
       return;
     }
 
     const success = await draftService.generateManuscript(
-      activeProjectPath,
-      activeDraftName,
+      activeProjectPath!,
+      activeDraftName!,
       manager.settings,
     );
 

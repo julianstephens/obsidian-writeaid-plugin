@@ -1,11 +1,11 @@
-import { APP_NAME, debug, DEBUG_PREFIX, slugifyDraftName, suppress } from "@/core/utils";
+import { APP_NAME, debug, DEBUG_PREFIX, FILES, MARKDOWN_FILE_EXTENSION, PANEL_DEBOUNCE_DEFAULT, PANEL_DEBOUNCE_MAX, PANEL_DEBOUNCE_MIN, PROJECT_TYPE, slugifyDraftName, suppress } from "@/core/utils";
 import type { WriteAidSettings } from "@/types";
 import { App, Modal, Notice, PluginSettingTab, Setting, TFile, TFolder } from "obsidian";
 
 // Keep the settings module decoupled from the full plugin implementation by
 // describing only the small interface we need here. This avoids circular
 // imports and makes the settings UI easier to test.
-export interface MinimalPlugin {
+interface MinimalPlugin {
   settings: WriteAidSettings;
   saveSettings: () => Promise<void> | void;
   manager?: { panelRefreshDebounceMs?: number };
@@ -13,10 +13,6 @@ export interface MinimalPlugin {
   refreshRibbonVisibility?: () => void;
   registerSettingsChangedCallback?: (callback: () => void) => void;
 }
-
-const PANEL_DEBOUNCE_MIN = 0;
-const PANEL_DEBOUNCE_MAX = 5000;
-const PANEL_DEBOUNCE_DEFAULT = 250;
 
 export class WriteAidSettingTab extends PluginSettingTab {
   plugin: MinimalPlugin;
@@ -54,7 +50,7 @@ export class WriteAidSettingTab extends PluginSettingTab {
     new Setting(containerEl)
       .setName("Include outline file on draft creation")
       .setDesc(
-        "If enabled, each new draft will include an outline.md file using the outline template.",
+        "If enabled, each new draft will include an outline file using the outline template.",
       )
       .addToggle((toggle) =>
         toggle.setValue(!!plugin.settings.includeDraftOutline).onChange((v) => {
@@ -183,7 +179,7 @@ export class WriteAidSettingTab extends PluginSettingTab {
           plugin.saveSettings();
           const prev = containerEl.querySelector(".wat-slug-preview");
           if (prev)
-            prev.textContent = `Example: Draft 1 → ${slugifyDraftName("Draft 1", v as WriteAidSettings["slugStyle"])}.md`;
+            prev.textContent = `Example: Draft 1 → ${slugifyDraftName("Draft 1", v as WriteAidSettings["slugStyle"])}${MARKDOWN_FILE_EXTENSION}`;
         });
       });
 
@@ -203,7 +199,7 @@ export class WriteAidSettingTab extends PluginSettingTab {
                 sampleName,
                 plugin.settings.slugStyle as WriteAidSettings["slugStyle"],
               );
-              prev.textContent = `Example: ${sampleName} → ${s}.md`;
+              prev.textContent = `Example: ${sampleName} → ${s}${MARKDOWN_FILE_EXTENSION}`;
             }
           }),
       );
@@ -213,7 +209,7 @@ export class WriteAidSettingTab extends PluginSettingTab {
       sampleName,
       plugin.settings.slugStyle as WriteAidSettings["slugStyle"],
     );
-    previewEl.setText(`Example: ${sampleName} → ${initialSlug}.md`);
+    previewEl.setText(`Example: ${sampleName} → ${initialSlug}${MARKDOWN_FILE_EXTENSION}`);
 
     containerEl.createEl("h3", { text: "Folders & Files" });
 
@@ -252,22 +248,22 @@ export class WriteAidSettingTab extends PluginSettingTab {
 
     new Setting(containerEl)
       .setName("Meta file name")
-      .setDesc("Name of the project metadata file (default: meta.md)")
+      .setDesc(`Name of the project metadata file (default: ${FILES.META})`)
       .addText((t) =>
-        t.setValue(plugin.settings.metaFileName || "meta.md").onChange((v) => {
+        t.setValue(plugin.settings.metaFileName || FILES.META).onChange((v) => {
           debug(`${DEBUG_PREFIX} Meta file name changed: ${v}`);
-          plugin.settings.metaFileName = v || "meta.md";
+          plugin.settings.metaFileName = v || FILES.META;
           plugin.saveSettings();
         }),
       );
 
     new Setting(containerEl)
       .setName("Outline file name")
-      .setDesc("Name of the draft outline file (default: outline.md)")
+      .setDesc(`Name of the draft outline file (default: ${FILES.OUTLINE})`)
       .addText((t) =>
-        t.setValue(plugin.settings.outlineFileName || "outline.md").onChange((v) => {
+        t.setValue(plugin.settings.outlineFileName || FILES.OUTLINE).onChange((v) => {
           debug(`${DEBUG_PREFIX} Outline file name changed: ${v}`);
-          plugin.settings.outlineFileName = v || "outline.md";
+          plugin.settings.outlineFileName = v || FILES.OUTLINE;
           plugin.saveSettings();
         }),
       );
@@ -292,8 +288,8 @@ export class WriteAidSettingTab extends PluginSettingTab {
       );
 
     new Setting(containerEl)
-      .setName("Default target word count for single-file projects")
-      .setDesc("Target word count automatically set for new single-file projects")
+      .setName(`Default target word count for ${PROJECT_TYPE.SINGLE} projects`)
+      .setDesc(`Target word count automatically set for new ${PROJECT_TYPE.SINGLE} projects`)
       .addText((t) =>
         t
           .setValue(String(plugin.settings.defaultSingleTargetWordCount ?? 20000))
@@ -301,7 +297,7 @@ export class WriteAidSettingTab extends PluginSettingTab {
           .onChange((v) => {
             const num = parseInt(v, 10);
             if (!isNaN(num) && num > 0) {
-              debug(`${DEBUG_PREFIX} Default single-file target word count changed: ${num}`);
+              debug(`${DEBUG_PREFIX} Default ${PROJECT_TYPE.SINGLE} target word count changed: ${num}`);
               plugin.settings.defaultSingleTargetWordCount = num;
               plugin.saveSettings();
             }
@@ -573,7 +569,7 @@ export class WriteAidSettingTab extends PluginSettingTab {
   }
 }
 
-export class FilePickerModal extends Modal {
+class FilePickerModal extends Modal {
   onPick: (path: string) => void;
   currentFolder: TFolder | null = null;
   expanded: Record<string, boolean> = {};
@@ -674,7 +670,7 @@ export class FilePickerModal extends Modal {
                 this.render();
               };
             } else if (gc instanceof TFile) {
-              if (gc.path.toLowerCase().endsWith(".md")) {
+              if (gc.path.toLowerCase().endsWith(MARKDOWN_FILE_EXTENSION)) {
                 const subRow = sub.createDiv({ cls: "wat-row sub-file" });
                 const a = subRow.createEl("a", { text: gc.name, href: "#" });
                 a.onclick = (e) => {
@@ -688,7 +684,7 @@ export class FilePickerModal extends Modal {
           }
         }
       } else if (child instanceof TFile) {
-        if (child.path.toLowerCase().endsWith(".md")) {
+        if (child.path.toLowerCase().endsWith(MARKDOWN_FILE_EXTENSION)) {
           const row = list.createDiv({ cls: "wat-row file-row" });
           const a = row.createEl("a", { text: child.name, href: "#" });
           a.onclick = (e) => {

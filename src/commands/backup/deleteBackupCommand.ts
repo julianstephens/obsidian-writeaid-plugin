@@ -1,5 +1,6 @@
-import { debug, DEBUG_PREFIX, getDraftsFolderName } from "@/core/utils";
+import { checkActive, debug, DEBUG_PREFIX, getDraftsFolderName } from "@/core/utils";
 import type { WriteAidManager } from "@/manager";
+import { WriteAidError } from "@/types";
 import { Notice } from "obsidian";
 
 export function deleteBackupCommand(manager: WriteAidManager) {
@@ -10,8 +11,7 @@ export function deleteBackupCommand(manager: WriteAidManager) {
     debug(`${DEBUG_PREFIX} Delete backup command called`);
     debug(`${DEBUG_PREFIX} Active project: ${activeProjectPath}, active draft: ${activeDraftName}`);
 
-    if (!activeProjectPath || !activeDraftName) {
-      new Notice("No active project or draft found.");
+    if (!checkActive(activeProjectPath, activeDraftName)) {
       return;
     }
 
@@ -23,7 +23,7 @@ export function deleteBackupCommand(manager: WriteAidManager) {
     );
 
     if (backups.length === 0) {
-      new Notice("No backups found for the current draft.");
+      new Notice(WriteAidError.BACKUPS_NOT_FOUND_DRAFT);
       return;
     }
 

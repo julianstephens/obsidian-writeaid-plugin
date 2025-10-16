@@ -1,4 +1,6 @@
 import type { CallableFunction, ExceptionConstructor } from "@/types";
+import { WriteAidError } from "@/types";
+import { Notice } from "obsidian";
 
 export const FOLDERS = {
   DRAFTS: "drafts",
@@ -26,6 +28,22 @@ export const VALID_PROJECT_TYPES = Object.values(PROJECT_TYPE);
 
 export const APP_NAME = "WriteAid";
 export const DEBUG_PREFIX = `${APP_NAME} debug:`;
+export const WRITE_AID_ICON_NAME = "pen-tool";
+
+export const MARKDOWN_FILE_EXTENSION = ".md";
+
+export const PANEL_DEBOUNCE_MIN = 0;
+export const PANEL_DEBOUNCE_MAX = 5000;
+export const PANEL_DEBOUNCE_DEFAULT = 250;
+
+export const BACKUP_FILE_EXTENSION = ".zip";
+export const BACKUP_TIMESTAMP_REGEX = /_(\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2})\.zip$/;
+
+export const FRONTMATTER_DELIMITER = "---";
+export const FRONTMATTER_REGEX = new RegExp(`^${FRONTMATTER_DELIMITER}\n([\\s\\S]*?)\n${FRONTMATTER_DELIMITER}`);
+
+export const BYTES_PER_KILOBYTE = 1024;
+export const FILE_SIZE_UNITS = ["B", "KB", "MB", "GB"];
 
 // Utility functions to get configured names with fallbacks
 export function getDraftsFolderName(settings?: { draftsFolderName?: string }): string {
@@ -142,4 +160,16 @@ export function debug(...args: unknown[]) {
       (console.debug || console.log).apply(console, args as []);
     }
   });
+}
+
+export function checkActive(project: string | null, draft: string | null): boolean {
+    if (!project) {
+      new Notice(WriteAidError.ACTIVE_PROJECT_NOT_FOUND);
+      return false;
+    }
+    if (!draft) {
+      new Notice(WriteAidError.ACTIVE_DRAFT_NOT_FOUND);
+      return false;
+    }
+    return true
 }

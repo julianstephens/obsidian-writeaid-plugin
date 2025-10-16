@@ -1,6 +1,6 @@
 import type { WriteAidSettings } from "@/types";
 import { App, TFile, TFolder } from "obsidian";
-import { debug, DEBUG_PREFIX, getDraftsFolderName, type ProjectType } from "./utils";
+import { debug, DEBUG_PREFIX, FRONTMATTER_DELIMITER, getDraftsFolderName, getMetaFileName, type ProjectType } from "./utils";
 
 /**
  * Project metadata tracked in meta.md
@@ -73,7 +73,7 @@ export async function updateMetaStats(
   options?: Partial<ProjectMetadata>,
   settings?: WriteAidSettings,
 ): Promise<void> {
-  const metaPath = `${projectPath}/meta.md`;
+  const metaPath = `${projectPath}/${getMetaFileName(settings)}`;
 
   // Read existing metadata or create new
   let metadata = await readMetaFile(app, metaPath);
@@ -116,7 +116,7 @@ export async function updateMetaStats(
  * Parse frontmatter from markdown content
  */
 function parseFrontmatter(content: string): ProjectMetadata | null {
-  const fmMatch = content.match(/^---\s*\n([\s\S]*?)\n---/);
+  const fmMatch = content.match(new RegExp(`${FRONTMATTER_DELIMITER}\\s*\\n([\\s\\S]*?)\\n${FRONTMATTER_DELIMITER}`));
   if (!fmMatch) {
     return null;
   }
@@ -155,7 +155,7 @@ function parseFrontmatter(content: string): ProjectMetadata | null {
  * Format metadata as markdown with YAML frontmatter and human-readable section
  */
 function formatMetaContent(metadata: ProjectMetadata): string {
-  const lines: string[] = ["---"];
+  const lines: string[] = [FRONTMATTER_DELIMITER];
 
   // Write YAML frontmatter
   if (metadata.current_active_draft !== undefined) {
@@ -178,7 +178,7 @@ function formatMetaContent(metadata: ProjectMetadata): string {
     lines.push(`project_type: ${metadata.project_type}`);
   }
 
-  lines.push("---");
+  lines.push(FRONTMATTER_DELIMITER);
   lines.push("");
 
   // Add human-readable section

@@ -1,4 +1,4 @@
-import type { SelectProjectModalProps } from "@/ui/modals/modalTypes";
+import type { SelectProjectModalProps } from "@/types";
 import type { App } from "obsidian";
 import { Modal, Setting } from "obsidian";
 

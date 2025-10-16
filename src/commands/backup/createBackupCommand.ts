@@ -1,4 +1,4 @@
-import { debug, DEBUG_PREFIX, getDraftsFolderName } from "@/core/utils";
+import { checkActive, debug, DEBUG_PREFIX, getDraftsFolderName } from "@/core/utils";
 import type { WriteAidManager } from "@/manager";
 import { Notice } from "obsidian";
 
@@ -10,8 +10,7 @@ export function createBackupCommand(manager: WriteAidManager) {
     debug(`${DEBUG_PREFIX} Create backup command called`);
     debug(`${DEBUG_PREFIX} Active project: ${activeProjectPath}, active draft: ${activeDraftName}`);
 
-    if (!activeProjectPath || !activeDraftName) {
-      new Notice("No active project or draft found.");
+    if (!checkActive(activeProjectPath, activeDraftName)) {
       return;
     }
 

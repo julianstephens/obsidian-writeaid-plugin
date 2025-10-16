@@ -1,7 +1,10 @@
 import {
   debug,
   DEBUG_PREFIX,
+  FRONTMATTER_DELIMITER,
+  FRONTMATTER_REGEX,
   getDraftsFolderName,
+  MARKDOWN_FILE_EXTENSION,
   slugifyDraftName,
   suppressAsync,
 } from "@/core/utils";
@@ -39,16 +42,16 @@ export class ChapterFileService {
     const draftFolder = `${project}/${draftsFolderName}/${draftName}`;
     for (let i = 0; i < newOrder.length; i++) {
       const { chapterName } = newOrder[i];
-      const filePath = `${draftFolder}/${chapterName}.md`;
+      const filePath = `${draftFolder}/${chapterName}${MARKDOWN_FILE_EXTENSION}`;
       const file = this.app.vault.getAbstractFileByPath(filePath);
       if (file && file instanceof TFile) {
         let content = await this.app.vault.read(file);
-        if (content.match(/^---\n([\s\S]*?)\n---/)) {
-          content = content.replace(/^---\n([\s\S]*?)\n---/, (match, fm) => {
+        if (content.match(FRONTMATTER_REGEX)) {
+          content = content.replace(FRONTMATTER_REGEX, (match, fm) => {
             let cleanedFm = fm.replace(/^order:.*\n?/gm, "");
             if (!cleanedFm.endsWith("\n")) cleanedFm += "\n";
             cleanedFm += `order: ${i + 1}\n`;
-            return `---\n${cleanedFm}---`;
+            return `${FRONTMATTER_DELIMITER}\n${cleanedFm}${FRONTMATTER_DELIMITER}`;
           });
           await this.app.vault.modify(file, content);
         }
@@ -91,14 +94,14 @@ export class ChapterFileService {
         `${DEBUG_PREFIX} ChapterFileService.listChapters: found folder with ${folder.children.length} children`,
       );
       for (const file of folder.children) {
-        if (file instanceof TFile && file.extension === "md") {
+        if (file instanceof TFile && file.extension === MARKDOWN_FILE_EXTENSION.slice(1)) {
           debug(`${DEBUG_PREFIX} ChapterFileService.listChapters: processing file ${file.path}`);
           await suppressAsync(async () => {
             const content = await this.app.vault.read(file);
             debug(
               `${DEBUG_PREFIX} ChapterFileService.listChapters: content length ${content.length}`,
             );
-            const fmMatch = content.match(/^---\n([\s\S]*?)\n---/);
+            const fmMatch = content.match(FRONTMATTER_REGEX);
             let order: number | undefined = undefined;
             let chapterName: string | undefined = undefined;
             if (fmMatch) {
@@ -126,13 +129,13 @@ export class ChapterFileService {
               `${DEBUG_PREFIX} ChapterFileService.listChapters: parsed order=${order}, chapterName=${chapterName}`,
             );
             const chapName =
-              chapterName && chapterName.length > 0 ? chapterName : file.name.replace(/\.md$/, "");
+              chapterName && chapterName.length > 0 ? chapterName : file.name.replace(new RegExp(`\\${MARKDOWN_FILE_EXTENSION}$`), "");
             const chapOrder = typeof order === "number" && !isNaN(order) ? order : 0;
             debug(
               `${DEBUG_PREFIX} ChapterFileService.listChapters: adding chapter ${file.name} with name ${chapName}, order ${chapOrder}`,
             );
             chapters.push({
-              name: file.name.replace(/\.md$/, ""),
+              name: file.name.replace(new RegExp(`\\${MARKDOWN_FILE_EXTENSION}$`), ""),
               chapterName: chapName,
               order: chapOrder,
             });
@@ -164,17 +167,17 @@ export class ChapterFileService {
       chapterName,
       settings?.slugStyle as import("@/core/utils").DraftSlugStyle,
     );
-    const fileName = `${slug}.md`;
+    const fileName = `${slug}${MARKDOWN_FILE_EXTENSION}`;
     const filePath = `${draftFolder}/${fileName}`;
     if (this.app.vault.getAbstractFileByPath(filePath)) return false;
     let maxOrder = 0;
     const folder = this.app.vault.getAbstractFileByPath(draftFolder);
     if (folder && folder instanceof TFolder) {
       for (const file of folder.children) {
-        if (file instanceof TFile && file.extension === "md") {
+        if (file instanceof TFile && file.extension === MARKDOWN_FILE_EXTENSION.slice(1)) {
           await suppressAsync(async () => {
             const content = await this.app.vault.read(file);
-            const fmMatch = content.match(/^---\n([\s\S]*?)\n---/);
+            const fmMatch = content.match(FRONTMATTER_REGEX);
             if (fmMatch) {
               const lines = fmMatch[1].split(/\r?\n/);
               for (const line of lines) {
@@ -191,7 +194,7 @@ export class ChapterFileService {
     }
     const order = maxOrder + 1;
     let title = `# ${chapterName}`;
-    const frontmatter = `---\norder: ${order}\nchapter_name: ${JSON.stringify(chapterName)}\n---\n`;
+    const frontmatter = `${FRONTMATTER_DELIMITER}\norder: ${order}\nchapter_name: ${JSON.stringify(chapterName)}\n${FRONTMATTER_DELIMITER}\n`;
     await this.app.vault.create(filePath, `${frontmatter}\n${title}\n\n`);
     return true;
   }
@@ -204,7 +207,7 @@ export class ChapterFileService {
     const draftsFolderName = this.getDraftsFolderName(project);
     if (!draftsFolderName) return false;
     const draftFolder = `${project}/${draftsFolderName}/${draftName}`;
-    const fileName = `${chapterName}.md`;
+    const fileName = `${chapterName}${MARKDOWN_FILE_EXTENSION}`;
     const filePath = `${draftFolder}/${fileName}`;
     const file = this.app.vault.getAbstractFileByPath(filePath);
     if (file && file instanceof TFile) {
@@ -213,16 +216,16 @@ export class ChapterFileService {
       const chapters = await this.listChapters(projectPath, draftName);
       for (let i = 0; i < chapters.length; i++) {
         const { name } = chapters[i];
-        const chapterFilePath = `${draftFolder}/${name}.md`;
+        const chapterFilePath = `${draftFolder}/${name}${MARKDOWN_FILE_EXTENSION}`;
         const chapterFile = this.app.vault.getAbstractFileByPath(chapterFilePath);
         if (chapterFile && chapterFile instanceof TFile) {
           let content = await this.app.vault.read(chapterFile);
-          if (content.match(/^---\n([\s\S]*?)\n---/)) {
-            content = content.replace(/^---\n([\s\S]*?)\n---/, (match, fm) => {
+          if (content.match(FRONTMATTER_REGEX)) {
+            content = content.replace(FRONTMATTER_REGEX, (match, fm) => {
               let cleanedFm = fm.replace(/^order:.*\n?/gm, "");
               if (!cleanedFm.endsWith("\n")) cleanedFm += "\n";
               cleanedFm += `order: ${i + 1}\n`;
-              return `---\n${cleanedFm}---`;
+              return `${FRONTMATTER_DELIMITER}\n${cleanedFm}${FRONTMATTER_DELIMITER}`;
             });
             await this.app.vault.modify(chapterFile, content);
           }
@@ -241,19 +244,19 @@ export class ChapterFileService {
     const draftsFolderName = this.getDraftsFolderName(project);
     if (!draftsFolderName) return false;
     const draftFolder = `${project}/${draftsFolderName}/${draftName}`;
-    const oldFile = `${draftFolder}/${oldName}.md`;
-    const newFile = `${draftFolder}/${newName}.md`;
+    const oldFile = `${draftFolder}/${oldName}${MARKDOWN_FILE_EXTENSION}`;
+    const newFile = `${draftFolder}/${newName}${MARKDOWN_FILE_EXTENSION}`;
     const file = this.app.vault.getAbstractFileByPath(oldFile);
     if (!file || !(file instanceof TFile)) return false;
     let content = await this.app.vault.read(file);
     let title = `# ${newName}`;
 
-    if (content.match(/^---\n([\s\S]*?)\n---/)) {
-      content = content.replace(/^---\n([\s\S]*?)\n---/, (match, fm) => {
+    if (content.match(FRONTMATTER_REGEX)) {
+      content = content.replace(FRONTMATTER_REGEX, (match, fm) => {
         let cleanedFm = fm.replace(/^chapter_name:.*\n?/gm, "");
         if (!cleanedFm.endsWith("\n")) cleanedFm += "\n";
         cleanedFm += `chapter_name: ${JSON.stringify(newName)}\n`;
-        return `---\n${cleanedFm}---`;
+        return `${FRONTMATTER_DELIMITER}\n${cleanedFm}${FRONTMATTER_DELIMITER}`;
       });
     }
     content = content.replace(/^#.*$/m, title);
@@ -282,7 +285,7 @@ export class ChapterFileService {
     if (!project) return false;
     const draftsFolderName = this.getDraftsFolderName(project);
     if (!draftsFolderName) return false;
-    const filePath = `${project}/${draftsFolderName}/${draftName}/${chapterName}.md`;
+    const filePath = `${project}/${draftsFolderName}/${draftName}/${chapterName}${MARKDOWN_FILE_EXTENSION}`;
     const file = this.app.vault.getAbstractFileByPath(filePath);
     if (file && file instanceof TFile) {
       await suppressAsync(async () => {

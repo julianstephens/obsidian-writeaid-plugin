@@ -1,5 +1,6 @@
-import { debug, DEBUG_PREFIX, getBackupsFolderName, getDraftsFolderName } from "@/core/utils";
+import { BYTES_PER_KILOBYTE, debug, DEBUG_PREFIX, FILE_SIZE_UNITS, getBackupsFolderName, getDraftsFolderName } from "@/core/utils";
 import type { WriteAidManager } from "@/manager";
+import { WriteAidError } from "@/types";
 import { App, Notice, SuggestModal, TFolder } from "obsidian";
 import { ConfirmOverwriteModal } from "./ConfirmOverwriteModal";
 
@@ -46,7 +47,7 @@ export class RestoreBackupModal extends SuggestModal<BackupItem> {
     this.backups = await this.getBackupDetails();
 
     if (this.backups.length === 0) {
-      new Notice("No backups found for the current project.");
+      new Notice(WriteAidError.BACKUPS_NOT_FOUND_PROJECT);
       this.close();
       return;
     }
@@ -130,10 +131,8 @@ export class RestoreBackupModal extends SuggestModal<BackupItem> {
 
   private formatFileSize(bytes: number): string {
     if (bytes === 0) return "0 B";
-    const k = 1024;
-    const sizes = ["B", "KB", "MB", "GB"];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + " " + sizes[i];
+    const i = Math.floor(Math.log(bytes) / Math.log(BYTES_PER_KILOBYTE));
+    return parseFloat((bytes / Math.pow(BYTES_PER_KILOBYTE, i)).toFixed(1)) + " " + FILE_SIZE_UNITS[i];
   }
 
   getSuggestions(query: string): BackupItem[] {

@@ -1,4 +1,3 @@
-// ...existing code...
 import { readMetaFile, updateMetaStats } from "@/core/meta";
 import { ProjectFileService } from "@/core/ProjectFileService";
 import { ProjectService } from "@/core/ProjectService";
@@ -8,6 +7,7 @@ import {
   debug,
   DEBUG_PREFIX,
   getDraftsFolderName,
+  getMetaFileName,
   suppress,
   suppressAsync,
 } from "@/core/utils";
@@ -200,7 +200,7 @@ export class WriteAidManager {
 
       // Multiple drafts: prefer meta.md's current_active_draft when valid
       await suppressAsync(async () => {
-        const meta = await readMetaFile(this.app, `${path}/meta.md`);
+        const meta = await readMetaFile(this.app, `${path}/${getMetaFileName(this.settings)}`);
         if (meta && meta.current_active_draft && drafts.includes(meta.current_active_draft)) {
           await this.setActiveDraft(meta.current_active_draft, path, false);
           debug(

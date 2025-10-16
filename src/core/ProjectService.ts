@@ -1,5 +1,6 @@
 import { ProjectFileService } from "@/core/ProjectFileService";
 import { TemplateService } from "@/core/TemplateService";
+import type { WriteAidManager } from "@/manager";
 import type { WriteAidSettings } from "@/types";
 import { App, normalizePath, Notice, TFile, TFolder } from "obsidian";
 import { readMetaFile } from "./meta";
@@ -7,20 +8,30 @@ import {
   asyncFilter,
   debug,
   DEBUG_PREFIX,
+  FRONTMATTER_DELIMITER,
   getDraftsFolderName,
   getManuscriptsFolderName,
   getMetaFileName,
+  getOutlineFileName,
+  MARKDOWN_FILE_EXTENSION,
   PROJECT_TYPE,
   type ProjectType,
 } from "./utils";
 
 export class ProjectService {
   app: App;
+  manager: WriteAidManager | null;
   tpl: TemplateService;
   projectFileService: ProjectFileService;
 
   constructor(app: App) {
     this.app = app;
+    this.manager =
+      (
+        this.app as unknown as {
+          plugins: { getPlugin?: (id: string) => { manager?: WriteAidManager } };
+        }
+      ).plugins.getPlugin?.("obsidian-writeaid-plugin")?.manager ?? null;
     this.tpl = new TemplateService(app);
     this.projectFileService = new ProjectFileService(app, this);
   }
@@ -52,11 +63,11 @@ export class ProjectService {
 
     const metaPath = `${projectPath}/${getMetaFileName(settings)}`;
     if (!this.app.vault.getAbstractFileByPath(metaPath)) {
-      const projectType = singleFile ? "single-file" : "multi-file";
+      const projectType = singleFile ? PROJECT_TYPE.SINGLE : PROJECT_TYPE.MULTI;
       const targetWordCount = singleFile
         ? (settings?.defaultSingleTargetWordCount ?? 20000)
         : (settings?.defaultMultiTargetWordCount ?? 50000);
-      const metaContent = `---\nproject_type: ${projectType}\ntarget_word_count: ${targetWordCount}\n---\n`;
+      const metaContent = `${FRONTMATTER_DELIMITER}\nproject_type: ${projectType}\ntarget_word_count: ${targetWordCount}\n${FRONTMATTER_DELIMITER}\n`;
       await this.app.vault.create(metaPath, metaContent);
     }
 
@@ -68,19 +79,20 @@ export class ProjectService {
 
   /** Try to open a sensible file in the project. Returns true if opened. */
   async openProject(projectPath: string) {
-    const metaPath = `${projectPath}/meta.md`;
+    const metaPath = `${projectPath}/${getMetaFileName(this.manager?.settings)}`;
     const metaFile = this.app.vault.getAbstractFileByPath(metaPath);
     if (metaFile && metaFile instanceof TFile) {
       const leaf = this.app.workspace.getLeaf();
       await leaf.openFile(metaFile);
       return true;
     }
+    const outlineFileName = getOutlineFileName(this.manager?.settings);
     const candidates = [
-      `${projectPath}/${projectPath}.md`,
-      `${projectPath}/Chapter 1.md`,
-      `${projectPath}/Chapter 01.md`,
-      `${projectPath}/outline.md`,
-      `${projectPath}/${getDraftsFolderName()}/Draft 1/outline.md`,
+      `${projectPath}/${projectPath}${MARKDOWN_FILE_EXTENSION}`,
+      `${projectPath}/Chapter 1${MARKDOWN_FILE_EXTENSION}`,
+      `${projectPath}/Chapter 01${MARKDOWN_FILE_EXTENSION}`,
+      `${projectPath}/${outlineFileName}`,
+      `${projectPath}/${getDraftsFolderName()}/Draft 1/${outlineFileName}`,
     ];
     for (const p of candidates) {
       const f = this.app.vault.getAbstractFileByPath(p);

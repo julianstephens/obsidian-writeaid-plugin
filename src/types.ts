@@ -1,3 +1,5 @@
+type EnumExtract<T> = T[keyof T];
+
 export interface WriteAidSettings {
   draftOutlineTemplate: string;
   planningTemplate: string;
@@ -48,9 +50,16 @@ export interface PluginLike {
   settings?: WriteAidSettings;
 }
 
-export interface WriteAidPluginManager {
-  activeProject?: unknown;
-  addActiveProjectListener?: (cb: (active: unknown) => void) => void;
+export const WriteAidError = {
+  ACTIVE_PROJECT_NOT_FOUND: "No active project found.",
+  ACTIVE_DRAFT_NOT_FOUND: "No active draft found.",
+  BACKUPS_NOT_FOUND_PROJECT: "No backups found for the current project.",
+  BACKUPS_NOT_FOUND_DRAFT: "No backups found for the current draft.",
+};
+export type WriteAidErrorType = EnumExtract<typeof WriteAidError>;
+
+export interface CallableFunction<T> {
+  (...args: unknown[]): T;
 }
 
 export interface Chapter {
@@ -58,10 +67,18 @@ export interface Chapter {
   chapterName?: string;
 }
 
-export interface CallableFunction<T> {
-  (...args: unknown[]): T;
-}
-
 export interface ExceptionConstructor {
   new (...args: unknown[]): Error;
+}
+
+export interface SelectProjectModalProps {
+  folders: string[];
+  onSubmit: (projectPath: string) => void;
+}
+
+export interface CreateDraftModalProps {
+  suggestedName: string;
+  drafts: string[];
+  projectPath?: string;
+  onSubmit: (draftName: string, copyFrom?: string) => void;
 }

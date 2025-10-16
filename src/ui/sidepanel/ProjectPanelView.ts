@@ -1,9 +1,8 @@
 import { DraftFileService } from "@/core/DraftFileService";
 import { ProjectFileService } from "@/core/ProjectFileService";
 import { ProjectService } from "@/core/ProjectService";
-import { APP_NAME, debug, DEBUG_PREFIX, suppress } from "@/core/utils";
+import { APP_NAME, debug, DEBUG_PREFIX, suppress, WRITE_AID_ICON_NAME } from "@/core/utils";
 import type { WriteAidManager } from "@/manager";
-import { WRITE_AID_ICON_NAME } from "@/ui/components/icons";
 import ProjectPanel from "@/ui/sidepanel/ProjectPanel.svelte";
 import { ItemView, Notice, type App, type WorkspaceLeaf } from "obsidian";
 import { mount } from "svelte";

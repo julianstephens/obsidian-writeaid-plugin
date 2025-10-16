@@ -1,5 +1,5 @@
 import { readMetaFile, writeMetaFile } from "@/core/meta";
-import { getDraftsFolderName, PROJECT_TYPE, slugifyDraftName } from "@/core/utils";
+import { getDraftsFolderName, getMetaFileName, MARKDOWN_FILE_EXTENSION, PROJECT_TYPE, slugifyDraftName } from "@/core/utils";
 import type { WriteAidSettings } from "@/types";
 import { Notice, TFile, TFolder, type App } from "obsidian";
 
@@ -8,7 +8,7 @@ async function convertSingleToMultiFileProject(
   projectPath: string,
   settings?: WriteAidSettings,
 ) {
-  const metaPath = `${projectPath}/meta.md`;
+  const metaPath = `${projectPath}/${getMetaFileName(settings)}`;
   const meta = await readMetaFile(app, metaPath);
   if (!meta || meta.project_type !== PROJECT_TYPE.SINGLE) {
     new Notice(`Project is not a ${PROJECT_TYPE.SINGLE} project.`);
@@ -31,10 +31,10 @@ async function convertSingleToMultiFileProject(
       // The main draft file should be <slug>.md where slug is the folder name slugified
       const slug = slugifyDraftName(draftFolder.name);
       const mainDraftFile = draftFolder.children.find(
-        (f) => f instanceof TFile && f.name === `${slug}.md`,
+        (f) => f instanceof TFile && f.name === `${slug}${MARKDOWN_FILE_EXTENSION}`,
       );
       if (mainDraftFile) {
-        const newPath = `${draftFolder.path}/Chapter 1.md`;
+        const newPath = `${draftFolder.path}/Chapter 1${MARKDOWN_FILE_EXTENSION}`;
         if (mainDraftFile.path !== newPath) {
           const content = await app.vault.read(mainDraftFile as TFile);
           await app.vault.create(newPath, content);
@@ -45,7 +45,7 @@ async function convertSingleToMultiFileProject(
     }
   }
   if (renamed) {
-    new Notice('Converted to multi-file project. Draft files renamed to "Chapter 1.md".');
+    new Notice(`Converted to multi-file project. Draft files renamed to "Chapter 1${MARKDOWN_FILE_EXTENSION}".`);
   } else {
     new Notice("Converted to multi-file project. No draft files needed renaming.");
   }
