@@ -2,6 +2,7 @@ export interface WriteAidSettings {
   draftOutlineTemplate: string;
   planningTemplate: string;
   chapterTemplate: string;
+  manuscriptNameTemplate: string;
   // How to slugify per-draft main filenames
   slugStyle?: "compact" | "kebab";
   // Persist the currently active project path (optional)
@@ -23,6 +24,23 @@ export interface WriteAidSettings {
 
   // If true, create an outline.md file when creating a new draft
   includeDraftOutline?: boolean;
+
+  // Customizable folder names
+  draftsFolderName?: string;
+  manuscriptsFolderName?: string;
+  backupsFolderName?: string;
+
+  // Customizable file names
+  metaFileName?: string;
+  outlineFileName?: string;
+
+  // Default target word counts for new projects
+  defaultMultiTargetWordCount?: number;
+  defaultSingleTargetWordCount?: number;
+
+  // Backup settings
+  maxBackups?: number;
+  maxBackupAgeDays?: number;
 }
 
 // Minimal plugin-like interface used for typing in services
@@ -38,4 +56,12 @@ export interface WriteAidPluginManager {
 export interface Chapter {
   name: string;
   chapterName?: string;
+}
+
+export interface CallableFunction<T> {
+  (...args: unknown[]): T;
+}
+
+export interface ExceptionConstructor {
+  new (...args: unknown[]): Error;
 }

@@ -1,3 +1,4 @@
+import { debug, DEBUG_PREFIX, getDraftsFolderName } from "@/core/utils";
 import type { WriteAidManager } from "@/manager";
 import { Notice } from "obsidian";
 
@@ -10,7 +11,8 @@ export function navigateToPreviousChapterCommand(manager: WriteAidManager) {
     }
 
     const path = activeFile.path;
-    const match = path.match(/^(.+)\/Drafts\/(.+)\/(.+)\.md$/);
+    const draftsFolderName = getDraftsFolderName(manager.settings);
+    const match = path.match(new RegExp(`^(.+)/${draftsFolderName}/(.+)/(.+)\\.md$`));
     if (!match) {
       new Notice("The current file is not a chapter.");
       return;
@@ -21,7 +23,10 @@ export function navigateToPreviousChapterCommand(manager: WriteAidManager) {
     const chapterFileName = match[3];
 
     try {
-      const chapters = await manager.draftService.listChapters(projectPath, draftName);
+      const chapters = await manager.projectFileService.chapters.listChapters(
+        projectPath,
+        draftName,
+      );
       const currentIndex = chapters.findIndex((ch) => ch.name === chapterFileName);
       if (currentIndex === -1) {
         new Notice("Unable to find the current chapter in the draft.");
@@ -35,7 +40,7 @@ export function navigateToPreviousChapterCommand(manager: WriteAidManager) {
       const previousChapter = chapters[currentIndex - 1];
       await manager.openChapter(projectPath, draftName, previousChapter.name);
     } catch (error) {
-      console.error("Failed to navigate to previous chapter:", error);
+      debug(`${DEBUG_PREFIX} Failed to navigate to previous chapter:`, error);
       new Notice("Failed to navigate to previous chapter.");
     }
   };

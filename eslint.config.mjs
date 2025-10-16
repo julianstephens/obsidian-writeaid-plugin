@@ -18,6 +18,7 @@ export default defineConfig([
       "**/scripts/**",
       "**/.DS_Store",
       "**/.env",
+      "**/test-vault/**",
     ],
   },
   {

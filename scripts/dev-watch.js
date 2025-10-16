@@ -5,14 +5,7 @@ const path = require("path");
 const repoRoot = path.resolve(__dirname, "..");
 const distDir = path.join(repoRoot, "dist");
 const manifest = path.join(repoRoot, "manifest.json");
-const dest = path.join(
-  repoRoot,
-  "..",
-  "dev-workspace",
-  ".obsidian",
-  "plugins",
-  "obsidian-writeaid-plugin",
-);
+const dest = path.join(repoRoot, "test-vault", ".obsidian", "plugins", "obsidian-writeaid-plugin");
 
 /**
  * @type {string | number | NodeJS.Timeout | null | undefined}

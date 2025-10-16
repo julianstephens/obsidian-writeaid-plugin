@@ -1,8 +1,6 @@
-// Valid project types
-export const VALID_PROJECT_TYPES = ["single-file", "multi-file"];
-
-export type ProjectType = (typeof VALID_PROJECT_TYPES)[number];
+import type { WriteAidSettings } from "@/types";
 import { App, TFile, TFolder } from "obsidian";
+import { debug, DEBUG_PREFIX, getDraftsFolderName, type ProjectType } from "./utils";
 
 /**
  * Project metadata tracked in meta.md
@@ -35,7 +33,7 @@ export async function readMetaFile(app: App, filePath: string): Promise<ProjectM
     const metadata = parseFrontmatter(content);
     return metadata;
   } catch (error) {
-    console.error("Error reading meta file:", error);
+    debug(`${DEBUG_PREFIX} Error reading meta file:`, error);
     return null;
   }
 }
@@ -73,6 +71,7 @@ export async function updateMetaStats(
   projectPath: string,
   activeDraft?: string,
   options?: Partial<ProjectMetadata>,
+  settings?: WriteAidSettings,
 ): Promise<void> {
   const metaPath = `${projectPath}/meta.md`;
 
@@ -85,7 +84,8 @@ export async function updateMetaStats(
   }
 
   // Count drafts in the Drafts folder
-  const draftsFolder = app.vault.getAbstractFileByPath(`${projectPath}/Drafts`);
+  const draftsFolderName = getDraftsFolderName(settings);
+  const draftsFolder = app.vault.getAbstractFileByPath(`${projectPath}/${draftsFolderName}`);
   if (draftsFolder && draftsFolder instanceof TFolder) {
     const draftFolders = draftsFolder.children.filter((child) => child instanceof TFolder);
     metadata.total_drafts = draftFolders.length;

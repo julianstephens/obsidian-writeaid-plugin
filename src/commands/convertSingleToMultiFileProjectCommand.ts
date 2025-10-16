@@ -1,20 +1,26 @@
 import { readMetaFile, writeMetaFile } from "@/core/meta";
-import { slugifyDraftName } from "@/core/utils";
+import { getDraftsFolderName, PROJECT_TYPE, slugifyDraftName } from "@/core/utils";
+import type { WriteAidSettings } from "@/types";
 import { Notice, TFile, TFolder, type App } from "obsidian";
 
-async function convertSingleToMultiFileProject(app: App, projectPath: string) {
+async function convertSingleToMultiFileProject(
+  app: App,
+  projectPath: string,
+  settings?: WriteAidSettings,
+) {
   const metaPath = `${projectPath}/meta.md`;
   const meta = await readMetaFile(app, metaPath);
-  if (!meta || meta.project_type !== "single-file") {
-    new Notice("Project is not a single-file project.");
+  if (!meta || meta.project_type !== PROJECT_TYPE.SINGLE) {
+    new Notice(`Project is not a ${PROJECT_TYPE.SINGLE} project.`);
     return false;
   }
 
-  meta.project_type = "multi-file";
+  meta.project_type = PROJECT_TYPE.MULTI;
   await writeMetaFile(app, metaPath, meta);
 
   // Rename all draft files in Drafts/*/ to 'Chapter 1.md'
-  const draftsFolder = app.vault.getAbstractFileByPath(`${projectPath}/Drafts`);
+  const draftsFolderName = getDraftsFolderName(settings);
+  const draftsFolder = app.vault.getAbstractFileByPath(`${projectPath}/${draftsFolderName}`);
   if (!draftsFolder || !(draftsFolder instanceof TFolder)) {
     new Notice("Drafts folder not found.");
     return false;
@@ -49,10 +55,11 @@ async function convertSingleToMultiFileProject(app: App, projectPath: string) {
 export async function convertSingleToMultiFileProjectCommand(
   app: App,
   projectPath: string | undefined,
+  settings?: WriteAidSettings,
 ) {
   if (!projectPath) {
     new Notice("No active project selected.");
     return;
   }
-  await convertSingleToMultiFileProject(app, projectPath);
+  await convertSingleToMultiFileProject(app, projectPath, settings);
 }

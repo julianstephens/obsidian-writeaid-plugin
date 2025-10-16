@@ -1,0 +1,22 @@
+{
+  "draftOutlineTemplate": "# Outline for {{draftName}}",
+  "planningTemplate": "# Planning: {{projectName}}\n\n- [ ] ...",
+  "chapterTemplate": "# {{chapterTitle}}\n\n",
+  "manuscriptNameTemplate": "{{draftName}}",
+  "slugStyle": "compact",
+  "ribbonPlacement": "left",
+  "ribbonAlwaysShow": false,
+  "autoOpenPanelOnStartup": true,
+  "autoSelectProjectOnStartup": true,
+  "activeProject": "Story",
+  "panelRefreshDebounceMs": 250,
+  "debug": false,
+  "includeDraftOutline": false,
+  "draftsFolderName": "Drafts",
+  "manuscriptsFolderName": "manuscripts",
+  "backupsFolderName": ".writeaid-backups",
+  "metaFileName": "meta.md",
+  "outlineFileName": "outline.md",
+  "maxBackups": 5,
+  "maxBackupAgeDays": 30
+}

@@ -3,9 +3,10 @@
   // reliably inside the Obsidian ItemView using DOM APIs.
   // The tag name chosen is <wa-project-panel>.
   // Note: the Vite/Svelte build must enable customElement or svelte config.
-  import type { DraftService } from "@/core/DraftService";
   import { readMetaFile } from "@/core/meta";
+  import type { ProjectFileService } from "@/core/ProjectFileService";
   import type { ProjectService } from "@/core/ProjectService";
+  import { APP_NAME, debug, DEBUG_PREFIX } from "@/core/utils";
   import type { WriteAidManager } from "@/manager";
   import type { Chapter } from "@/types";
   import BaseButton from "@/ui/components/BaseButton.svelte";
@@ -30,7 +31,7 @@
   import { flip } from "svelte/animate";
   import { cubicOut } from "svelte/easing";
 
-  export let draftService: DraftService;
+  export let projectFileService: ProjectFileService;
   export let projectService: ProjectService;
   export let manager: WriteAidManager;
   export let activeProject: string | null = null;
@@ -53,6 +54,7 @@
   // Local reactive copy of manager.activeDraft for Svelte reactivity
   let activeDraft: string | null = manager?.activeDraft ?? null;
   let activeProjectListener: ((p: string | null) => void) | null = null;
+  const ICON_SIZE = 20;
 
   // Chapter management state
   let chapters: Array<Chapter> = [];
@@ -104,9 +106,7 @@
       selectedValue = newProjects[0];
       // Debug: log project selection
       try {
-        if (manager && manager.settings && manager.settings.debug) {
-          console.debug(`WriteAid debug: panel refresh selected single project '${selectedValue}'`);
-        }
+        debug(`${DEBUG_PREFIX} panel refresh selected single project '${selectedValue}'`);
       } catch (e) {
         // ignore
       }
@@ -117,11 +117,7 @@
       selectedValue = newProjects[0];
       // Debug: log fallback selection
       try {
-        if (manager && manager.settings && manager.settings.debug) {
-          console.debug(
-            `WriteAid debug: panel refresh selected fallback project '${selectedValue}'`,
-          );
-        }
+        debug(`${DEBUG_PREFIX} panel refresh selected fallback project '${selectedValue}'`);
       } catch (e) {
         // ignore
       }
@@ -133,9 +129,7 @@
         selected = found;
         selectedValue = found.value;
         try {
-          if (manager && manager.settings && manager.settings.debug) {
-            console.debug(`WriteAid debug: panel refresh kept project '${selectedValue}'`);
-          }
+          debug(`${DEBUG_PREFIX} panel refresh kept project '${selectedValue}'`);
         } catch (e) {
           // ignore
         }
@@ -162,13 +156,8 @@
         drafts = [];
         return;
       }
-      // Prefer draftService for listing drafts to avoid duplicating logic
-      if (draftService && typeof draftService.listDrafts === "function") {
-        drafts = draftService.listDrafts(selectedValue) || [];
-      } else {
-        // fallback to manager API
-        drafts = manager?.listDrafts ? manager.listDrafts(selectedValue) || [] : [];
-      }
+      // Use the new projectFileService for listing drafts
+      drafts = projectFileService.drafts.listDrafts(selectedValue) || [];
       // apply sort
       drafts = Array.from(drafts);
       drafts.sort((a, b) => (a > b ? 1 : a < b ? -1 : 0));
@@ -205,13 +194,9 @@
         chapters = [];
         return;
       }
-      // Prefer draftService for chapter listing
+      // Use the new projectFileService for chapter listing
       let ch: Chapter[] = [];
-      if (draftService && typeof draftService.listChapters === "function") {
-        ch = await draftService.listChapters(selectedValue, manager.activeDraft);
-      } else if (manager && typeof manager.listChapters === "function") {
-        ch = await manager.listChapters(selectedValue, manager.activeDraft);
-      }
+      ch = await projectFileService.chapters.listChapters(selectedValue, manager.activeDraft);
       chapters = Array.isArray(ch) ? ch : [];
     } catch (e) {
       chapters = [];
@@ -226,12 +211,12 @@
   async function createInlineDraft() {
     if (!selectedValue || !newDraftName.trim()) return;
     try {
-      // Prefer manager for creating drafts to ensure notifications and panel updates
-      if (manager && typeof manager.createNewDraft === "function") {
-        await manager.createNewDraft(newDraftName.trim(), copyFrom || undefined, selectedValue);
-      } else if (draftService && typeof draftService.createDraft === "function") {
-        await draftService.createDraft(newDraftName.trim(), copyFrom || undefined, selectedValue);
-      }
+      // Use the new projectFileService for creating drafts
+      await projectFileService.drafts.createDraft(
+        newDraftName.trim(),
+        copyFrom || undefined,
+        selectedValue,
+      );
     } catch (e) {
       // ignore
     }
@@ -248,15 +233,9 @@
   async function openDraft(draftName) {
     // Prefer manager.setActiveDraft to change active draft
     if (!selectedValue) return;
-    // If draftService can open drafts, use it (opens files). Otherwise, fall back to manager.setActiveDraft.
+    // Use the new projectFileService for opening drafts
     let opened = false;
-    if (draftService && typeof draftService.openDraft === "function") {
-      try {
-        opened = await draftService.openDraft(selectedValue, draftName);
-      } catch (e) {
-        opened = false;
-      }
-    }
+    opened = await projectFileService.drafts.openDraft(selectedValue, draftName);
     if (!opened) {
       if (manager?.setActiveDraft) await manager.setActiveDraft(draftName, selectedValue);
     }
@@ -276,7 +255,7 @@
           await refreshDrafts();
           new Notice(`Draft '${newName}' created as duplicate of '${draftName}'.`);
         } catch (e) {
-          console.error("Failed to duplicate draft:", e);
+          debug(`${DEBUG_PREFIX} Failed to duplicate draft:`, e);
           new Notice("Failed to duplicate draft.");
         }
       },
@@ -443,7 +422,7 @@
 
 <div class="project-list wa-panel">
   <div class="wa-row justify-between">
-    <div class="wa-title">WriteAid Projects</div>
+    <div class="wa-title">{APP_NAME} Projects</div>
     <div>
       <IconButton
         ariaLabel="Refresh projects"
@@ -473,8 +452,8 @@
         );
         if (!projectPath) return;
         // Wait for the new project to appear in the list
-  let newProjects: string[] = [];
-  let newProject: string | null = null;
+        let newProjects: string[] = [];
+        let newProject: string | null = null;
         for (let i = 0; i < 20; i++) {
           await new Promise(res => setTimeout(res, 100));
           newProjects = await refresh();
@@ -558,7 +537,7 @@
             </IconButton>
           </div>
           <div class="wa-button-group">
-            <BaseButton onclick={createDraft} variant="primary">New</BaseButton>
+            <BaseButton onclick={createDraft} variant="primary">New Draft</BaseButton>
             <IconButton
               ariaLabel="Refresh drafts"
               title={undefined}
@@ -607,7 +586,7 @@
               </div>
               <div class="wa-draft-actions">
                 <IconButton ariaLabel="Open draft" title={undefined} onclick={() => openDraft(d)}>
-                  <Eye size={18} />
+                  <Eye size={ICON_SIZE} />
                 </IconButton>
                 {#if activeDraft !== d}
                   <IconButton
@@ -615,7 +594,7 @@
                     title={undefined}
                     onclick={() => setActiveDraft(d)}
                   >
-                    <BookOpenCheck size={18} />
+                    <BookOpenCheck size={ICON_SIZE} />
                   </IconButton>
                 {/if}
                 <IconButton
@@ -623,21 +602,21 @@
                   title={undefined}
                   onclick={() => renameDraft(d)}
                 >
-                  <Pencil size={18} />
+                  <Pencil size={ICON_SIZE} />
                 </IconButton>
                 <IconButton
                   ariaLabel="Duplicate draft"
                   title={undefined}
                   onclick={() => duplicateDraft(d)}
                 >
-                  <Copy size={18} />
+                  <Copy size={ICON_SIZE} />
                 </IconButton>
                 <IconButton
                   ariaLabel="Delete draft"
                   title={undefined}
                   onclick={() => deleteDraftHandler(d)}
                 >
-                  <Trash size={18} />
+                  <Trash size={ICON_SIZE} />
                 </IconButton>
               </div>
             </div>
@@ -708,6 +687,7 @@
               </div>
               <div class="wa-draft-actions">
                 <BaseButton
+                  title="Move chapter up"
                   onclick={async () => {
                     if (i === 0) return;
                     // Move chapter up
@@ -725,9 +705,10 @@
                     );
                     await refreshChapters();
                   }}
-                  disabled={i === 0}>↑</BaseButton
+                  disabled={i === 0}><ArrowUp /></BaseButton
                 >
                 <BaseButton
+                  title="Move chapter down"
                   onclick={async () => {
                     if (i === chapters.length - 1) return;
                     // Move chapter down
@@ -745,7 +726,7 @@
                     );
                     await refreshChapters();
                   }}
-                  disabled={i === chapters.length - 1}>↓</BaseButton
+                  disabled={i === chapters.length - 1}><ArrowDown /></BaseButton
                 >
                 <IconButton
                   ariaLabel="Open chapter"
@@ -759,7 +740,7 @@
                     );
                   }}
                 >
-                  <Eye size={18} />
+                  <Eye size={ICON_SIZE} />
                 </IconButton>
                 <IconButton
                   ariaLabel="Rename chapter"
@@ -782,7 +763,7 @@
                     modal.open();
                   }}
                 >
-                  <Pencil size={18} />
+                  <Pencil size={ICON_SIZE} />
                 </IconButton>
                 <IconButton
                   ariaLabel="Delete chapter"
@@ -805,7 +786,7 @@
                     modal.open();
                   }}
                 >
-                  <Trash size={18} />
+                  <Trash size={ICON_SIZE} />
                 </IconButton>
               </div>
             </div>

@@ -48,6 +48,7 @@
   },
   "dependencies": {
     "@lucide/svelte": "^0.545.0",
+    "jszip": "^3.10.1",
     "svelte-select": "5.8.0"
   }
 }
