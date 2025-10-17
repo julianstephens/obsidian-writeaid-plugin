@@ -2,13 +2,11 @@
   export let value: string | number = "";
   export let placeholder = "";
   export let type: string = "text";
-  export let oninput: ((event: InputEvent) => void) | undefined;
+  export let inputHandler: (() => void) | undefined;
 
-  function handleInput(e: Event) {
-    const v = (e.target as HTMLInputElement).value;
-    value = v;
-    if (oninput) oninput(e as InputEvent);
+  function handleInput() {
+    if (inputHandler) inputHandler();
   }
 </script>
 
-<input class="base-input" {placeholder} bind:value oninput={handleInput} {type} />
+<input class="base-input" {placeholder} bind:value on:input={handleInput} {type} />

@@ -1,4 +1,16 @@
-import { APP_NAME, debug, DEBUG_PREFIX, FILES, MARKDOWN_FILE_EXTENSION, PANEL_DEBOUNCE_DEFAULT, PANEL_DEBOUNCE_MAX, PANEL_DEBOUNCE_MIN, PROJECT_TYPE, slugifyDraftName, suppress } from "@/core/utils";
+import {
+  APP_NAME,
+  debug,
+  DEBUG_PREFIX,
+  FILES,
+  MARKDOWN_FILE_EXTENSION,
+  PANEL_DEBOUNCE_DEFAULT,
+  PANEL_DEBOUNCE_MAX,
+  PANEL_DEBOUNCE_MIN,
+  PROJECT_TYPE,
+  slugifyDraftName,
+  suppress,
+} from "@/core/utils";
 import type { WriteAidSettings } from "@/types";
 import { App, Modal, Notice, PluginSettingTab, Setting, TFile, TFolder } from "obsidian";
 
@@ -61,36 +73,36 @@ export class WriteAidSettingTab extends PluginSettingTab {
       );
 
     new Setting(containerEl)
-      .setName("Draft outline template")
-      .setDesc("Template for new draft outline files. Use {{draftName}}")
+      .setName("Outline template")
+      .setDesc("Template for outline files. Use {{draftName}}")
       .addTextArea((ta) => {
-        ta.setValue(plugin.settings.draftOutlineTemplate || "");
-        ta.inputEl.setAttribute("data-setting", "draft-outline");
+        ta.setValue(plugin.settings.outlineTemplate || "");
+        ta.inputEl.setAttribute("data-setting", "outline");
       })
       .addButton((btn) =>
         btn.setButtonText("Pick file...").onClick(() => {
-          debug(`${DEBUG_PREFIX} Opening file picker for draft outline template`);
+          debug(`${DEBUG_PREFIX} Opening file picker for outline template`);
           new FilePickerModal(this.app, (path) => {
-            debug(`${DEBUG_PREFIX} Draft outline template selected: ${path}`);
-            plugin.settings.draftOutlineTemplate = path;
+            debug(`${DEBUG_PREFIX} Outline template selected: ${path}`);
+            plugin.settings.outlineTemplate = path;
             this.display();
           }).open();
         }),
       );
 
     new Setting(containerEl)
-      .setName("Planning template")
-      .setDesc("Template for planning documents. Use {{projectName}}")
+      .setName("Outline template")
+      .setDesc("Template for outline documents. Use {{draftName}}")
       .addTextArea((ta) => {
-        ta.setValue(plugin.settings.planningTemplate || "");
-        ta.inputEl.setAttribute("data-setting", "planning");
+        ta.setValue(plugin.settings.outlineTemplate || "");
+        ta.inputEl.setAttribute("data-setting", "outline");
       })
       .addButton((btn) =>
         btn.setButtonText("Pick file...").onClick(() => {
-          debug(`${DEBUG_PREFIX} Opening file picker for planning template`);
+          debug(`${DEBUG_PREFIX} Opening file picker for outline template`);
           new FilePickerModal(this.app, (path) => {
-            debug(`${DEBUG_PREFIX} Planning template selected: ${path}`);
-            plugin.settings.planningTemplate = path;
+            debug(`${DEBUG_PREFIX} Outline template selected: ${path}`);
+            plugin.settings.outlineTemplate = path;
             this.display();
           }).open();
         }),
@@ -132,11 +144,8 @@ export class WriteAidSettingTab extends PluginSettingTab {
         .onClick(async () => {
           debug(`${DEBUG_PREFIX} Save Templates button clicked`);
           // Get current values from the form inputs
-          const draftOutlineInput = containerEl.querySelector(
-            'textarea[data-setting="draft-outline"]',
-          ) as HTMLTextAreaElement;
-          const planningInput = containerEl.querySelector(
-            'textarea[data-setting="planning"]',
+          const outlineInput = containerEl.querySelector(
+            'textarea[data-setting="outline"]',
           ) as HTMLTextAreaElement;
           const chapterInput = containerEl.querySelector(
             'textarea[data-setting="chapter"]',
@@ -146,17 +155,16 @@ export class WriteAidSettingTab extends PluginSettingTab {
           ) as HTMLInputElement;
 
           debug(
-            `${DEBUG_PREFIX} Found inputs - draft: ${!!draftOutlineInput}, planning: ${!!planningInput}, chapter: ${!!chapterInput}, manuscript: ${!!manuscriptInput}`,
+            `${DEBUG_PREFIX} Found inputs - outline: ${!!outlineInput}, chapter: ${!!chapterInput}, manuscript: ${!!manuscriptInput}`,
           );
           debug(`${DEBUG_PREFIX} Manuscript input value: "${manuscriptInput?.value}"`);
 
-          if (draftOutlineInput) plugin.settings.draftOutlineTemplate = draftOutlineInput.value;
-          if (planningInput) plugin.settings.planningTemplate = planningInput.value;
+          if (outlineInput) plugin.settings.outlineTemplate = outlineInput.value;
           if (chapterInput) plugin.settings.chapterTemplate = chapterInput.value;
           if (manuscriptInput) plugin.settings.manuscriptNameTemplate = manuscriptInput.value;
 
           debug(
-            `${DEBUG_PREFIX} Saving templates: draft=${plugin.settings.draftOutlineTemplate?.substring(0, 50)}..., planning=${plugin.settings.planningTemplate?.substring(0, 50)}..., chapter=${plugin.settings.chapterTemplate?.substring(0, 50)}..., manuscript=${plugin.settings.manuscriptNameTemplate}`,
+            `${DEBUG_PREFIX} Saving templates: outline=${plugin.settings.outlineTemplate?.substring(0, 50)}..., chapter=${plugin.settings.chapterTemplate?.substring(0, 50)}..., manuscript=${plugin.settings.manuscriptNameTemplate}`,
           );
 
           await plugin.saveSettings();
@@ -297,7 +305,9 @@ export class WriteAidSettingTab extends PluginSettingTab {
           .onChange((v) => {
             const num = parseInt(v, 10);
             if (!isNaN(num) && num > 0) {
-              debug(`${DEBUG_PREFIX} Default ${PROJECT_TYPE.SINGLE} target word count changed: ${num}`);
+              debug(
+                `${DEBUG_PREFIX} Default ${PROJECT_TYPE.SINGLE} target word count changed: ${num}`,
+              );
               plugin.settings.defaultSingleTargetWordCount = num;
               plugin.saveSettings();
             }

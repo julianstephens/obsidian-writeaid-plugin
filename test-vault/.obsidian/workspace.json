@@ -89,7 +89,7 @@
       }
     ],
     "direction": "horizontal",
-    "width": 415.5
+    "width": 475.5
   },
   "right": {
     "id": "741f9b7f0069bec9",
@@ -179,7 +179,7 @@
       "bases:Create new base": false
     }
   },
-  "active": "5280a970130968c9",
+  "active": "36a4b021559a3158",
   "lastOpenFiles": [
     "Story/Drafts/Draft 2/draft2.md",
     "Story/Drafts/Draft 3/draft3.md",

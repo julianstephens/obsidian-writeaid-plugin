@@ -152,11 +152,14 @@ export class DraftFileService {
     } else {
       // Only create outline.md if enabled in settings (must be strictly true)
       if (settings?.includeDraftOutline === true) {
-        const draftOutlineTemplate = settings?.draftOutlineTemplate ?? "";
-        const outlineContent = await this.tpl.render(draftOutlineTemplate, {
+        const outlineTemplate = settings?.outlineTemplate ?? "";
+        const outlineContent = await this.tpl.render(outlineTemplate, {
           draftName,
         });
-        await this.app.vault.create(`${newDraftFolder}/${getOutlineFileName(this.manager?.settings)}`, outlineContent);
+        await this.app.vault.create(
+          `${newDraftFolder}/${getOutlineFileName(this.manager?.settings)}`,
+          outlineContent,
+        );
       }
 
       // Determine project type
@@ -323,13 +326,19 @@ export class DraftFileService {
         // If this is a Markdown file, update its frontmatter draft property
         if (file.extension === MARKDOWN_FILE_EXTENSION.slice(1)) {
           // Replace or insert draft: <newName> in YAML frontmatter
-          content = content.replace(new RegExp(`^(${FRONTMATTER_DELIMITER}\\s*\\n[\\s\\S]*?\\n)(draft:.*\\n)?`, 'm'), (match, p1) => {
-            // Remove any existing draft: line
-            let fm = p1.replace(/^draft:.*\n/m, "");
-            // Insert new draft line after ---\n
-            // If there's already a draft: line, replace it; otherwise, insert after ---\n
-            return fm.replace(new RegExp(`^(${FRONTMATTER_DELIMITER}\\s*\\n)`), `$1draft: ${newName}\n`);
-          });
+          content = content.replace(
+            new RegExp(`^(${FRONTMATTER_DELIMITER}\\s*\\n[\\s\\S]*?\\n)(draft:.*\\n)?`, "m"),
+            (match, p1) => {
+              // Remove any existing draft: line
+              let fm = p1.replace(/^draft:.*\n/m, "");
+              // Insert new draft line after ---\n
+              // If there's already a draft: line, replace it; otherwise, insert after ---\n
+              return fm.replace(
+                new RegExp(`^(${FRONTMATTER_DELIMITER}\\s*\\n)`),
+                `$1draft: ${newName}\n`,
+              );
+            },
+          );
         }
         await this.app.vault.create(dest, content);
         await this.app.vault.delete(file);
@@ -475,6 +484,43 @@ export class DraftFileService {
     }
 
     return true;
+  }
+
+  /**
+   * Get the outline file for a draft, if it exists.
+   */
+  getOutlineFile(projectPath: string, draftName: string): TFile | null {
+    const project = this.resolveProjectPath(projectPath);
+    if (!project) return null;
+    const draftsFolderName = this.getDraftsFolderName(project);
+    if (!draftsFolderName) return null;
+    const outlinePath = `${project}/${draftsFolderName}/${draftName}/${getOutlineFileName(this.manager?.settings)}`;
+    const outlineFile = this.app.vault.getAbstractFileByPath(outlinePath);
+    return outlineFile && outlineFile instanceof TFile ? outlineFile : null;
+  }
+
+  /**
+   * Create an outline file for a draft using the outline template.
+   */
+  async createOutline(projectPath: string, draftName: string, template: string): Promise<void> {
+    const project = this.resolveProjectPath(projectPath);
+    if (!project) throw new Error("Project not found");
+    const draftsFolderName = this.getDraftsFolderName(project);
+    if (!draftsFolderName) throw new Error("Drafts folder not found");
+    const draftFolder = `${project}/${draftsFolderName}/${draftName}`;
+    const outlinePath = `${draftFolder}/${getOutlineFileName(this.manager?.settings)}`;
+
+    // Check if outline already exists
+    const existingFile = this.app.vault.getAbstractFileByPath(outlinePath);
+    if (existingFile) {
+      throw new Error("Outline file already exists");
+    }
+
+    // Render the template
+    const outlineContent = await this.tpl.render(template, { draftName });
+
+    // Create the outline file
+    await this.app.vault.create(outlinePath, outlineContent);
   }
 }
 

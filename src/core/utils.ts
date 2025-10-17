@@ -40,7 +40,9 @@ export const BACKUP_FILE_EXTENSION = ".zip";
 export const BACKUP_TIMESTAMP_REGEX = /_(\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2})\.zip$/;
 
 export const FRONTMATTER_DELIMITER = "---";
-export const FRONTMATTER_REGEX = new RegExp(`^${FRONTMATTER_DELIMITER}\n([\\s\\S]*?)\n${FRONTMATTER_DELIMITER}`);
+export const FRONTMATTER_REGEX = new RegExp(
+  `^${FRONTMATTER_DELIMITER}\n([\\s\\S]*?)\n${FRONTMATTER_DELIMITER}`,
+);
 
 export const BYTES_PER_KILOBYTE = 1024;
 export const FILE_SIZE_UNITS = ["B", "KB", "MB", "GB"];
@@ -163,13 +165,13 @@ export function debug(...args: unknown[]) {
 }
 
 export function checkActive(project: string | null, draft: string | null): boolean {
-    if (!project) {
-      new Notice(WriteAidError.ACTIVE_PROJECT_NOT_FOUND);
-      return false;
-    }
-    if (!draft) {
-      new Notice(WriteAidError.ACTIVE_DRAFT_NOT_FOUND);
-      return false;
-    }
-    return true
+  if (!project) {
+    new Notice(WriteAidError.ACTIVE_PROJECT_NOT_FOUND);
+    return false;
+  }
+  if (!draft) {
+    new Notice(WriteAidError.ACTIVE_DRAFT_NOT_FOUND);
+    return false;
+  }
+  return true;
 }

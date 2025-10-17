@@ -3,6 +3,7 @@ import { createBackupCommand } from "@/commands/backup/createBackupCommand";
 import { deleteBackupCommand } from "@/commands/backup/deleteBackupCommand";
 import { listBackupsCommand } from "@/commands/backup/listBackupsCommand";
 import { createNewDraftCommand } from "@/commands/draft/createNewDraftCommand";
+import { createOutlineCommand } from "@/commands/draft/createOutlineCommand";
 import { generateManuscriptCommand } from "@/commands/draft/generateManuscriptCommand";
 import { switchDraftCommand } from "@/commands/draft/switchDraftCommand";
 import { navigateToNextChapterCommand } from "@/commands/navigation/navigateToNextChapterCommand";
@@ -14,16 +15,16 @@ import { toggleProjectPanelCommand } from "@/commands/project/toggleProjectPanel
 import { updateProjectMetadataCommand } from "@/commands/project/updateProjectMetadataCommand";
 import { ProjectService } from "@/core/ProjectService";
 import {
-  APP_NAME,
-  asyncFilter,
-  debug,
-  DEBUG_PREFIX,
-  FILES,
-  FOLDERS,
-  getDraftsFolderName,
-  suppress,
-  suppressAsync,
-  WRITE_AID_ICON_NAME,
+    APP_NAME,
+    asyncFilter,
+    debug,
+    DEBUG_PREFIX,
+    FILES,
+    FOLDERS,
+    getDraftsFolderName,
+    suppress,
+    suppressAsync,
+    WRITE_AID_ICON_NAME,
 } from "@/core/utils";
 import { WriteAidManager } from "@/manager";
 import { WriteAidSettingTab } from "@/settings";
@@ -31,6 +32,17 @@ import stylesText from "@/styles/writeaid.css?inline";
 import type { WriteAidSettings } from "@/types";
 import { ProjectPanelView, VIEW_TYPE_PROJECT_PANEL } from "@/ui/sidepanel/ProjectPanelView";
 import { Plugin, TFolder } from "obsidian";
+
+// Force browser environment for Svelte 5 compatibility
+// Svelte 5 checks for server environment and disables client-side features in SSR mode
+// We need to ensure it doesn't detect a server context in the Obsidian plugin environment
+if (typeof globalThis !== 'undefined') {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const global = globalThis as any;
+  if (!global.__BROWSER__) {
+    global.__BROWSER__ = true;
+  }
+}
 
 // Helper function to truncate long project names for status bar display
 function truncateProjectName(projectName: string, maxLength: number = 20): string {
@@ -41,9 +53,35 @@ function truncateProjectName(projectName: string, maxLength: number = 20): strin
 }
 
 const DEFAULT_SETTINGS: WriteAidSettings = {
-  draftOutlineTemplate: "# Outline for {{draftName}}",
-  planningTemplate: "# Planning: {{projectName}}\n\n- [ ] ...",
-  chapterTemplate: "# {{chapterTitle}}\n\n",
+  outlineTemplate: `# {{draftName}} Outline
+
+## Overview
+Brief description of the story goes here.
+
+## Characters
+- Character 1: Description
+- Character 2: Description
+
+## Plot Points
+- Opening: 
+- Middle: 
+- Climax: 
+- Resolution: 
+
+## Chapters
+- Chapter 1: Title
+- Chapter 2: Title
+- Chapter 3: Title`,
+  chapterTemplate: `# {{chapterName}}
+
+## Summary
+Chapter summary goes here.
+
+## Scene 1
+Scene content goes here.
+
+## Scene 2
+Scene content goes here.`,
   manuscriptNameTemplate: "{{draftName}}",
   slugStyle: "compact",
   ribbonPlacement: "left",
@@ -181,6 +219,8 @@ export default class WriteAidPlugin extends Plugin {
         : undefined,
     );
 
+    debug(`${DEBUG_PREFIX} Manager created:`, !!this.manager);
+
     // Only instantiate ProjectService once
     const projectService = new ProjectService(this.app);
 
@@ -295,7 +335,11 @@ export default class WriteAidPlugin extends Plugin {
     }
 
     // register side panel view
-    this.registerView(VIEW_TYPE_PROJECT_PANEL, (leaf) => new ProjectPanelView(leaf, this.app));
+    debug(`${DEBUG_PREFIX} Registering ProjectPanelView with manager:`, !!this.manager);
+    this.registerView(VIEW_TYPE_PROJECT_PANEL, (leaf) => {
+      debug(`${DEBUG_PREFIX} Creating ProjectPanelView instance with manager:`, !!this.manager);
+      return new ProjectPanelView(leaf, this.app, this.manager);
+    });
 
     const ribbonEl = this.addRibbonIcon(WRITE_AID_ICON_NAME, `${APP_NAME} Projects`, () => {});
     ribbonEl.classList.add("writeaid-ribbon");
@@ -371,6 +415,12 @@ export default class WriteAidPlugin extends Plugin {
       id: "create-new-draft",
       name: "Create New Draft",
       callback: createNewDraftCommand(this.manager),
+    });
+
+    this.addCommand({
+      id: "create-outline",
+      name: "Create Outline",
+      callback: () => createOutlineCommand(this.manager),
     });
 
     this.addCommand({

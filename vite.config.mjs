@@ -1,44 +1,35 @@
 import { svelte, vitePreprocess } from "@sveltejs/vite-plugin-svelte";
-import builtinModules from "builtin-modules";
-import path from "path";
+import builtins from "builtin-modules";
+import { resolve } from "path";
 import { defineConfig } from "vite";
 
 export default defineConfig({
   plugins: [
     svelte({
+      // Use standard Svelte component mode (not custom elements)
       preprocess: vitePreprocess(),
-      compilerOptions: {
-        // Enable compiling components as custom elements when a top-level
-        // <svelte:options tag="..." /> is used in the component source.
-        customElement: true,
-      },
     }),
   ],
-  resolve: {
-    alias: {
-      "@": path.resolve(process.cwd(), "src"),
-      "@/": path.resolve(process.cwd(), "src") + "/",
-    },
-  },
-  ssr: {
-    noExternal: ["svelte-select", "svelte-floating-ui"],
-  },
   build: {
-    outDir: "dist",
-    emptyOutDir: true,
     lib: {
-      entry: path.resolve(process.cwd(), "src/main.ts"),
-      name: "WriteAid",
-      fileName: () => "main",
+      entry: resolve(__dirname, "src/main.ts"),
       formats: ["cjs"],
+      fileName: "main",
     },
     rollupOptions: {
-      external: ["obsidian", ...builtinModules],
-      input: path.resolve(process.cwd(), "src/main.ts"),
-      output: {
-        entryFileNames: "main.js",
-        assetFileNames: "styles.css",
-      },
+      external: ["obsidian", ...builtins],
     },
+    sourcemap: true,
+    emptyOutDir: true,
+  },
+  resolve: {
+    alias: {
+      "@": resolve(__dirname, "src"),
+    },
+  },
+  // Force browser environment for Svelte
+  define: {
+    'process.env.NODE_ENV': JSON.stringify('production'),
+    'global': 'globalThis',
   },
 });

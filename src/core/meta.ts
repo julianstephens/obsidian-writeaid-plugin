@@ -1,6 +1,13 @@
 import type { WriteAidSettings } from "@/types";
 import { App, TFile, TFolder } from "obsidian";
-import { debug, DEBUG_PREFIX, FRONTMATTER_DELIMITER, getDraftsFolderName, getMetaFileName, type ProjectType } from "./utils";
+import {
+  debug,
+  DEBUG_PREFIX,
+  FRONTMATTER_DELIMITER,
+  getDraftsFolderName,
+  getMetaFileName,
+  type ProjectType,
+} from "./utils";
 
 /**
  * Project metadata tracked in meta.md
@@ -116,7 +123,9 @@ export async function updateMetaStats(
  * Parse frontmatter from markdown content
  */
 function parseFrontmatter(content: string): ProjectMetadata | null {
-  const fmMatch = content.match(new RegExp(`${FRONTMATTER_DELIMITER}\\s*\\n([\\s\\S]*?)\\n${FRONTMATTER_DELIMITER}`));
+  const fmMatch = content.match(
+    new RegExp(`${FRONTMATTER_DELIMITER}\\s*\\n([\\s\\S]*?)\\n${FRONTMATTER_DELIMITER}`),
+  );
   if (!fmMatch) {
     return null;
   }

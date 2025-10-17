@@ -14,6 +14,11 @@
       "hotkeys": [{ "modifiers": ["Mod", "Alt"], "key": "D" }]
     },
     {
+      "id": "create-outline",
+      "name": "Create Outline",
+      "hotkeys": [{ "modifiers": ["Mod", "Alt"], "key": "O" }]
+    },
+    {
       "id": "create-new-project",
       "name": "Create New Project",
       "hotkeys": [{ "modifiers": ["Mod", "Shift"], "key": "P" }]

@@ -129,7 +129,9 @@ export class ChapterFileService {
               `${DEBUG_PREFIX} ChapterFileService.listChapters: parsed order=${order}, chapterName=${chapterName}`,
             );
             const chapName =
-              chapterName && chapterName.length > 0 ? chapterName : file.name.replace(new RegExp(`\\${MARKDOWN_FILE_EXTENSION}$`), "");
+              chapterName && chapterName.length > 0
+                ? chapterName
+                : file.name.replace(new RegExp(`\\${MARKDOWN_FILE_EXTENSION}$`), "");
             const chapOrder = typeof order === "number" && !isNaN(order) ? order : 0;
             debug(
               `${DEBUG_PREFIX} ChapterFileService.listChapters: adding chapter ${file.name} with name ${chapName}, order ${chapOrder}`,

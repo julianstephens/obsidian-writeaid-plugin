@@ -12,7 +12,9 @@ export function navigateToPreviousChapterCommand(manager: WriteAidManager) {
 
     const path = activeFile.path;
     const draftsFolderName = getDraftsFolderName(manager.settings);
-    const match = path.match(new RegExp(`^(.+)/${draftsFolderName}/(.+)/(.+)\\${MARKDOWN_FILE_EXTENSION}$`));
+    const match = path.match(
+      new RegExp(`^(.+)/${draftsFolderName}/(.+)/(.+)\\${MARKDOWN_FILE_EXTENSION}$`),
+    );
     if (!match) {
       new Notice("The current file is not a chapter.");
       return;

@@ -1,7 +1,13 @@
 import type { WriteAidSettings } from "@/types";
 import * as JSZip from "jszip";
 import { App, TFile, TFolder } from "obsidian";
-import { BACKUP_FILE_EXTENSION, BACKUP_TIMESTAMP_REGEX, debug, DEBUG_PREFIX, getBackupsFolderName } from "./utils";
+import {
+  BACKUP_FILE_EXTENSION,
+  BACKUP_TIMESTAMP_REGEX,
+  debug,
+  DEBUG_PREFIX,
+  getBackupsFolderName,
+} from "./utils";
 
 export class BackupService {
   constructor(

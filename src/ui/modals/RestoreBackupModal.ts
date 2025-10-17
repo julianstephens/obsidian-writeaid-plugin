@@ -1,4 +1,11 @@
-import { BYTES_PER_KILOBYTE, debug, DEBUG_PREFIX, FILE_SIZE_UNITS, getBackupsFolderName, getDraftsFolderName } from "@/core/utils";
+import {
+  BYTES_PER_KILOBYTE,
+  debug,
+  DEBUG_PREFIX,
+  FILE_SIZE_UNITS,
+  getBackupsFolderName,
+  getDraftsFolderName,
+} from "@/core/utils";
 import type { WriteAidManager } from "@/manager";
 import { WriteAidError } from "@/types";
 import { App, Notice, SuggestModal, TFolder } from "obsidian";
@@ -132,7 +139,9 @@ export class RestoreBackupModal extends SuggestModal<BackupItem> {
   private formatFileSize(bytes: number): string {
     if (bytes === 0) return "0 B";
     const i = Math.floor(Math.log(bytes) / Math.log(BYTES_PER_KILOBYTE));
-    return parseFloat((bytes / Math.pow(BYTES_PER_KILOBYTE, i)).toFixed(1)) + " " + FILE_SIZE_UNITS[i];
+    return (
+      parseFloat((bytes / Math.pow(BYTES_PER_KILOBYTE, i)).toFixed(1)) + " " + FILE_SIZE_UNITS[i]
+    );
   }
 
   getSuggestions(query: string): BackupItem[] {

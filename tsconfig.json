@@ -3,7 +3,6 @@
     "target": "ES2020",
     "module": "ESNext",
     "outDir": "./dist/",
-    "rootDir": "./src",
     "strict": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
@@ -14,7 +13,9 @@
     "noImplicitAny": false,
     "paths": {
       "@/*": ["./src/*"]
-    }
+    },
+    "types": ["vite/client", "svelte"]
   },
-  "include": ["src/**/*"]
+  "include": ["src/**/*", "*.svelte"],
+  "exclude": ["node_modules/*", "dist/*"]
 }
