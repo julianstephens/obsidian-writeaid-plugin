@@ -1,6 +1,7 @@
 <script lang="ts">
   import { autoUpdate, flip, offset, shift, size } from '@floating-ui/dom';
-  import { onDestroy, onMount } from 'svelte';
+  import { ChevronDown, X } from 'lucide-svelte';
+  import { createEventDispatcher, onDestroy, onMount } from 'svelte';
 
   // Props
   export let items: Array<{ value: string; label: string }> = [];
@@ -25,6 +26,12 @@
   let dropdownEl: HTMLElement;
   let searchInputEl: HTMLInputElement;
   let cleanup: (() => void) | null = null;
+
+  // Event dispatcher
+  const dispatch = createEventDispatcher();
+
+  // Reactive display label
+  $: displayLabel = !value ? placeholder : typeof value === 'string' ? (items.find(i => i.value === value)?.label || value) : (value as any).label || placeholder;
 
   // Get display label
   function getDisplayLabel(): string {
@@ -75,6 +82,7 @@
     if (triggerEl && dropdownEl) {
       setupFloatingUI();
     }
+
   }
 
   // Close dropdown
@@ -97,11 +105,10 @@
       shift({ padding: 8 }),
       size({
         padding: 8,
-        apply({ rects, availableHeight, availableWidth }) {
+        apply({ availableHeight }) {
           Object.assign(dropdownEl.style, {
             maxHeight: `${Math.min(availableHeight - 10, 350)}px`,
-            minWidth: `${rects.reference.width}px`,
-            maxWidth: `${Math.max(availableWidth - 16, rects.reference.width)}px`,
+            width: `${triggerEl.offsetWidth}px`,
           });
         },
       }),
@@ -116,7 +123,6 @@
 
       // Add data attribute to track placement for styling
       dropdownEl.setAttribute('data-placement', placement);
-
       Object.assign(dropdownEl.style, {
         left: `${x}px`,
         top: `${y}px`,
@@ -128,14 +134,9 @@
   function selectItem(item: { value: string; label: string }) {
     value = item;
     closeDropdown();
-    
-    // Dispatch custom select event
-    const event = new CustomEvent('select', {
-      detail: item,
-      bubbles: true,
-      cancelable: true,
-    });
-    triggerEl?.dispatchEvent(event);
+
+    // Dispatch select event using Svelte's event dispatcher
+    dispatch('select', item);
   }
 
   // Clear selection
@@ -143,12 +144,9 @@
     e.stopPropagation();
     value = null;
     closeDropdown();
-    
-    const event = new CustomEvent('clear', {
-      bubbles: true,
-      cancelable: true,
-    });
-    triggerEl?.dispatchEvent(event);
+
+    // Dispatch clear event using Svelte's event dispatcher
+    dispatch('clear');
   }
 
   // Handle keyboard navigation
@@ -227,6 +225,21 @@
   $: {
     updateFilteredItems();
   }
+
+  // React to value changes from parent binding
+  $: if (value !== undefined) {
+    // Ensure selectedIndex is updated when value changes externally
+    if (filteredItems.length > 0) {
+      const currentValue = getValueString();
+      selectedIndex = filteredItems.findIndex(item => item.value === currentValue);
+    }
+  }
+
+  // Ensure dropdown width matches trigger width
+  $: if (isOpen && dropdownEl && triggerEl) {
+    dropdownEl.style.width = `${triggerEl.offsetWidth}px`;
+    dropdownEl.style.top = `${triggerEl.offsetTop + triggerEl.offsetHeight + 6}px`;
+  }
 </script>
 
 <div class="wa-select-container wa-select">
@@ -248,7 +261,7 @@
   >
     <div class="wa-select-value">
       {#if value}
-        <span class="wa-select-label">{getDisplayLabel()}</span>
+        <span class="wa-select-label">{displayLabel}</span>
       {:else}
         <span class="wa-select-placeholder">{placeholder}</span>
       {/if}
@@ -262,12 +275,12 @@
           on:click={clearSelection}
           aria-label="Clear selection"
         >
-          ✕
+          <X />
         </button>
       {/if}
       {#if showChevron}
         <div class="wa-select-chevron" class:rotated={isOpen}>
-          ▼
+          <ChevronDown />
         </div>
       {/if}
     </div>
@@ -310,244 +323,3 @@
     </div>
   {/if}
 </div>
-
-<style>
-  .wa-select-container.wa-select {
-    position: relative;
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-  }
-
-  .wa-select-label-text {
-    font-size: 0.9em;
-    font-weight: 500;
-    color: var(--select-text, var(--text-normal, #222));
-  }
-
-  .wa-select-trigger {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 8px 10px;
-    border: 1px solid var(--select-border, var(--background-modifier-border, #ccc));
-    border-radius: 6px;
-    background: var(--select-bg, var(--background-primary, #fff));
-    color: var(--select-text, var(--text-normal, #222));
-    cursor: pointer;
-    transition: all 0.2s ease;
-    min-height: 38px;
-    font-size: 1em;
-  }
-
-  .wa-select-trigger:hover:not(.disabled) {
-    border-color: var(--select-border-focus, var(--interactive-accent, #7c5cff));
-  }
-
-  .wa-select-trigger.open {
-    border-color: var(--select-border-focus, var(--interactive-accent, #7c5cff));
-  }
-
-  .wa-select-trigger.disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-    background: var(--disabled-background, #f3f3f3);
-  }
-
-  .wa-select-value {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    min-width: 0;
-  }
-
-  .wa-select-label,
-  .wa-select-placeholder {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  .wa-select-placeholder {
-    color: var(--select-placeholder, var(--text-muted, #888));
-  }
-
-  .wa-select-controls {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    flex-shrink: 0;
-    margin-left: 8px;
-  }
-
-  .wa-select-clear {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 20px;
-    height: 20px;
-    padding: 0;
-    border: none;
-    background: none;
-    color: var(--select-chevron, var(--text-muted, #888));
-    cursor: pointer;
-    border-radius: 3px;
-    transition: background 0.2s;
-    font-size: 0.8em;
-  }
-
-  .wa-select-clear:hover {
-    background: var(--background-modifier-hover, #f0f0f0);
-  }
-
-  .wa-select-chevron {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 20px;
-    height: 20px;
-    color: var(--select-chevron, var(--text-muted, #888));
-    font-size: 0.7em;
-    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
-  .wa-select-chevron.rotated {
-    transform: rotate(180deg);
-  }
-
-  .wa-select-dropdown {
-    position: fixed;
-    z-index: 1000;
-    background: var(--select-dropdown-bg, var(--background-secondary, #f6f6f6));
-    border: 1px solid var(--select-dropdown-border, var(--background-modifier-border, #e0e0e0));
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15), 0 2px 4px rgba(0, 0, 0, 0.1);
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    animation: slideIn 0.15s ease-out;
-  }
-
-  @keyframes slideIn {
-    from {
-      opacity: 0;
-      transform: translateY(-4px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
-  /* Placement variants */
-  .wa-select-dropdown[data-placement*='top'] {
-    animation: slideInTop 0.15s ease-out;
-  }
-
-  @keyframes slideInTop {
-    from {
-      opacity: 0;
-      transform: translateY(4px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
-  .wa-select-search {
-    padding: 8px;
-    border-bottom: 1px solid var(--select-dropdown-border, var(--background-modifier-border, #e0e0e0));
-  }
-
-  .wa-select-search-input {
-    width: 100%;
-    padding: 6px 8px;
-    border: 1px solid var(--select-border, var(--background-modifier-border, #ccc));
-    border-radius: 4px;
-    background: var(--select-bg, var(--background-primary, #fff));
-    color: var(--select-text, var(--text-normal, #222));
-    font-size: 0.95em;
-  }
-
-  .wa-select-search-input:focus {
-    outline: none;
-    border-color: var(--select-border-focus, var(--interactive-accent, #7c5cff));
-  }
-
-  .wa-select-list {
-    flex: 1;
-    overflow-y: auto;
-    max-height: 300px;
-  }
-
-  /* Custom scrollbar for webkit browsers */
-  .wa-select-list::-webkit-scrollbar {
-    width: 6px;
-  }
-
-  .wa-select-list::-webkit-scrollbar-track {
-    background: transparent;
-  }
-
-  .wa-select-list::-webkit-scrollbar-thumb {
-    background: var(--scrollbar-thumb-bg, rgba(0, 0, 0, 0.2));
-    border-radius: 3px;
-  }
-
-  .wa-select-list::-webkit-scrollbar-thumb:hover {
-    background: var(--scrollbar-thumb-hover-bg, rgba(0, 0, 0, 0.3));
-  }
-
-  .wa-select-empty {
-    padding: 12px 10px;
-    text-align: center;
-    color: var(--select-placeholder, var(--text-muted, #888));
-    font-size: 0.95em;
-  }
-
-  .wa-select-option {
-    width: 100%;
-    padding: 8px 10px;
-    border: none;
-    background: transparent;
-    color: var(--select-text, var(--text-normal, #222));
-    text-align: left;
-    cursor: pointer;
-    transition: background 0.15s;
-    font-size: 0.95em;
-  }
-
-  .wa-select-option:hover {
-    background: var(--select-option-hover, var(--background-modifier-hover, #f0f0ff));
-  }
-
-  .wa-select-option.selected {
-    background: var(--select-option-active, var(--background-modifier-active, #eaeaff));
-  }
-
-  .wa-select-option.active {
-    background: var(--select-option-active, var(--background-modifier-active, #eaeaff));
-    font-weight: 500;
-  }
-
-  /* Dark mode support */
-  :global(.theme-dark) .wa-select-trigger {
-    border-color: var(--select-border, var(--background-modifier-border, #333));
-    background: var(--select-bg, var(--background-primary, #23232b));
-    color: var(--select-text, var(--text-normal, #e0e0e0));
-  }
-
-  :global(.theme-dark) .wa-select-dropdown {
-    background: var(--select-dropdown-bg, var(--background-secondary, #23233a));
-    border-color: var(--select-dropdown-border, var(--background-modifier-border, #333));
-  }
-
-  :global(.theme-dark) .wa-select-search-input {
-    background: var(--select-bg, var(--background-primary, #23232b));
-    color: var(--select-text, var(--text-normal, #e0e0e0));
-    border-color: var(--select-border, var(--background-modifier-border, #333));
-  }
-</style>

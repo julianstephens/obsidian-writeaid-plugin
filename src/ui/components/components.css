@@ -122,10 +122,6 @@
   color: var(--wa-muted);
 }
 
-/* .svelte-select input[type="text"]:hover {
-  background-color: transparent;
-} */
-
 .wa-centered-modal {
   display: flex;
   flex-direction: column;

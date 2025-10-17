@@ -6,6 +6,3 @@
 <span class="badge" style={color ? `background-color: ${color}` : ""}>
   <slot>{text}</slot>
 </span>
-
-<style>
-</style>

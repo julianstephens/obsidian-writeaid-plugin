@@ -14,7 +14,7 @@
   --wa-radius: 8px;
   --wa-gap: 8px;
 
-  /* Svelte-select theming variables (light mode) */
+  /* Select theming variables (light mode) */
   --select-bg: var(--background-primary, #fff);
   --select-border: var(--background-modifier-border, #ccc);
   --select-border-focus: var(--interactive-accent, #7c5cff);
@@ -49,8 +49,8 @@
   --wa-accent: var(--interactive-accent, #7c5cff);
   --wa-border: rgba(255, 255, 255, 0.06);
 
-  /* Svelte-select theming variables (dark mode) */
-  --select-bg: var(--background-primary, #23232b);
+  /* Select theming variables (dark mode) */
+  --select-bg: var(--background-secondary, #23232b);
   --select-border: var(--background-modifier-border, #333);
   --select-border-focus: var(--interactive-accent, #7c5cff);
   --select-text: var(--text-normal, #e0e0e0);
