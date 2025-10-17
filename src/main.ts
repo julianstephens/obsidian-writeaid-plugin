@@ -28,7 +28,7 @@ import {
 } from "@/core/utils";
 import { WriteAidManager } from "@/manager";
 import { WriteAidSettingTab } from "@/settings";
-import "@/styles/themes.css";
+import themesText from "@/styles/themes.css?inline";
 import stylesText from "@/styles/writeaid.css?inline";
 import type { WriteAidSettings } from "@/types";
 import { ProjectPanelView, VIEW_TYPE_PROJECT_PANEL } from "@/ui/sidepanel/ProjectPanelView";
@@ -37,7 +37,7 @@ import { Plugin, TFolder } from "obsidian";
 // Force browser environment for Svelte 5 compatibility
 // Svelte 5 checks for server environment and disables client-side features in SSR mode
 // We need to ensure it doesn't detect a server context in the Obsidian plugin environment
-if (typeof globalThis !== 'undefined') {
+if (typeof globalThis !== "undefined") {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const global = globalThis as any;
   if (!global.__BROWSER__) {
@@ -302,7 +302,7 @@ export default class WriteAidPlugin extends Plugin {
       if (!this.waStyleEl) {
         this.waStyleEl = document.createElement("style");
         this.waStyleEl.setAttribute("data-writeaid-style", "");
-        this.waStyleEl.textContent = stylesText as unknown as string;
+        this.waStyleEl.textContent = themesText + stylesText;
         this.waStyleEl.classList.add("writeaid-plugin-style");
         document.head.appendChild(this.waStyleEl);
       }

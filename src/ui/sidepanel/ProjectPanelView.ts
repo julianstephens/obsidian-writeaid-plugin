@@ -37,7 +37,7 @@ export class ProjectPanelView extends ItemView {
   }
 
   async onOpen() {
-    this.panelEl = this.contentEl.createEl('div', {
+    this.panelEl = this.contentEl.createEl("div", {
       cls: "writeaid-project-panel",
     });
 
@@ -60,7 +60,7 @@ export class ProjectPanelView extends ItemView {
           projectFileService: this.projectFileService,
         },
       });
-      
+
       debug(`${DEBUG_PREFIX} ProjectPanel mounted successfully`);
     } catch (err) {
       debug(`${DEBUG_PREFIX} failed to mount project panel:`, err);

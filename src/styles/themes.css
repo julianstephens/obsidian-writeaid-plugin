@@ -22,8 +22,8 @@
   --select-placeholder: var(--text-muted, #888);
   --select-dropdown-bg: var(--background-secondary, #f6f6f6);
   --select-dropdown-border: var(--background-modifier-border, #e0e0e0);
-  --select-option-hover: var(--background-modifier-hover, #f0f0ff);
-  --select-option-active: var(--background-modifier-active, #eaeaff);
+  --select-option-hover: #f0f0ff;
+  --select-option-active: #eaeaff;
   --select-chevron: var(--text-muted, #888);
 }
 
@@ -50,15 +50,15 @@
   --wa-border: rgba(255, 255, 255, 0.06);
 
   /* Select theming variables (dark mode) */
-  --select-bg: var(--background-secondary, #23232b);
+  --select-bg: var(--background-primary, #23232b);
   --select-border: var(--background-modifier-border, #333);
   --select-border-focus: var(--interactive-accent, #7c5cff);
   --select-text: var(--text-normal, #e0e0e0);
   --select-placeholder: var(--text-muted, #aaa);
   --select-dropdown-bg: var(--background-secondary, #23233a);
   --select-dropdown-border: var(--background-modifier-border, #333);
-  --select-option-hover: var(--background-modifier-hover, #2a2a4a);
-  --select-option-active: var(--background-modifier-active, #2a2a4a);
+  --select-option-hover: #2a2a4a;
+  --select-option-active: #2a2a4a;
   --select-chevron: var(--text-muted, #aaa);
 }
 

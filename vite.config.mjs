@@ -27,12 +27,9 @@ export default defineConfig({
       "@": resolve(__dirname, "src"),
     },
   },
-  ssr: {
-    noExternal: ["svelte-select", "svelte-floating-ui"],
-  },
   // Force browser environment for Svelte
   define: {
-    'process.env.NODE_ENV': JSON.stringify('production'),
-    'global': 'globalThis',
+    "process.env.NODE_ENV": JSON.stringify("production"),
+    global: "globalThis",
   },
 });

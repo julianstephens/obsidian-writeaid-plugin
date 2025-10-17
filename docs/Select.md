@@ -22,40 +22,40 @@ src/ui/components/Select.svelte
 
 ## Props
 
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
-| `items` | `Array<{value, label}>` | `[]` | Array of selectable options |
-| `value` | `string \| object \| null` | `null` | Currently selected value |
-| `placeholder` | `string` | `"Select..."` | Placeholder text when nothing selected |
-| `label` | `string` | `""` | Optional label displayed above select |
-| `disabled` | `boolean` | `false` | Disable the select |
-| `searchable` | `boolean` | `false` | Enable search filtering |
-| `clearable` | `boolean` | `false` | Show clear button |
-| `showChevron` | `boolean` | `true` | Show dropdown chevron icon |
-| `name` | `string` | `""` | HTML name attribute |
-| `containerStyles` | `string` | `""` | Inline styles for container |
+| Prop              | Type                       | Default       | Description                            |
+| ----------------- | -------------------------- | ------------- | -------------------------------------- |
+| `items`           | `Array<{value, label}>`    | `[]`          | Array of selectable options            |
+| `value`           | `string \| object \| null` | `null`        | Currently selected value               |
+| `placeholder`     | `string`                   | `"Select..."` | Placeholder text when nothing selected |
+| `label`           | `string`                   | `""`          | Optional label displayed above select  |
+| `disabled`        | `boolean`                  | `false`       | Disable the select                     |
+| `searchable`      | `boolean`                  | `false`       | Enable search filtering                |
+| `clearable`       | `boolean`                  | `false`       | Show clear button                      |
+| `showChevron`     | `boolean`                  | `true`        | Show dropdown chevron icon             |
+| `name`            | `string`                   | `""`          | HTML name attribute                    |
+| `containerStyles` | `string`                   | `""`          | Inline styles for container            |
 
 ## Events
 
-| Event | Detail | Description |
-|-------|--------|-------------|
-| `select` | `{value, label}` | Fired when an item is selected |
-| `clear` | - | Fired when selection is cleared |
+| Event    | Detail           | Description                     |
+| -------- | ---------------- | ------------------------------- |
+| `select` | `{value, label}` | Fired when an item is selected  |
+| `clear`  | -                | Fired when selection is cleared |
 
 ## Usage Example
 
 ```svelte
 <script>
-  import Select from '@/ui/components/Select.svelte';
+  import Select from "@/ui/components/Select.svelte";
 
   let selected = null;
   let items = [
-    { value: 'draft-1', label: 'Draft 1' },
-    { value: 'draft-2', label: 'Draft 2' },
+    { value: "draft-1", label: "Draft 1" },
+    { value: "draft-2", label: "Draft 2" },
   ];
 
   function handleSelect(e) {
-    console.log('Selected:', e.detail);
+    console.log("Selected:", e.detail);
   }
 </script>
 
@@ -74,19 +74,15 @@ src/ui/components/Select.svelte
 The component uses CSS variables for styling and integrates with Obsidian's theme system:
 
 ```css
---select-bg: Background color
---select-text: Text color
---select-placeholder: Placeholder text color
---select-border: Border color
---select-border-focus: Border color when focused
---select-dropdown-bg: Dropdown background
---select-dropdown-border: Dropdown border
---select-option-hover: Hover state background
---select-option-active: Active/selected state background
---select-chevron: Chevron icon color
+--select-bg: Background color --select-text: Text color --select-placeholder: Placeholder text color
+  --select-border: Border color --select-border-focus: Border color when focused
+  --select-dropdown-bg: Dropdown background --select-dropdown-border: Dropdown border
+  --select-option-hover: Hover state background --select-option-active: Active/selected state
+  background --select-chevron: Chevron icon color;
 ```
 
 These all fall back to Obsidian CSS variables:
+
 - `var(--background-primary, #fff)`
 - `var(--text-normal, #222)`
 - `var(--text-muted, #888)`
@@ -120,7 +116,7 @@ The dropdown uses `@floating-ui/dom` for intelligent positioning with the follow
 
 ### Visual Enhancements
 
-- **Smooth Animations**: 
+- **Smooth Animations**:
   - Slide-in from top or bottom depending on placement
   - 150ms cubic-bezier animation for smooth appearance
   - Chevron rotates smoothly on open/close
@@ -135,6 +131,7 @@ The dropdown uses `@floating-ui/dom` for intelligent positioning with the follow
 ## Browser Compatibility
 
 Works with all modern browsers supporting:
+
 - ES6+ JavaScript
 - CSS Grid/Flexbox
 - `floating-ui/dom` (all modern browsers)
@@ -178,6 +175,7 @@ The Select component is now used in `ProjectPanel.svelte`:
 ## Future Enhancements
 
 Potential improvements:
+
 - [ ] Virtual scrolling for large lists
 - [ ] Multi-select support
 - [ ] Option grouping

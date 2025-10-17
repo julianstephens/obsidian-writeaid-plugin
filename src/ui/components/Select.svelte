@@ -1,23 +1,23 @@
 <script lang="ts">
-  import { autoUpdate, flip, offset, shift, size } from '@floating-ui/dom';
-  import { ChevronDown, X } from 'lucide-svelte';
-  import { createEventDispatcher, onDestroy, onMount } from 'svelte';
+  import { autoUpdate, flip, offset, shift, size } from "@floating-ui/dom";
+  import { ChevronDown, X } from "lucide-svelte";
+  import { createEventDispatcher, onDestroy, onMount } from "svelte";
 
   // Props
   export let items: Array<{ value: string; label: string }> = [];
   export let value: { value: string; label: string } | string | null = null;
-  export let placeholder = 'Select...';
-  export let label = '';
+  export let placeholder = "Select...";
+  export let label = "";
   export let disabled = false;
   export let searchable = false;
   export let clearable = false;
   export let showChevron = true;
-  export let name = '';
-  export let containerStyles = '';
+  export let name = "";
+  export let containerStyles = "";
 
   // Local state
   let isOpen = false;
-  let searchQuery = '';
+  let searchQuery = "";
   let filteredItems: Array<{ value: string; label: string }> = [];
   let selectedIndex = -1;
 
@@ -31,12 +31,16 @@
   const dispatch = createEventDispatcher();
 
   // Reactive display label
-  $: displayLabel = !value ? placeholder : typeof value === 'string' ? (items.find(i => i.value === value)?.label || value) : (value as any).label || placeholder;
+  $: displayLabel = !value
+    ? placeholder
+    : typeof value === "string"
+      ? items.find((i) => i.value === value)?.label || value
+      : (value as any).label || placeholder;
 
   // Get display label
   function getDisplayLabel(): string {
     if (!value) return placeholder;
-    if (typeof value === 'string') {
+    if (typeof value === "string") {
       const item = items.find((i) => i.value === value);
       return item ? item.label : value;
     }
@@ -45,9 +49,9 @@
 
   // Get value string
   function getValueString(): string {
-    if (!value) return '';
-    if (typeof value === 'string') return value;
-    return (value as any).value || '';
+    if (!value) return "";
+    if (typeof value === "string") return value;
+    return (value as any).value || "";
   }
 
   // Filter items based on search query
@@ -58,7 +62,7 @@
       filteredItems = items.filter(
         (item) =>
           item.label.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          item.value.toLowerCase().includes(searchQuery.toLowerCase())
+          item.value.toLowerCase().includes(searchQuery.toLowerCase()),
       );
     }
     selectedIndex = -1;
@@ -68,7 +72,7 @@
   function openDropdown() {
     if (disabled || isOpen) return;
     isOpen = true;
-    searchQuery = '';
+    searchQuery = "";
     updateFilteredItems();
 
     // Focus search input if searchable
@@ -82,13 +86,12 @@
     if (triggerEl && dropdownEl) {
       setupFloatingUI();
     }
-
   }
 
   // Close dropdown
   function closeDropdown() {
     isOpen = false;
-    searchQuery = '';
+    searchQuery = "";
     selectedIndex = -1;
   }
 
@@ -100,7 +103,7 @@
       offset(6),
       flip({
         padding: 8,
-        fallbackAxisSideDirection: 'end',
+        fallbackAxisSideDirection: "end",
       }),
       shift({ padding: 8 }),
       size({
@@ -115,14 +118,14 @@
     ];
 
     cleanup = autoUpdate(triggerEl, dropdownEl, async () => {
-      const { computePosition } = await import('@floating-ui/dom');
+      const { computePosition } = await import("@floating-ui/dom");
       const { x, y, placement } = await computePosition(triggerEl, dropdownEl, {
         middleware,
-        placement: 'bottom-start',
+        placement: "bottom-start",
       });
 
       // Add data attribute to track placement for styling
-      dropdownEl.setAttribute('data-placement', placement);
+      dropdownEl.setAttribute("data-placement", placement);
       Object.assign(dropdownEl.style, {
         left: `${x}px`,
         top: `${y}px`,
@@ -136,7 +139,7 @@
     closeDropdown();
 
     // Dispatch select event using Svelte's event dispatcher
-    dispatch('select', item);
+    dispatch("select", item);
   }
 
   // Clear selection
@@ -146,13 +149,13 @@
     closeDropdown();
 
     // Dispatch clear event using Svelte's event dispatcher
-    dispatch('clear');
+    dispatch("clear");
   }
 
   // Handle keyboard navigation
   function handleKeydown(e: KeyboardEvent) {
     if (!isOpen) {
-      if (e.key === 'Enter' || e.key === ' ') {
+      if (e.key === "Enter" || e.key === " ") {
         e.preventDefault();
         openDropdown();
       }
@@ -160,17 +163,17 @@
     }
 
     switch (e.key) {
-      case 'ArrowDown':
+      case "ArrowDown":
         e.preventDefault();
         selectedIndex = Math.min(selectedIndex + 1, filteredItems.length - 1);
         scrollToSelected();
         break;
-      case 'ArrowUp':
+      case "ArrowUp":
         e.preventDefault();
         selectedIndex = Math.max(selectedIndex - 1, -1);
         scrollToSelected();
         break;
-      case 'Enter':
+      case "Enter":
         e.preventDefault();
         if (selectedIndex >= 0) {
           selectItem(filteredItems[selectedIndex]);
@@ -178,7 +181,7 @@
           closeDropdown();
         }
         break;
-      case 'Escape':
+      case "Escape":
         e.preventDefault();
         closeDropdown();
         break;
@@ -189,10 +192,10 @@
   function scrollToSelected() {
     if (selectedIndex < 0) return;
     const selectedElement = document.querySelector(
-      `[data-select-index="${selectedIndex}"]`
+      `[data-select-index="${selectedIndex}"]`,
     ) as HTMLElement;
     if (selectedElement) {
-      selectedElement.scrollIntoView({ block: 'nearest' });
+      selectedElement.scrollIntoView({ block: "nearest" });
     }
   }
 
@@ -213,12 +216,12 @@
   }
 
   onMount(() => {
-    document.addEventListener('click', handleClickOutside);
+    document.addEventListener("click", handleClickOutside);
     updateFilteredItems();
   });
 
   onDestroy(() => {
-    document.removeEventListener('click', handleClickOutside);
+    document.removeEventListener("click", handleClickOutside);
     if (cleanup) cleanup();
   });
 
@@ -231,7 +234,7 @@
     // Ensure selectedIndex is updated when value changes externally
     if (filteredItems.length > 0) {
       const currentValue = getValueString();
-      selectedIndex = filteredItems.findIndex(item => item.value === currentValue);
+      selectedIndex = filteredItems.findIndex((item) => item.value === currentValue);
     }
   }
 

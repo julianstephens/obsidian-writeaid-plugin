@@ -1,6 +1,9 @@
 /* ==========================================================================
    WriteAid Panel Styles (Non-theming)
    ========================================================================== */
+button:hover {
+  cursor: pointer;
+}
 
 .writeaid-ribbon {
   padding-left: 6px;
@@ -268,227 +271,230 @@
    WriteAid Select Styles (Non-theming)
    ========================================================================== */
 .wa-select-container.wa-select {
-    position: relative;
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-  }
+  position: relative;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
 
-  .wa-select-label-text {
-    font-size: 0.9em;
-    font-weight: 500;
-    color: var(--select-text, var(--text-normal, #222));
-  }
+.wa-select-label-text {
+  font-size: 0.9em;
+  font-weight: 500;
+  color: var(--select-text, var(--text-normal, #222));
+}
 
-  .wa-select-trigger {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 8px 10px;
-    border: 1px solid var(--select-border, var(--background-modifier-border, #ccc));
-    border-radius: 6px;
-    background: var(--select-bg, var(--background-primary, #fff));
-    color: var(--select-text, var(--text-normal, #222));
-    cursor: pointer;
-    transition: all 0.2s ease;
-    min-height: 38px;
-    font-size: 1em;
-  }
+.wa-select-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  border: 1px solid var(--select-border, var(--background-modifier-border, #ccc));
+  border-radius: 6px;
+  background: var(--select-bg, var(--background-primary, #fff));
+  color: var(--select-text, var(--text-normal, #222));
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-height: 38px;
+  font-size: 1em;
+}
 
-  .wa-select-trigger:hover:not(.disabled) {
-    border-color: var(--select-border-focus, var(--interactive-accent, #7c5cff));
-  }
+.wa-select-trigger:hover:not(.disabled) {
+  border-color: var(--select-border-focus, var(--interactive-accent, #7c5cff));
+}
 
-  .wa-select-trigger.open {
-    border-color: var(--select-border-focus, var(--interactive-accent, #7c5cff));
-  }
+.wa-select-trigger.open {
+  border-color: var(--select-border-focus, var(--interactive-accent, #7c5cff));
+}
 
-  .wa-select-trigger.disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-    background: var(--disabled-background, #f3f3f3);
-  }
+.wa-select-trigger.disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background: var(--disabled-background, #f3f3f3);
+}
 
-  .wa-select-value {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    min-width: 0;
-  }
+.wa-select-value {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
 
-  .wa-select-label,
-  .wa-select-placeholder {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
+.wa-select-label,
+.wa-select-placeholder {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 
-  .wa-select-placeholder {
-    color: var(--select-placeholder, var(--text-muted, #888));
-  }
+.wa-select-placeholder {
+  color: var(--select-placeholder, var(--text-muted, #888));
+}
 
-  .wa-select-controls {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    flex-shrink: 0;
-    margin-left: 8px;
-  }
+.wa-select-controls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  margin-left: 8px;
+}
 
-  .wa-select-clear {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 20px;
-    height: 20px;
-    padding: 0;
-    border: none;
-    background: none;
-    color: var(--select-chevron, var(--text-muted, #888));
-    cursor: pointer;
-    border-radius: 3px;
-    transition: background 0.2s;
-    font-size: 0.8em;
-  }
+.wa-select-clear {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--select-chevron, var(--text-muted, #888));
+  cursor: pointer;
+  border-radius: 3px;
+  transition: background 0.2s;
+  font-size: 0.8em;
+}
 
-  .wa-select-clear:hover {
-    background: var(--background-modifier-hover, #f0f0f0);
-  }
+.wa-select-clear:hover {
+  background: var(--background-modifier-hover, #f0f0f0);
+}
 
-  .wa-select-chevron {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 20px;
-    height: 20px;
-    color: var(--select-chevron, var(--text-muted, #888));
-    font-size: 0.7em;
-    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  }
+.wa-select-chevron {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  color: var(--select-chevron, var(--text-muted, #888));
+  font-size: 0.7em;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
 
-  .wa-select-chevron.rotated {
-    transform: rotate(180deg);
-  }
+.wa-select-chevron.rotated {
+  transform: rotate(180deg);
+}
 
-  .wa-select-dropdown {
-    position: absolute;
-    z-index: 1000;
-    background: var(--select-dropdown-bg, var(--background-secondary, #f6f6f6));
-    border: 1px solid var(--select-dropdown-border, var(--background-modifier-border, #e0e0e0));
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15), 0 2px 4px rgba(0, 0, 0, 0.1);
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    animation: slideIn 0.15s ease-out;
-  }
+.wa-select-dropdown {
+  position: absolute;
+  z-index: 1000;
+  background: var(--select-dropdown-bg, var(--background-secondary, #f6f6f6));
+  border: 1px solid var(--select-dropdown-border, var(--background-modifier-border, #e0e0e0));
+  border-radius: 8px;
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.15),
+    0 2px 4px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  animation: slideIn 0.15s ease-out;
+}
 
-  @keyframes slideIn {
-    from {
-      opacity: 0;
-      transform: translateY(-4px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
   }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
 
-  /* Placement variants */
-  .wa-select-dropdown[data-placement*='top'] {
-    animation: slideInTop 0.15s ease-out;
-  }
+/* Placement variants */
+.wa-select-dropdown[data-placement*="top"] {
+  animation: slideInTop 0.15s ease-out;
+}
 
-  @keyframes slideInTop {
-    from {
-      opacity: 0;
-      transform: translateY(4px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
+@keyframes slideInTop {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
   }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
 
-  .wa-select-search {
-    padding: 8px;
-    border-bottom: 1px solid var(--select-dropdown-border, var(--background-modifier-border, #e0e0e0));
-  }
+.wa-select-search {
+  padding: 8px;
+  border-bottom: 1px solid var(--select-dropdown-border, var(--background-modifier-border, #e0e0e0));
+}
 
-  .wa-select-search-input {
-    width: 100%;
-    padding: 6px 8px;
-    border: 1px solid var(--select-border, var(--background-modifier-border, #ccc));
-    border-radius: 4px;
-    background: var(--select-bg, var(--background-primary, #fff));
-    color: var(--select-text, var(--text-normal, #222));
-    font-size: 0.95em;
-  }
+.wa-select-search-input {
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid var(--select-border, var(--background-modifier-border, #ccc));
+  border-radius: 4px;
+  background: var(--select-bg, var(--background-primary, #fff));
+  color: var(--select-text, var(--text-normal, #222));
+  font-size: 0.95em;
+}
 
-  .wa-select-search-input:focus {
-    outline: none;
-    border-color: var(--select-border-focus, var(--interactive-accent, #7c5cff));
-  }
+.wa-select-search-input:focus {
+  outline: none;
+  border-color: var(--select-border-focus, var(--interactive-accent, #7c5cff));
+}
 
-  .wa-select-list {
-    flex: 1;
-    overflow-y: auto;
-    max-height: 300px;
-  }
+.wa-select-list {
+  flex: 1;
+  overflow-y: auto;
+  max-height: 300px;
+}
 
-  /* Custom scrollbar for webkit browsers */
-  .wa-select-list::-webkit-scrollbar {
-    width: 6px;
-  }
+/* Custom scrollbar for webkit browsers */
+.wa-select-list::-webkit-scrollbar {
+  width: 6px;
+}
 
-  .wa-select-list::-webkit-scrollbar-track {
-    background: transparent;
-  }
+.wa-select-list::-webkit-scrollbar-track {
+  background: transparent;
+}
 
-  .wa-select-list::-webkit-scrollbar-thumb {
-    background: var(--scrollbar-thumb-bg, rgba(0, 0, 0, 0.2));
-    border-radius: 3px;
-  }
+.wa-select-list::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb-bg, rgba(0, 0, 0, 0.2));
+  border-radius: 3px;
+}
 
-  .wa-select-list::-webkit-scrollbar-thumb:hover {
-    background: var(--scrollbar-thumb-hover-bg, rgba(0, 0, 0, 0.3));
-  }
+.wa-select-list::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover-bg, rgba(0, 0, 0, 0.3));
+}
 
-  .wa-select-empty {
-    padding: 12px 10px;
-    text-align: center;
-    color: var(--select-placeholder, var(--text-muted, #888));
-    font-size: 0.95em;
-  }
+.wa-select-empty {
+  padding: 12px 10px;
+  text-align: center;
+  color: var(--select-placeholder, var(--text-muted, #888));
+  font-size: 0.95em;
+}
 
-  .wa-select-option {
-    width: 100%;
-    padding: 8px 10px;
-    border-radius: 0;
-    box-shadow: none !important;
-    border: none;
-    background: transparent;
-    color: var(--select-text, var(--text-normal, #222));
-    text-align: left;
-    cursor: pointer;
-    transition: background 0.15s;
-    font-size: 0.95em;
-  }
+.wa-select-option {
+  width: 100%;
+  margin-top: 2px;
+  padding: 8px 10px;
+  border-radius: 0;
+  box-shadow: none !important;
+  border: none;
+  background: transparent;
+  color: var(--select-text, var(--text-normal, #222));
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s;
+  font-size: 0.95em;
+}
 
-  .wa-select-option:hover {
-    background: var(--select-option-hover, var(--background-modifier-hover, #f0f0ff));
-    box-shadow: none !important;
-  }
+.wa-select-option:hover {
+  background: var(--select-option-hover, #f0f0ff);
+  box-shadow: none !important;
+}
 
-  .wa-select-option.selected {
-    background: var(--select-option-active, var(--background-modifier-active, #eaeaff));
-    box-shadow: none !important;
-  }
+.wa-select-option.selected {
+  background: var(--select-option-active, #eaeaff);
+  box-shadow: none !important;
+}
 
-  .wa-select-option.active {
-    background: var(--select-option-active, var(--background-modifier-active, #eaeaff));
-    font-weight: 500;
-    box-shadow: none !important;
-  }
+.wa-select-option.active {
+  background: var(--select-option-active, #eaeaff);
+  font-weight: 500;
+  box-shadow: none !important;
+}

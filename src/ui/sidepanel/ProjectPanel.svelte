@@ -2,20 +2,29 @@
   import { readMetaFile } from "@/core/meta";
   import type { ProjectFileService } from "@/core/ProjectFileService";
   import type { ProjectService } from "@/core/ProjectService";
-  import { APP_NAME, debug, DEBUG_PREFIX, getMetaFileName } from "@/core/utils";
+  import { APP_NAME, debug, DEBUG_PREFIX, getMetaFileName, suppress } from "@/core/utils";
   import type { WriteAidManager } from "@/manager";
   import type { Chapter } from "@/types";
+  import BaseButton from "@/ui/components/BaseButton.svelte";
+  import IconButton from "@/ui/components/IconButton.svelte";
   import Select from "@/ui/components/Select.svelte";
   import { ConfirmDeleteModal } from "@/ui/modals/ConfirmDeleteModal";
   import { DuplicateDraftModal } from "@/ui/modals/DuplicateDraftModal";
   import { RenameChapterModal } from "@/ui/modals/RenameChapterModal";
-  import { ArrowDown, ArrowUp, BookOpenCheck, Copy, Eye, Pencil, RotateCcw, Trash } from "lucide-svelte";
+  import {
+    ArrowDown,
+    ArrowUp,
+    BookOpenCheck,
+    Copy,
+    Eye,
+    Pencil,
+    RotateCcw,
+    Trash,
+  } from "lucide-svelte";
   import { Notice } from "obsidian";
   import { onDestroy } from "svelte";
   import { flip } from "svelte/animate";
   import { cubicOut } from "svelte/easing";
-  import BaseButton from "../components/BaseButton.svelte";
-  import IconButton from "../components/IconButton.svelte";
 
   // Props passed from parent ItemView - Svelte 4 style
   export let manager: WriteAidManager;
@@ -198,7 +207,7 @@
   // Refresh chapters (multi-file projects)
   async function refreshChapters() {
     if (!manager || !projectFileService) return;
-    
+
     loadingChapters = true;
     const minSpin = new Promise((resolve) => setTimeout(resolve, 400));
     try {
@@ -363,7 +372,7 @@
     const newOrder = chapters.slice();
     [newOrder[i - 1], newOrder[i]] = [newOrder[i], newOrder[i - 1]];
     const ordered = newOrder.map((ch, idx) => ({
-      chapterName: ch.chapterName || '',
+      chapterName: ch.chapterName || "",
       order: idx + 1,
     }));
     await manager.reorderChapters(selectedValue, manager.activeDraft, ordered as any);
@@ -375,7 +384,7 @@
     const newOrder = chapters.slice();
     [newOrder[i], newOrder[i + 1]] = [newOrder[i + 1], newOrder[i]];
     const ordered = newOrder.map((ch, idx) => ({
-      chapterName: ch.chapterName || '',
+      chapterName: ch.chapterName || "",
       order: idx + 1,
     }));
     await manager.reorderChapters(selectedValue, manager.activeDraft, ordered as any);
@@ -389,15 +398,11 @@
 
   function renameChapterHandler(chapterName: string) {
     if (!selectedValue || !manager?.activeDraft) return;
-    const modal = new RenameChapterModal(
-      manager.app,
-      chapterName,
-      async (newName) => {
-        if (!manager?.activeDraft || !selectedValue) return;
-        await manager.renameChapter(selectedValue, manager.activeDraft, chapterName, newName);
-        await refreshChapters();
-      },
-    );
+    const modal = new RenameChapterModal(manager.app, chapterName, async (newName) => {
+      if (!manager?.activeDraft || !selectedValue) return;
+      await manager.renameChapter(selectedValue, manager.activeDraft, chapterName, newName);
+      await refreshChapters();
+    });
     modal.open();
   }
 
@@ -428,7 +433,7 @@
   async function handleCreateProjectClick() {
     if (!manager || !projectService) return;
     const app = manager.app;
-    const { CreateProjectModal } = await import('@/ui/modals/CreateProjectModal');
+    const { CreateProjectModal } = await import("@/ui/modals/CreateProjectModal");
     let projectPath: string | null = null;
     const modal = new CreateProjectModal(app, async (projectName, singleFile, initialDraftName) => {
       if (!projectName || !manager || !projectService) return;
@@ -437,20 +442,20 @@
         singleFile,
         initialDraftName,
         undefined,
-        manager.settings
+        manager.settings,
       );
       if (!projectPath) return;
       // Wait for the new project to appear in the list
       let newProjects: string[] = [];
       let newProject: string | null = null;
       for (let i = 0; i < 20; i++) {
-        await new Promise(res => setTimeout(res, 100));
+        await new Promise((res) => setTimeout(res, 100));
         newProjects = await refresh();
-        const found = newProjects.find(p => p === projectPath);
-        newProject = typeof found === 'string' ? found : null;
+        const found = newProjects.find((p) => p === projectPath);
+        newProject = typeof found === "string" ? found : null;
         if (newProject) break;
       }
-      if (typeof newProject === 'string' && newProject) {
+      if (typeof newProject === "string" && newProject) {
         activeProject = newProject;
         selected = { value: newProject, label: newProject };
         selectedValue = newProject;
@@ -472,7 +477,7 @@
 
   // Cleanup on destroy — must be called at component init time, not inside onMount
   onDestroy(() => {
-    try {
+    suppress(() => {
       if (
         manager &&
         typeof manager.removeActiveDraftListener === "function" &&
@@ -480,10 +485,8 @@
       ) {
         manager.removeActiveDraftListener(activeDraftListener);
       }
-    } catch (e) {
-      // ignore
-    }
-    try {
+    });
+    suppress(() => {
       if (
         manager &&
         typeof manager.removeActiveProjectListener === "function" &&
@@ -491,16 +494,14 @@
       ) {
         manager.removeActiveProjectListener(activeProjectListener);
       }
-    } catch (e) {
-      // ignore
-    }
+    });
   });
 </script>
 
 <div class="project-list wa-panel">
   <div class="wa-row justify-between">
-      <div class="wa-title">{APP_NAME} Projects</div>
-      <div>
+    <div class="wa-title">{APP_NAME} Projects</div>
+    <div>
       <IconButton
         ariaLabel="Refresh projects"
         clickHandler={() => refresh(true)}
@@ -514,9 +515,11 @@
 
   <div class="wa-row" style="margin: 18px 0 10px 0;">
     <BaseButton
+      title="Create New Project"
       clickHandler={handleCreateProjectClick}
       variant="primary"
-      style="width: 40%; margin: 0 auto;">New Project</BaseButton>
+      style="width: 40%; margin: 0 auto;">New Project</BaseButton
+    >
   </div>
 
   {#if projects.length === 0}
@@ -571,7 +574,9 @@
             </IconButton>
           </div>
           <div class="wa-button-group">
-            <BaseButton clickHandler={createDraft} variant="primary">New Draft</BaseButton>
+            <BaseButton title="New draft" clickHandler={createDraft} variant="primary"
+              >New Draft</BaseButton
+            >
             <IconButton
               ariaLabel="Refresh drafts"
               title={undefined}
@@ -615,7 +620,11 @@
                 {d}
               </div>
               <div class="wa-draft-actions">
-                <IconButton ariaLabel="Open draft" title={undefined} clickHandler={() => openDraft(d)}>
+                <IconButton
+                  ariaLabel="Open draft"
+                  title={undefined}
+                  clickHandler={() => openDraft(d)}
+                >
                   <Eye size={ICON_SIZE} />
                 </IconButton>
                 {#if activeDraft !== d}
@@ -662,8 +671,9 @@
         <div class="wa-row justify-between">
           <div class="wa-title">Chapters</div>
           <div class="wa-button-group">
-            <BaseButton clickHandler={() => (showCreateChapter = !showCreateChapter)} variant="primary"
-              >New Chapter</BaseButton
+            <BaseButton
+              clickHandler={() => (showCreateChapter = !showCreateChapter)}
+              variant="primary">New Chapter</BaseButton
             >
           </div>
         </div>
@@ -724,22 +734,22 @@
                 >
                 <IconButton
                   ariaLabel="Open chapter"
-                  title="Open chapter"
-                  clickHandler={() => openChapterHandler(ch.chapterName || '')}
+                  title={undefined}
+                  clickHandler={() => openChapterHandler(ch.chapterName || "")}
                 >
                   <Eye size={ICON_SIZE} />
                 </IconButton>
                 <IconButton
                   ariaLabel="Rename chapter"
-                  title="Rename chapter"
-                  clickHandler={() => renameChapterHandler(ch.chapterName || '')}
+                  title={undefined}
+                  clickHandler={() => renameChapterHandler(ch.chapterName || "")}
                 >
                   <Pencil size={ICON_SIZE} />
                 </IconButton>
                 <IconButton
                   ariaLabel="Delete chapter"
-                  title="Delete chapter"
-                  clickHandler={() => deleteChapterHandler(ch.chapterName || '')}
+                  title={undefined}
+                  clickHandler={() => deleteChapterHandler(ch.chapterName || "")}
                 >
                   <Trash size={ICON_SIZE} />
                 </IconButton>

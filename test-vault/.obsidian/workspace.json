@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Story/Drafts/Draft 3/draft3.md",
+                "file": "Story/Drafts/Draft 2/draft2.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "draft3"
+              "title": "draft2"
             }
           }
         ]
@@ -181,8 +181,8 @@
   },
   "active": "36a4b021559a3158",
   "lastOpenFiles": [
-    "Story/Drafts/Draft 2/draft2.md",
     "Story/Drafts/Draft 3/draft3.md",
+    "Story/Drafts/Draft 2/draft2.md",
     "Story/Drafts/Draft 2",
     "Story/Drafts/Draft 3",
     "novel/Drafts/Draft 1/Chapter 2.md",
