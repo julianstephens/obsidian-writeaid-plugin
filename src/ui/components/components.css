@@ -1,64 +1,6 @@
-/* Chakra-like design tokens (theming friendly) */
-:root {
-  --wa-bg: var(--background-primary, #ffffff);
-  --wa-surface: var(--background-modifier-hover, #f7f7fb);
-  --wa-muted: var(--text-muted, #6b7280);
-  --wa-text: var(--text-normal, #0f172a);
-  --wa-accent: var(--interactive-accent, #7c5cff);
-  --wa-border: rgba(15, 23, 42, 0.08);
-  --wa-radius: 8px;
-  --wa-gap: 8px;
-}
-
-/* Dark theme fallbacks */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --wa-bg: var(--background-primary, #0b0b0c);
-    --wa-surface: var(--background-modifier-hover, #121212);
-    --wa-muted: var(--text-muted, #9aa4b2);
-    --wa-text: var(--text-normal, #e6eef8);
-    --wa-accent: var(--interactive-accent, #8b5cf6);
-    --wa-border: rgba(255, 255, 255, 0.06);
-  }
-}
-
-.wa-panel {
-  background: var(--wa-bg);
-  color: var(--wa-text);
-  border-radius: var(--wa-radius);
-  padding: 12px;
-  /* box-shadow: 0 1px 0 rgba(15, 23, 42, 0.04); */
-}
-
-.writeaid-project-panel {
-  flex: none;
-  height: 100%;
-  width: 100%;
-}
-
-.view-content:has(+ .writeaid-project-panel) {
-  display: none;
-}
-
-.wa-panel-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--wa-gap);
-  margin-bottom: 8px;
-}
-
-.wa-title {
-  font-weight: 600;
-  font-size: 18px;
-}
-
-.wa-row {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  width: 100%;
-}
+/* ==========================================================================
+   WriteAid Component Styles (Non-theming)
+   ========================================================================== */
 
 .wa-button {
   background: transparent;
@@ -91,40 +33,6 @@
   border: 1px solid var(--wa-border);
   background: var(--wa-surface);
   color: var(--wa-text);
-}
-.wa-select {
-  appearance: none;
-  padding: 8px 10px;
-  border-radius: 6px;
-  border: 1px solid var(--wa-border);
-  background: var(--wa-surface);
-  color: var(--wa-text);
-}
-
-.wa-draft-list {
-  margin-top: 8px;
-}
-.wa-draft-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 6px 8px;
-  border-radius: 6px;
-}
-.wa-draft-item + .wa-draft-item {
-  margin-top: 6px;
-}
-.wa-draft-name {
-  font-weight: 500;
-}
-.wa-draft-actions {
-  display: flex;
-  gap: 6px;
-}
-
-.wa-unit {
-  color: var(--wa-muted);
-  margin-left: 6px;
 }
 
 /* Icon button */
@@ -214,15 +122,9 @@
   color: var(--wa-muted);
 }
 
-.svelte-select input[type="text"]:hover {
+/* .svelte-select input[type="text"]:hover {
   background-color: transparent;
-}
-
-.wa-button-group {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
+} */
 
 .wa-centered-modal {
   display: flex;

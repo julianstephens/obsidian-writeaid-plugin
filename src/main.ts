@@ -15,19 +15,20 @@ import { toggleProjectPanelCommand } from "@/commands/project/toggleProjectPanel
 import { updateProjectMetadataCommand } from "@/commands/project/updateProjectMetadataCommand";
 import { ProjectService } from "@/core/ProjectService";
 import {
-    APP_NAME,
-    asyncFilter,
-    debug,
-    DEBUG_PREFIX,
-    FILES,
-    FOLDERS,
-    getDraftsFolderName,
-    suppress,
-    suppressAsync,
-    WRITE_AID_ICON_NAME,
+  APP_NAME,
+  asyncFilter,
+  debug,
+  DEBUG_PREFIX,
+  FILES,
+  FOLDERS,
+  getDraftsFolderName,
+  suppress,
+  suppressAsync,
+  WRITE_AID_ICON_NAME,
 } from "@/core/utils";
 import { WriteAidManager } from "@/manager";
 import { WriteAidSettingTab } from "@/settings";
+import "@/styles/themes.css";
 import stylesText from "@/styles/writeaid.css?inline";
 import type { WriteAidSettings } from "@/types";
 import { ProjectPanelView, VIEW_TYPE_PROJECT_PANEL } from "@/ui/sidepanel/ProjectPanelView";

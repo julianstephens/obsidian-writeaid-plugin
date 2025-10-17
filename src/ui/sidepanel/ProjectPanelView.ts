@@ -12,7 +12,7 @@ export class ProjectPanelView extends ItemView {
   manager: WriteAidManager;
   projectService: ProjectService;
   projectFileService: ProjectFileService;
-  containerElInner: HTMLElement | null = null;
+  panelEl: HTMLElement | null = null;
   selectedProject: string | null = null;
   projectPanel: any;
 
@@ -37,7 +37,7 @@ export class ProjectPanelView extends ItemView {
   }
 
   async onOpen() {
-    this.containerElInner = this.containerEl.createDiv({
+    this.panelEl = this.contentEl.createEl('div', {
       cls: "writeaid-project-panel",
     });
 
@@ -53,7 +53,7 @@ export class ProjectPanelView extends ItemView {
 
       // Instantiate Svelte 4 component with props
       this.projectPanel = new ProjectPanel({
-        target: this.containerElInner,
+        target: this.panelEl,
         props: {
           manager: this.manager,
           projectService: this.projectService,

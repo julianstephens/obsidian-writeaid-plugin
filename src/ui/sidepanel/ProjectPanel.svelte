@@ -2,20 +2,15 @@
   import { readMetaFile } from "@/core/meta";
   import type { ProjectFileService } from "@/core/ProjectFileService";
   import type { ProjectService } from "@/core/ProjectService";
-  import { APP_NAME, debug, DEBUG_PREFIX, getMetaFileName } from "@/core/utils";
+  import { debug, DEBUG_PREFIX, getMetaFileName } from "@/core/utils";
   import type { WriteAidManager } from "@/manager";
   import type { Chapter } from "@/types";
-  import BaseButton from "@/ui/components/BaseButton.svelte";
-  import IconButton from "@/ui/components/IconButton.svelte";
+  import Select from "@/ui/components/Select.svelte";
   import { ConfirmDeleteModal } from "@/ui/modals/ConfirmDeleteModal";
   import { DuplicateDraftModal } from "@/ui/modals/DuplicateDraftModal";
   import { RenameChapterModal } from "@/ui/modals/RenameChapterModal";
-  import { ArrowDown, ArrowUp, BookOpenCheck, Copy, Eye, Pencil, RotateCcw, Trash } from "lucide-svelte";
   import { Notice } from "obsidian";
   import { onDestroy } from "svelte";
-  import Select from "svelte-select/no-styles/Select.svelte";
-  import { flip } from "svelte/animate";
-  import { cubicOut } from "svelte/easing";
 
   // Props passed from parent ItemView - Svelte 4 style
   export let manager: WriteAidManager;
@@ -498,7 +493,7 @@
 </script>
 
 <div class="project-list wa-panel">
-  <div class="wa-row justify-between">
+  <!-- <div class="wa-row justify-between">
       <div class="wa-title">{APP_NAME} Projects</div>
       <div>
       <IconButton
@@ -517,7 +512,7 @@
       clickHandler={handleCreateProjectClick}
       variant="primary"
       style="width: 40%; margin: 0 auto;">New Project</BaseButton>
-  </div>
+  </div> -->
 
   {#if projects.length === 0}
     <div class="wa-muted" style="margin: 4rem auto 0; font-size: 18px; width: fit-content;">
@@ -526,19 +521,18 @@
   {/if}
   {#if projects.length > 0}
     <div style="margin:20px 0;">
-      <label for="wa-project-select">Select project</label>
-      <div class="project-select-row">
+      <!-- <label for="wa-project-select">Select project</label> -->
+      <div class="wa-row">
         <Select
           name="wa-project-select"
-          class="wa-select"
+          bind:value={selected}
           items={projectOptions}
+          placeholder="Choose a project..."
           showChevron={true}
           {disabled}
           clearable={false}
           searchable={false}
-          placeholder="Choose a project..."
           containerStyles="background: var(--select-bg); color: var(--select-text); border: 1px solid var(--select-border); border-radius: none; min-height: 38px; box-shadow: none; font-size: 1em; transition: border 0.2s;"
-          bind:value={selected}
           on:select={(e) => {
             const item = e.detail;
             selected = item;
@@ -551,7 +545,7 @@
     </div>
   {/if}
 
-  {#if selectedValue}
+  <!-- {#if selectedValue}
     <div class="draft-controls" style="margin-top:16px;">
       <div class="wa-panel-header">
         <div class="wa-row justify-between">
@@ -751,24 +745,19 @@
         </div>
       {/if}
     </div>
-  {/if}
+  {/if} -->
 </div>
 
 <style>
   .project-list {
     padding: 8px;
   }
-  .project-select-row {
-    display: flex;
-    gap: 8px;
-    align-items: center;
-  }
   .create-inline {
     margin-top: 8px;
     justify-content: center;
   }
-  .wa-panel {
-    padding: 8px;
+  .wa-panel.project-list {
+    padding: 1em;
     height: 100%;
     border-radius: 0;
   }
