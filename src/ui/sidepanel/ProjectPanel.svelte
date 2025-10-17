@@ -70,12 +70,25 @@
     const activeDraftListener = (draft: string | null) => {
       activeDraft = draft;
       debug(`${DEBUG_PREFIX} active draft updated -> ${draft}`);
+      // Refresh chapters when active draft changes
+      refreshChapters();
     };
     manager.addActiveDraftListener(activeDraftListener);
 
     activeProjectListener = (project: string | null) => {
       activeProject = project;
       debug(`${DEBUG_PREFIX} active project updated -> ${project}`);
+      // Refresh everything when active project changes
+      if (project) {
+        refresh();
+      } else {
+        // Clear state when no project is active
+        selected = undefined;
+        selectedValue = null;
+        drafts = [];
+        chapters = [];
+        isMultiFileProject = false;
+      }
     };
     manager.addActiveProjectListener(activeProjectListener);
 
@@ -175,7 +188,10 @@
     await minSpin;
     loadingProjects = false;
     // Optionally, refresh drafts for the selected project
-    if (selectedValue) await refreshDrafts();
+    if (selectedValue) {
+      await refreshDrafts();
+      await refreshChapters();
+    }
     return newProjects;
   }
 
@@ -735,7 +751,7 @@
                 <IconButton
                   ariaLabel="Open chapter"
                   title={undefined}
-                  clickHandler={() => openChapterHandler(ch.chapterName || "")}
+                  clickHandler={() => openChapterHandler(ch.name)}
                 >
                   <Eye size={ICON_SIZE} />
                 </IconButton>

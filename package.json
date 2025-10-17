@@ -8,7 +8,7 @@
     "build": "vite build && cp manifest.json dist/",
     "dev:watch": "node ./scripts/dev-watch.js",
     "dev:copy": "node ./scripts/dev-watch.js --once",
-    "format": "prettier --write .",
+    "format": "prettier --write . --ignore-path .prettierignore",
     "lint": "pnpm exec eslint . --ext .ts,.svelte",
     "test": "pnpm build && node ./scripts/verify-manifest-commands.js"
   },
