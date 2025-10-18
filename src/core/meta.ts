@@ -112,7 +112,9 @@ export async function updateMetaStats(
             try {
               const content = await app.vault.read(file);
               const fmMatch = content.match(
-                new RegExp(`${FRONTMATTER_DELIMITER}\\s*\\n([\\s\\S]*?)\\n${FRONTMATTER_DELIMITER}`),
+                new RegExp(
+                  `${FRONTMATTER_DELIMITER}\\s*\\n([\\s\\S]*?)\\n${FRONTMATTER_DELIMITER}`,
+                ),
               );
               if (fmMatch) {
                 // Parse the frontmatter fields

@@ -187,11 +187,14 @@ Your chapter content...
 - `last_updated` (ISO 8601 timestamp): Creation and modification timestamp
   - **Purpose**: Tracks when chapter was created or last modified
   - **Generated**: ISO 8601 format (e.g., `2025-01-15T14:30:45Z`)
+  - **Format**: UTC time with `Z` suffix (always timezone-independent)
   - **Updated**: Automatically when chapter is modified
 
 **Ordering:** Chapters are sorted by `order` value for navigation and manuscript generation. When creating a new chapter, the order is automatically set to one more than the highest existing chapter order.
 
 **Metadata Maintenance:** The `last_updated` and `word_count` fields are automatically maintained by WriteAid as chapters are created and edited.
+
+**Note on Timestamps:** All timestamps are stored in UTC (the `Z` suffix means Zulu/UTC time). Your editor may display them in your local timezone, which could appear different from UTC. See [TIMEZONE_NOTES.md](TIMEZONE_NOTES.md) for details.
 
 ````
 ```
