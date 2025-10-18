@@ -410,24 +410,33 @@ export class ChapterFileService {
    * @returns true if the chapter has all required fields
    */
   private hasRequiredChapterFields(frontmatter: string): boolean {
-    // Check for the 3 minimum required fields (backward compatibility)
-    // Newer fields (draft_id, word_count, last_updated) are optional
+    // Check for all 6 required fields
     const hasId = /^id:\s*\S+/im.test(frontmatter);
     const hasOrder = /^order:\s*\d+/im.test(frontmatter);
     const hasChapterName = /^chapter_name:\s*\S+/im.test(frontmatter);
+    const hasDraftId = /^draft_id:\s*\S+/im.test(frontmatter);
+    const hasWordCount = /^word_count:\s*\d+/im.test(frontmatter);
+    const hasLastUpdated = /^last_updated:\s*\S+/im.test(frontmatter);
 
-    // Require the 3 basic fields; newer fields are optional for backward compatibility
-    return hasId && hasOrder && hasChapterName;
+    // Require all 6 fields for new chapter design
+    return hasId && hasOrder && hasChapterName && hasDraftId && hasWordCount && hasLastUpdated;
   }
 
   /**
    * Extract chapter metadata from frontmatter
    * @param frontmatter The frontmatter content (without delimiters)
-   * @returns Object with id, order, and chapterName or null if missing required fields
+   * @returns Object with all 6 required chapter fields or null if missing required fields
    */
   private extractChapterMetadata(
     frontmatter: string,
-  ): { id?: string; order?: number; chapterName?: string } | null {
+  ): {
+    id?: string;
+    order?: number;
+    chapterName?: string;
+    draftId?: string;
+    wordCount?: number;
+    lastUpdated?: string;
+  } | null {
     if (!this.hasRequiredChapterFields(frontmatter)) {
       return null;
     }
@@ -435,6 +444,9 @@ export class ChapterFileService {
     let id: string | undefined;
     let order: number | undefined;
     let chapterName: string | undefined;
+    let draftId: string | undefined;
+    let wordCount: number | undefined;
+    let lastUpdated: string | undefined;
 
     const lines = frontmatter.split(/\r?\n/);
     for (const line of lines) {
@@ -455,13 +467,23 @@ export class ChapterFileService {
         }
         if (val.length > 0) chapterName = val;
       }
+
+      const draftIdMatch = line.match(/^draft_id:\s*(.+?)$/i);
+      if (draftIdMatch) draftId = draftIdMatch[1].trim();
+
+      const wordCountMatch = line.match(/^word_count:\s*(\d+)/i);
+      if (wordCountMatch) wordCount = parseInt(wordCountMatch[1], 10);
+
+      const lastUpdatedMatch = line.match(/^last_updated:\s*(.+?)$/i);
+      if (lastUpdatedMatch) lastUpdated = lastUpdatedMatch[1].trim();
     }
 
-    return { id, order, chapterName };
+    return { id, order, chapterName, draftId, wordCount, lastUpdated };
   }
 
   /**
-   * Check if a file is a valid chapter (has required frontmatter fields)
+   * Check if a file is a valid chapter (has all required frontmatter fields)
+   * Requires all 6 fields: id, order, chapter_name, draft_id, word_count, last_updated
    */
   isValidChapter(content: string): boolean {
     const fmMatch = content.match(FRONTMATTER_REGEX);
