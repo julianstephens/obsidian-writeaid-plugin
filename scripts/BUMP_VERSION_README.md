@@ -61,16 +61,19 @@ Typically, you would:
 ## Troubleshooting
 
 **"Could not retrieve git history"**
+
 - This is a warning, not an error
 - Occurs if the previous version tag doesn't exist
 - The script will still create the version bump with a generic changelog entry
 
 **"Failed to push tag"**
+
 - Ensure you have push permissions to the remote repository
 - Check your git configuration and SSH keys
 - You can manually push later with: `git push origin v<version>`
 
 **Version already exists**
+
 - If a version hasn't changed, the script will error
 - This prevents accidental duplicate versions
 

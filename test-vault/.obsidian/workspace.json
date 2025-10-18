@@ -13,7 +13,7 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Novel/meta.md",
+                "file": "Move/meta.md",
                 "mode": "source",
                 "source": false
               },
@@ -181,9 +181,14 @@
   },
   "active": "5280a970130968c9",
   "lastOpenFiles": [
+    "Novel/meta.md",
+    "Move/drafts/Draft 1/chapter1.md",
+    "Move/drafts/Draft 1",
+    "Move/meta.md",
+    "Move/drafts",
+    "Move",
     "Novel/drafts/Draft 1/chapter2.md",
     "Novel/drafts/Draft 1/chapter1.md",
-    "Novel/meta.md",
     "Novel/manuscripts/Draft 1.md",
     "Novel/manuscripts",
     "Novel/drafts/Draft 1/chapter3.md",
@@ -207,15 +212,10 @@
     "Test 2/drafts",
     "Test 2",
     "Test/drafts/Draft 1/draft1.md",
-    "Test/drafts/Draft 1",
-    "Test/drafts",
-    "Test",
     "Story/Drafts/Draft 2/draft2.md",
     "Story/Drafts/Draft 4/draft4.md",
     "Story/Drafts/Draft 3/draft3.md",
     "Story/Drafts/c1444281-337a-48c9-8e56-13f910865a88/draft2.md",
-    "Story/Drafts/Draft 4/draft2.md",
-    "Story/Manuscripts/Draft 3.md",
-    "Story/Drafts/Draft 1/draft2.md"
+    "Story/Drafts/Draft 4/draft2.md"
   ]
 }

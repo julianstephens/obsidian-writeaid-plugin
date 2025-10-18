@@ -5,6 +5,10 @@ button:hover {
   cursor: pointer;
 }
 
+button:disabled {
+  cursor: not-allowed;
+}
+
 .writeaid-ribbon {
   padding-left: 6px;
 }
@@ -55,6 +59,11 @@ button:hover {
   100% {
     transform: rotate(360deg);
   }
+}
+
+/* Apply spinning animation to icon buttons */
+.wa-icon-btn.spinning svg {
+  animation: spin 1s linear infinite;
 }
 
 /* Slider and unit styling for panel debounce control */

@@ -258,7 +258,7 @@
     }
     const previousActiveDraft = activeDraft;
     loadingDrafts = true;
-    const minSpin = new Promise((resolve) => setTimeout(resolve, 400));
+    const minSpin = new Promise((resolve) => setTimeout(resolve, 600));
     try {
       // Use the new projectFileService for listing drafts
       drafts = projectFileService.drafts.listDrafts(selectedValue) || [];
@@ -309,7 +309,7 @@
     if (!manager || !projectFileService) return;
 
     loadingChapters = true;
-    const minSpin = new Promise((resolve) => setTimeout(resolve, 400));
+    const minSpin = new Promise((resolve) => setTimeout(resolve, 600));
     try {
       if (!selectedValue) {
         chapters = [];
@@ -796,6 +796,15 @@
               clickHandler={() => (showCreateChapter = !showCreateChapter)}
               variant="primary">New Chapter</BaseButton
             >
+            <IconButton
+              ariaLabel="Refresh chapters"
+              title={undefined}
+              clickHandler={refreshChapters}
+              disabled={loadingChapters}
+              spinning={loadingChapters}
+            >
+              <RotateCcw />
+            </IconButton>
           </div>
         </div>
       </div>
@@ -846,12 +855,13 @@
                 <BaseButton
                   title="Move chapter up"
                   clickHandler={() => reorderChaptersUp(i)}
-                  disabled={i === 0}><ArrowUp /></BaseButton
+                  disabled={chapters.length <= 1 || i === 0}><ArrowUp /></BaseButton
                 >
                 <BaseButton
                   title="Move chapter down"
                   clickHandler={() => reorderChaptersDown(i)}
-                  disabled={i === chapters.length - 1}><ArrowDown /></BaseButton
+                  disabled={chapters.length <= 1 || i === chapters.length - 1}
+                  ><ArrowDown /></BaseButton
                 >
                 <IconButton
                   ariaLabel="Open chapter"

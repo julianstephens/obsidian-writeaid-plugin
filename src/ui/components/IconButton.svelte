@@ -8,24 +8,11 @@
 </script>
 
 <button
-  class={`wa-icon-btn clickable-icon ${variant === "ghost" ? "ghost" : ""}`}
+  class={`wa-icon-btn clickable-icon ${variant === "ghost" ? "ghost" : ""} ${spinning ? "spinning" : ""}`}
   aria-label={ariaLabel}
   {disabled}
   {title}
   on:click={clickHandler}
 >
-  <span class={spinning ? "spinning" : ""}>
-    <slot />
-  </span>
+  <slot />
 </button>
-
-<style>
-  .spinning {
-    animation: spin 1s linear infinite;
-  }
-  @keyframes spin {
-    100% {
-      transform: rotate(360deg);
-    }
-  }
-</style>
