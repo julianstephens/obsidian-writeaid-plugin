@@ -509,7 +509,3 @@ Backups are stored as ZIP archives with this naming:
 - For novels with 50+ chapters, consider pagination
 - Refresh panel debounce: increase if experiencing lag
 - Consider archiving completed projects to separate folders
-
-```
-
-```

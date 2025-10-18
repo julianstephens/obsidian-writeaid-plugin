@@ -427,9 +427,7 @@ export class ChapterFileService {
    * @param frontmatter The frontmatter content (without delimiters)
    * @returns Object with all 6 required chapter fields or null if missing required fields
    */
-  private extractChapterMetadata(
-    frontmatter: string,
-  ): {
+  private extractChapterMetadata(frontmatter: string): {
     id?: string;
     order?: number;
     chapterName?: string;
