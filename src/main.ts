@@ -3,16 +3,20 @@ import { createBackupCommand } from "@/commands/backup/createBackupCommand";
 import { deleteBackupCommand } from "@/commands/backup/deleteBackupCommand";
 import { listBackupsCommand } from "@/commands/backup/listBackupsCommand";
 import { createNewDraftCommand } from "@/commands/draft/createNewDraftCommand";
+import { createOutlineCommand } from "@/commands/draft/createOutlineCommand";
 import { generateManuscriptCommand } from "@/commands/draft/generateManuscriptCommand";
+import { initializeDraftFileCommand } from "@/commands/draft/initializeDraftFileCommand";
 import { switchDraftCommand } from "@/commands/draft/switchDraftCommand";
 import { navigateToNextChapterCommand } from "@/commands/navigation/navigateToNextChapterCommand";
 import { navigateToPreviousChapterCommand } from "@/commands/navigation/navigateToPreviousChapterCommand";
 import { convertSingleToMultiFileProjectCommand } from "@/commands/project/convertSingleToMultiFileProjectCommand";
 import { createNewProjectCommand } from "@/commands/project/createNewProjectCommand";
+import { openProjectMetaCommand } from "@/commands/project/openProjectMetaCommand";
 import { selectActiveProjectCommand } from "@/commands/project/selectActiveProjectCommand";
 import { toggleProjectPanelCommand } from "@/commands/project/toggleProjectPanelCommand";
 import { updateProjectMetadataCommand } from "@/commands/project/updateProjectMetadataCommand";
 import { ProjectService } from "@/core/ProjectService";
+import { readMetaFile } from "@/core/meta";
 import {
   APP_NAME,
   asyncFilter,
@@ -21,16 +25,29 @@ import {
   FILES,
   FOLDERS,
   getDraftsFolderName,
+  getMetaFileName,
   suppress,
   suppressAsync,
   WRITE_AID_ICON_NAME,
 } from "@/core/utils";
 import { WriteAidManager } from "@/manager";
 import { WriteAidSettingTab } from "@/settings";
+import themesText from "@/styles/themes.css?inline";
 import stylesText from "@/styles/writeaid.css?inline";
 import type { WriteAidSettings } from "@/types";
 import { ProjectPanelView, VIEW_TYPE_PROJECT_PANEL } from "@/ui/sidepanel/ProjectPanelView";
 import { Plugin, TFolder } from "obsidian";
+
+// Force browser environment for Svelte 5 compatibility
+// Svelte 5 checks for server environment and disables client-side features in SSR mode
+// We need to ensure it doesn't detect a server context in the Obsidian plugin environment
+if (typeof globalThis !== "undefined") {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const global = globalThis as any;
+  if (!global.__BROWSER__) {
+    global.__BROWSER__ = true;
+  }
+}
 
 // Helper function to truncate long project names for status bar display
 function truncateProjectName(projectName: string, maxLength: number = 20): string {
@@ -41,9 +58,35 @@ function truncateProjectName(projectName: string, maxLength: number = 20): strin
 }
 
 const DEFAULT_SETTINGS: WriteAidSettings = {
-  draftOutlineTemplate: "# Outline for {{draftName}}",
-  planningTemplate: "# Planning: {{projectName}}\n\n- [ ] ...",
-  chapterTemplate: "# {{chapterTitle}}\n\n",
+  outlineTemplate: `# {{draftName}} Outline
+
+## Overview
+Brief description of the story goes here.
+
+## Characters
+- Character 1: Description
+- Character 2: Description
+
+## Plot Points
+- Opening: 
+- Middle: 
+- Climax: 
+- Resolution: 
+
+## Chapters
+- Chapter 1: Title
+- Chapter 2: Title
+- Chapter 3: Title`,
+  chapterTemplate: `# {{chapterName}}
+
+## Summary
+Chapter summary goes here.
+
+## Scene 1
+Scene content goes here.
+
+## Scene 2
+Scene content goes here.`,
   manuscriptNameTemplate: "{{draftName}}",
   slugStyle: "compact",
   ribbonPlacement: "left",
@@ -156,10 +199,14 @@ export default class WriteAidPlugin extends Plugin {
         for (const draftFolder of draftsFolder.children) {
           if (draftFolder instanceof TFolder) {
             const draftPath = `${draftsFolderPath}/${draftFolder.name}`;
-            await this.manager.projectFileService.backups.clearOldBackups(
-              draftPath,
-              this.manager.settings,
-            );
+            const draftId = await this.manager.projectFileService.drafts.getDraftId(draftPath);
+            if (draftId) {
+              await this.manager.projectFileService.backups.clearOldBackups(
+                draftPath,
+                draftId,
+                this.manager.settings,
+              );
+            }
           }
         }
       }
@@ -181,43 +228,65 @@ export default class WriteAidPlugin extends Plugin {
         : undefined,
     );
 
+    debug(`${DEBUG_PREFIX} Manager created:`, !!this.manager);
+
     // Only instantiate ProjectService once
     const projectService = new ProjectService(this.app);
 
     this.app.workspace.onLayoutReady(async () => {
-      // Ensure an active project is always selected on startup if projects exist
-      const projects = await projectService.listProjects();
+      // Ensure an active project is always selected on startup if projects exist and setting is enabled
       let toActivate: string | null = null;
-      if (projects.length === 1) {
-        toActivate = projects[0];
-      } else if (projects.length > 1) {
-        // Use last active if it exists in the list, else first
-        const lastActiveRaw = this.settings.activeProject;
-        const lastActive = lastActiveRaw?.trim().replace(/^\/+/, "").replace(/\/+$/, "");
-        debug(
-          `${DEBUG_PREFIX} lastActiveRaw='${lastActiveRaw}', normalized='${lastActive}', includes=${lastActive && projects.includes(lastActive)}`,
-        );
-        if (lastActive && projects.includes(lastActive)) {
-          toActivate = lastActive;
-        } else {
+
+      if (this.settings.autoSelectProjectOnStartup !== false) {
+        const projects = await projectService.listProjects();
+        if (projects.length === 1) {
           toActivate = projects[0];
-        }
-      } else if (projects.length === 0) {
-        // No valid projects found, but check if saved active project exists and has meta.md
-        const lastActiveRaw = this.settings.activeProject;
-        const lastActive = lastActiveRaw?.trim().replace(/^\/+/, "").replace(/\/+$/, "");
-        const isValidProject = await projectService.isProjectFolder(lastActiveRaw || "");
-        if (isValidProject) {
+        } else if (projects.length > 1) {
+          // Use last active if it exists in the list, else first
+          const lastActiveRaw = this.settings.activeProject;
+          const lastActive = lastActiveRaw?.trim().replace(/^\/+/, "").replace(/\/+$/, "");
           debug(
-            `${DEBUG_PREFIX} activating saved project '${lastActive}' as it exists and has valid meta file`,
+            `${DEBUG_PREFIX} lastActiveRaw='${lastActiveRaw}', normalized='${lastActive}', includes=${lastActive && projects.includes(lastActive)}`,
           );
-          toActivate = lastActive ?? null;
+          if (lastActive && projects.includes(lastActive)) {
+            toActivate = lastActive;
+          } else {
+            toActivate = projects[0];
+          }
+        } else if (projects.length === 0) {
+          // No valid projects found, but check if saved active project exists and has meta.md
+          const lastActiveRaw = this.settings.activeProject;
+          const lastActive = lastActiveRaw?.trim().replace(/^\/+/, "").replace(/\/+$/, "");
+          const isValidProject = await projectService.isProjectFolder(lastActiveRaw || "");
+          if (isValidProject) {
+            debug(
+              `${DEBUG_PREFIX} activating saved project '${lastActive}' as it exists and has valid meta file`,
+            );
+            toActivate = lastActive ?? null;
+          }
         }
       }
+
       debug(`${DEBUG_PREFIX} toActivate='${toActivate}'`);
       if (toActivate) {
         await this.manager.setActiveProject(toActivate);
         this.settings.activeProject = toActivate;
+
+        // Auto-restore the active draft for this project (Phase 8: Startup Draft Restoration)
+        const projectMeta = await readMetaFile(
+          this.app,
+          `${toActivate}/${getMetaFileName(this.settings)}`,
+        );
+        if (projectMeta?.current_active_draft) {
+          const drafts = this.manager.listDrafts(toActivate);
+          if (drafts.includes(projectMeta.current_active_draft)) {
+            debug(
+              `${DEBUG_PREFIX} auto-restoring draft '${projectMeta.current_active_draft}' for project '${toActivate}'`,
+            );
+            await this.manager.setActiveDraft(projectMeta.current_active_draft, toActivate, false);
+          }
+        }
+
         await this.saveSettings();
         // open the panel only if user has enabled auto-open
         if (this.settings.autoOpenPanelOnStartup) {
@@ -261,7 +330,7 @@ export default class WriteAidPlugin extends Plugin {
       if (!this.waStyleEl) {
         this.waStyleEl = document.createElement("style");
         this.waStyleEl.setAttribute("data-writeaid-style", "");
-        this.waStyleEl.textContent = stylesText as unknown as string;
+        this.waStyleEl.textContent = themesText + stylesText;
         this.waStyleEl.classList.add("writeaid-plugin-style");
         document.head.appendChild(this.waStyleEl);
       }
@@ -295,7 +364,11 @@ export default class WriteAidPlugin extends Plugin {
     }
 
     // register side panel view
-    this.registerView(VIEW_TYPE_PROJECT_PANEL, (leaf) => new ProjectPanelView(leaf, this.app));
+    debug(`${DEBUG_PREFIX} Registering ProjectPanelView with manager:`, !!this.manager);
+    this.registerView(VIEW_TYPE_PROJECT_PANEL, (leaf) => {
+      debug(`${DEBUG_PREFIX} Creating ProjectPanelView instance with manager:`, !!this.manager);
+      return new ProjectPanelView(leaf, this.app, this.manager);
+    });
 
     const ribbonEl = this.addRibbonIcon(WRITE_AID_ICON_NAME, `${APP_NAME} Projects`, () => {});
     ribbonEl.classList.add("writeaid-ribbon");
@@ -374,6 +447,12 @@ export default class WriteAidPlugin extends Plugin {
     });
 
     this.addCommand({
+      id: "create-outline",
+      name: "Create Outline",
+      callback: () => createOutlineCommand(this.manager),
+    });
+
+    this.addCommand({
       id: "create-new-project",
       name: "Create New Project",
       callback: createNewProjectCommand(this.manager),
@@ -395,6 +474,12 @@ export default class WriteAidPlugin extends Plugin {
       id: "select-active-project",
       name: "Select Active Project",
       callback: selectActiveProjectCommand(this.manager),
+    });
+
+    this.addCommand({
+      id: "open-project-meta",
+      name: "Open Project Meta",
+      callback: openProjectMetaCommand(this.manager),
     });
 
     this.addCommand({
@@ -452,6 +537,12 @@ export default class WriteAidPlugin extends Plugin {
       id: "clear-old-backups",
       name: "Clear Old Backups",
       callback: clearOldBackupsCommand(this.manager),
+    });
+
+    this.addCommand({
+      id: "initialize-draft-file",
+      name: "Initialize Draft File Metadata",
+      callback: initializeDraftFileCommand(this.manager),
     });
 
     this.addSettingTab(new WriteAidSettingTab(this.app, this));

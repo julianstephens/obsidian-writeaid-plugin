@@ -3,6 +3,7 @@ import {
   DEBUG_PREFIX,
   FRONTMATTER_DELIMITER,
   FRONTMATTER_REGEX,
+  generateDraftId,
   getDraftsFolderName,
   MARKDOWN_FILE_EXTENSION,
   slugifyDraftName,
@@ -101,6 +102,15 @@ export class ChapterFileService {
             debug(
               `${DEBUG_PREFIX} ChapterFileService.listChapters: content length ${content.length}`,
             );
+
+            // Check if this is a valid chapter (has all required fields: id, order, chapter_name)
+            if (!this.isValidChapter(content)) {
+              debug(
+                `${DEBUG_PREFIX} ChapterFileService.listChapters: ${file.path} is not a valid chapter (missing required fields)`,
+              );
+              return;
+            }
+
             const fmMatch = content.match(FRONTMATTER_REGEX);
             let order: number | undefined = undefined;
             let chapterName: string | undefined = undefined;
@@ -129,7 +139,9 @@ export class ChapterFileService {
               `${DEBUG_PREFIX} ChapterFileService.listChapters: parsed order=${order}, chapterName=${chapterName}`,
             );
             const chapName =
-              chapterName && chapterName.length > 0 ? chapterName : file.name.replace(new RegExp(`\\${MARKDOWN_FILE_EXTENSION}$`), "");
+              chapterName && chapterName.length > 0
+                ? chapterName
+                : file.name.replace(new RegExp(`\\${MARKDOWN_FILE_EXTENSION}$`), "");
             const chapOrder = typeof order === "number" && !isNaN(order) ? order : 0;
             debug(
               `${DEBUG_PREFIX} ChapterFileService.listChapters: adding chapter ${file.name} with name ${chapName}, order ${chapOrder}`,
@@ -156,12 +168,22 @@ export class ChapterFileService {
     draftName: string,
     chapterName: string,
     settings?: WriteAidSettings,
+    draftId?: string,
   ) {
+    debug(
+      `${DEBUG_PREFIX} createChapter called: chapterName=${chapterName}, draft=${draftName}, draftId=${draftId}`,
+    );
     const project = this.resolveProjectPath(projectPath);
-    if (!project) return false;
+    if (!project) {
+      debug(`${DEBUG_PREFIX} createChapter: no project resolved`);
+      return false;
+    }
     // Find the drafts folder, case-insensitively
     const draftsFolderName = this.getDraftsFolderName(project);
-    if (!draftsFolderName) return false;
+    if (!draftsFolderName) {
+      debug(`${DEBUG_PREFIX} createChapter: no drafts folder found`);
+      return false;
+    }
     const draftFolder = `${project}/${draftsFolderName}/${draftName}`;
     const slug = slugifyDraftName(
       chapterName,
@@ -169,22 +191,36 @@ export class ChapterFileService {
     );
     const fileName = `${slug}${MARKDOWN_FILE_EXTENSION}`;
     const filePath = `${draftFolder}/${fileName}`;
-    if (this.app.vault.getAbstractFileByPath(filePath)) return false;
+    if (this.app.vault.getAbstractFileByPath(filePath)) {
+      debug(`${DEBUG_PREFIX} createChapter: file already exists at ${filePath}`);
+      return false;
+    }
     let maxOrder = 0;
+    let existingDraftId: string | null = null;
     const folder = this.app.vault.getAbstractFileByPath(draftFolder);
     if (folder && folder instanceof TFolder) {
       for (const file of folder.children) {
         if (file instanceof TFile && file.extension === MARKDOWN_FILE_EXTENSION.slice(1)) {
           await suppressAsync(async () => {
             const content = await this.app.vault.read(file);
-            const fmMatch = content.match(FRONTMATTER_REGEX);
-            if (fmMatch) {
-              const lines = fmMatch[1].split(/\r?\n/);
-              for (const line of lines) {
-                const m = line.match(/^order:\s*(\d+)/i);
-                if (m) {
-                  const ord = parseInt(m[1], 10);
-                  if (!isNaN(ord) && ord > maxOrder) maxOrder = ord;
+            // Only count order from valid chapters
+            if (this.isValidChapter(content)) {
+              const fmMatch = content.match(FRONTMATTER_REGEX);
+              if (fmMatch) {
+                const lines = fmMatch[1].split(/\r?\n/);
+                for (const line of lines) {
+                  const m = line.match(/^order:\s*(\d+)/i);
+                  if (m) {
+                    const ord = parseInt(m[1], 10);
+                    if (!isNaN(ord) && ord > maxOrder) maxOrder = ord;
+                  }
+                  // Extract draft ID from the first valid chapter found
+                  if (!existingDraftId) {
+                    const idMatch = line.match(/^id:\s*(.+)/i);
+                    if (idMatch) {
+                      existingDraftId = idMatch[1].trim();
+                    }
+                  }
                 }
               }
             }
@@ -194,18 +230,32 @@ export class ChapterFileService {
     }
     const order = maxOrder + 1;
     let title = `# ${chapterName}`;
-    const frontmatter = `${FRONTMATTER_DELIMITER}\norder: ${order}\nchapter_name: ${JSON.stringify(chapterName)}\n${FRONTMATTER_DELIMITER}\n`;
-    await this.app.vault.create(filePath, `${frontmatter}\n${title}\n\n`);
+    // Create frontmatter with all three required fields: id, order, chapter_name
+    // If draftId is not provided, try to use existing draft ID from other chapters
+    // Otherwise, generate a new one
+    const finalDraftId = draftId || existingDraftId || generateDraftId();
+    let frontmatter = `${FRONTMATTER_DELIMITER}\nid: ${finalDraftId}\norder: ${order}\nchapter_name: ${JSON.stringify(chapterName)}\n${FRONTMATTER_DELIMITER}\n`;
+    await this.app.vault.create(filePath, `${frontmatter}${title}\n\n`);
+    debug(
+      `${DEBUG_PREFIX} createChapter: created ${filePath} with order ${order}, chapter_name "${chapterName}", and draft id ${finalDraftId}`,
+    );
     return true;
   }
 
   /** Delete a chapter file from a draft folder. */
   async deleteChapter(projectPath: string, draftName: string, chapterName: string) {
+    debug(`${DEBUG_PREFIX} deleteChapter called: chapterName=${chapterName}, draft=${draftName}`);
     const project = this.resolveProjectPath(projectPath);
-    if (!project) return false;
+    if (!project) {
+      debug(`${DEBUG_PREFIX} deleteChapter: no project resolved`);
+      return false;
+    }
     // Find the drafts folder, case-insensitively
     const draftsFolderName = this.getDraftsFolderName(project);
-    if (!draftsFolderName) return false;
+    if (!draftsFolderName) {
+      debug(`${DEBUG_PREFIX} deleteChapter: no drafts folder found`);
+      return false;
+    }
     const draftFolder = `${project}/${draftsFolderName}/${draftName}`;
     const fileName = `${chapterName}${MARKDOWN_FILE_EXTENSION}`;
     const filePath = `${draftFolder}/${fileName}`;
@@ -238,16 +288,26 @@ export class ChapterFileService {
 
   /** Rename a chapter file and/or update its short name. */
   async renameChapter(projectPath: string, draftName: string, oldName: string, newName: string) {
+    debug(`${DEBUG_PREFIX} renameChapter called: ${oldName} -> ${newName}`);
     const project = this.resolveProjectPath(projectPath);
-    if (!project) return false;
+    if (!project) {
+      debug(`${DEBUG_PREFIX} renameChapter: no project resolved`);
+      return false;
+    }
     // Find the drafts folder, case-insensitively
     const draftsFolderName = this.getDraftsFolderName(project);
-    if (!draftsFolderName) return false;
+    if (!draftsFolderName) {
+      debug(`${DEBUG_PREFIX} renameChapter: no drafts folder found`);
+      return false;
+    }
     const draftFolder = `${project}/${draftsFolderName}/${draftName}`;
     const oldFile = `${draftFolder}/${oldName}${MARKDOWN_FILE_EXTENSION}`;
     const newFile = `${draftFolder}/${newName}${MARKDOWN_FILE_EXTENSION}`;
     const file = this.app.vault.getAbstractFileByPath(oldFile);
-    if (!file || !(file instanceof TFile)) return false;
+    if (!file || !(file instanceof TFile)) {
+      debug(`${DEBUG_PREFIX} renameChapter: file not found at ${oldFile}`);
+      return false;
+    }
     let content = await this.app.vault.read(file);
     let title = `# ${newName}`;
 
@@ -312,5 +372,66 @@ export class ChapterFileService {
       }
     }
     return null;
+  }
+
+  /**
+   * Check if a chapter file has all required frontmatter fields: id, order, chapter_name
+   * @param frontmatter The frontmatter content (without delimiters)
+   * @returns true if the chapter has all required fields
+   */
+  private hasRequiredChapterFields(frontmatter: string): boolean {
+    const hasId = /^id:\s*\S+/im.test(frontmatter);
+    const hasOrder = /^order:\s*\d+/im.test(frontmatter);
+    const hasChapterName = /^chapter_name:\s*\S+/im.test(frontmatter);
+    return hasId && hasOrder && hasChapterName;
+  }
+
+  /**
+   * Extract chapter metadata from frontmatter
+   * @param frontmatter The frontmatter content (without delimiters)
+   * @returns Object with id, order, and chapterName or null if missing required fields
+   */
+  private extractChapterMetadata(
+    frontmatter: string,
+  ): { id?: string; order?: number; chapterName?: string } | null {
+    if (!this.hasRequiredChapterFields(frontmatter)) {
+      return null;
+    }
+
+    let id: string | undefined;
+    let order: number | undefined;
+    let chapterName: string | undefined;
+
+    const lines = frontmatter.split(/\r?\n/);
+    for (const line of lines) {
+      const idMatch = line.match(/^id:\s*(.+?)$/i);
+      if (idMatch) id = idMatch[1].trim();
+
+      const orderMatch = line.match(/^order:\s*(\d+)/i);
+      if (orderMatch) order = parseInt(orderMatch[1], 10);
+
+      const nameMatch = line.match(/^chapter_name:\s*(.*)$/i);
+      if (nameMatch) {
+        let val = nameMatch[1].trim();
+        if (
+          (val.startsWith('"') && val.endsWith('"')) ||
+          (val.startsWith("'") && val.endsWith("'"))
+        ) {
+          val = val.slice(1, -1);
+        }
+        if (val.length > 0) chapterName = val;
+      }
+    }
+
+    return { id, order, chapterName };
+  }
+
+  /**
+   * Check if a file is a valid chapter (has required frontmatter fields)
+   */
+  isValidChapter(content: string): boolean {
+    const fmMatch = content.match(FRONTMATTER_REGEX);
+    if (!fmMatch) return false;
+    return this.hasRequiredChapterFields(fmMatch[1]);
   }
 }

@@ -1,3 +1,4 @@
+import { debug, DEBUG_PREFIX } from "@/core/utils";
 import { App, Modal } from "obsidian";
 
 export class ConfirmDeleteModal extends Modal {
@@ -22,10 +23,12 @@ export class ConfirmDeleteModal extends Modal {
     const confirmBtn = buttonRow.createEl("button", { text: "Delete", cls: "mod-cta wa-button" });
     const cancelBtn = buttonRow.createEl("button", { text: "Cancel", cls: "wa-button" });
     confirmBtn.onclick = async () => {
+      debug(`${DEBUG_PREFIX} ConfirmDeleteModal: confirmed delete for ${this.type} "${this.name}"`);
       this.close();
       await this.onConfirm();
     };
     cancelBtn.onclick = () => {
+      debug(`${DEBUG_PREFIX} ConfirmDeleteModal: cancelled delete for ${this.type} "${this.name}"`);
       this.close();
     };
   }

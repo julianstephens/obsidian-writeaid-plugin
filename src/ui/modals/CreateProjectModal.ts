@@ -1,3 +1,4 @@
+import { debug, DEBUG_PREFIX } from "@/core/utils";
 import type { App } from "obsidian";
 import { Modal, Setting } from "obsidian";
 
@@ -41,6 +42,9 @@ export class CreateProjectModal extends Modal {
         .setButtonText("Create Project")
         .setCta()
         .onClick(() => {
+          debug(
+            `${DEBUG_PREFIX} CreateProjectModal: creating project "${projectName}", singleFile: ${singleFile}, initialDraftName: ${initialDraftName}`,
+          );
           this.close();
           this.onSubmit(projectName, singleFile, initialDraftName || undefined);
         }),

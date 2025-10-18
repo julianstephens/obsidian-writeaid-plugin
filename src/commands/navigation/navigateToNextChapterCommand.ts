@@ -4,16 +4,21 @@ import { Notice } from "obsidian";
 
 export function navigateToNextChapterCommand(manager: WriteAidManager) {
   return async () => {
+    debug(`${DEBUG_PREFIX} Navigate to next chapter command called`);
     const activeFile = manager.app.workspace.getActiveFile();
     if (!activeFile) {
+      debug(`${DEBUG_PREFIX} navigateToNextChapter: no active file`);
       new Notice("No file is currently open.");
       return;
     }
 
     const path = activeFile.path;
     const draftsFolderName = getDraftsFolderName(manager.settings);
-    const match = path.match(new RegExp(`^(.+)/${draftsFolderName}/(.+)/(.+)\\${MARKDOWN_FILE_EXTENSION}$`));
+    const match = path.match(
+      new RegExp(`^(.+)/${draftsFolderName}/(.+)/(.+)\\${MARKDOWN_FILE_EXTENSION}$`),
+    );
     if (!match) {
+      debug(`${DEBUG_PREFIX} navigateToNextChapter: file is not a chapter`);
       new Notice("The current file is not a chapter.");
       return;
     }
@@ -23,6 +28,9 @@ export function navigateToNextChapterCommand(manager: WriteAidManager) {
     const chapterFileName = match[3];
 
     try {
+      debug(
+        `${DEBUG_PREFIX} navigateToNextChapter: looking for next chapter after ${chapterFileName}`,
+      );
       const chapters = await manager.projectFileService.chapters.listChapters(
         projectPath,
         draftName,

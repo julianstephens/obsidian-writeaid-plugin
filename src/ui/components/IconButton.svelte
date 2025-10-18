@@ -3,7 +3,7 @@
   export let variant: "ghost" | "default" = "default";
   export let disabled: boolean = false;
   export let title: string | undefined;
-  export let onclick: ((e: MouseEvent) => void) | undefined = undefined;
+  export let clickHandler: ((e: MouseEvent) => void) | undefined = undefined;
   export let spinning: boolean = false;
 </script>
 
@@ -12,7 +12,7 @@
   aria-label={ariaLabel}
   {disabled}
   {title}
-  {onclick}
+  on:click={clickHandler}
 >
   <span class={spinning ? "spinning" : ""}>
     <slot />

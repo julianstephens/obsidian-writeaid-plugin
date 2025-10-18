@@ -14,6 +14,11 @@
       "hotkeys": [{ "modifiers": ["Mod", "Alt"], "key": "D" }]
     },
     {
+      "id": "create-outline",
+      "name": "Create Outline",
+      "hotkeys": [{ "modifiers": ["Mod", "Alt"], "key": "O" }]
+    },
+    {
       "id": "create-new-project",
       "name": "Create New Project",
       "hotkeys": [{ "modifiers": ["Mod", "Shift"], "key": "P" }]
@@ -37,6 +42,10 @@
       "id": "generate-manuscript",
       "name": "Generate Manuscript",
       "hotkeys": [{ "modifiers": ["Mod", "Shift"], "key": "M" }]
+    },
+    {
+      "id": "initialize-draft-file",
+      "name": "Initialize Draft File Metadata"
     },
     {
       "id": "navigate-to-next-chapter",
@@ -71,6 +80,10 @@
     {
       "id": "clear-old-backups",
       "name": "Clear Old Backups"
+    },
+    {
+      "id": "open-project-meta",
+      "name": "Open Project Meta"
     }
   ]
 }

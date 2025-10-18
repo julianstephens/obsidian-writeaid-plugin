@@ -1,3 +1,4 @@
+import { debug, DEBUG_PREFIX } from "@/core/utils";
 import { App, Modal } from "obsidian";
 
 export class RenameDraftModal extends Modal {
@@ -5,20 +6,13 @@ export class RenameDraftModal extends Modal {
   onSubmit: (newName: string, renameFile: boolean) => void;
   inputEl: HTMLInputElement | undefined;
   checkboxEl: HTMLInputElement | undefined;
-  isSingleFile: boolean;
   errorEl: HTMLElement | undefined;
   cancelBtn: HTMLButtonElement | undefined;
 
-  constructor(
-    app: App,
-    oldName: string,
-    onSubmit: (newName: string, renameFile: boolean) => void,
-    isSingleFile = false,
-  ) {
+  constructor(app: App, oldName: string, onSubmit: (newName: string, renameFile: boolean) => void) {
     super(app);
     this.oldName = oldName;
     this.onSubmit = onSubmit;
-    this.isSingleFile = isSingleFile;
   }
 
   onOpen() {
@@ -39,11 +33,9 @@ export class RenameDraftModal extends Modal {
     this.errorEl.style.color = "var(--color-red, #d43c3c)";
     this.errorEl.style.display = "none";
 
-    if (this.isSingleFile) {
-      const cbLabel = contentEl.createEl("label", { cls: "wa-rename-checkbox-label" });
-      this.checkboxEl = cbLabel.createEl("input", { type: "checkbox" });
-      cbLabel.appendText(" Also rename the main draft file (filename)");
-    }
+    const cbLabel = contentEl.createEl("label", { cls: "wa-rename-checkbox-label" });
+    this.checkboxEl = cbLabel.createEl("input", { type: "checkbox", attr: { checked: "checked" } });
+    cbLabel.appendText(" Also rename the main draft file (filename)");
 
     const btnRow = contentEl.createEl("div", { cls: "wa-rename-btn-row" });
     const confirmBtn = btnRow.createEl("button", { text: "Rename", cls: "mod-cta" });
@@ -67,7 +59,7 @@ export class RenameDraftModal extends Modal {
 
   submit() {
     const value = this.inputEl?.value.trim();
-    const renameFile = this.isSingleFile && this.checkboxEl ? this.checkboxEl.checked : false;
+    const renameFile = this.checkboxEl ? this.checkboxEl.checked : false;
     if (!value) {
       if (this.errorEl) {
         this.errorEl.textContent = "Draft name cannot be empty.";
@@ -85,6 +77,9 @@ export class RenameDraftModal extends Modal {
       return;
     }
     if (this.errorEl) this.errorEl.style.display = "none";
+    debug(
+      `${DEBUG_PREFIX} RenameDraftModal: renaming draft from "${this.oldName}" to "${value}", renameFile: ${renameFile}`,
+    );
     this.onSubmit(value, renameFile);
     this.close();
   }

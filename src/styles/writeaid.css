@@ -1,84 +1,10 @@
-/* Svelte-select theming for WriteAid (Obsidian light/dark mode) */
-:root {
-  /* Core backgrounds and borders */
-  --background: var(--background-primary, #fff);
-  --border: var(--background-modifier-border, #ccc);
-  --border-focused: var(--interactive-accent, #7c5cff);
-  --border-hover: var(--interactive-accent, #7c5cff);
-  --border-radius: 6px;
-  --border-radius-focused: 6px;
-  --box-sizing: border-box;
-  --font-size: 1.5em;
-  --height: 38px;
-  --padding: 0 10px;
-  --margin: 0;
-  --width: 100%;
-  /* Dropdown list */
-  --list-background: var(--background-secondary, #f6f6f6);
-  --list-border: var(--background-modifier-border, #e0e0e0);
-  --list-border-radius: 6px;
-  --list-shadow: 0 2px 8px rgba(30, 30, 30, 0.06);
-  --list-z-index: 1000;
-  --list-max-height: 260px;
-  /* Items */
-  --item-color: var(--text-normal, #222);
-  --item-hover-bg: var(--background-modifier-hover, #f0f0ff);
-  --item-hover-color: var(--text-normal, #222);
-  --item-active-background: var(--background-modifier-active, #eaeaff);
-  --item-is-active-bg: var(--background-modifier-active, #eaeaff);
-  --item-is-active-color: var(--text-normal, #222);
-  --item-padding: 8px 14px;
-  --item-height: 36px;
-  --item-line-height: 1.4;
-  --item-transition: background 0.15s;
-  /* Placeholder */
-  --placeholder-color: var(--text-muted, #888);
-  --placeholder-opacity: 1;
-  /* Chevron and icons */
-  --chevron-color: var(--text-muted, #888);
-  --chevron-icon-colour: var(--text-muted, #888);
-  --chevron-background: transparent;
-  --chevron-border: none;
-  --chevron-width: 22px;
-  --chevron-height: 22px;
-  --chevron-pointer-events: auto;
-  --icons-color: var(--text-muted, #888);
-  /* Disabled */
-  --disabled-background: var(--background-modifier-disabled, #f3f3f3);
-  --disabled-border-color: var(--background-modifier-border, #eee);
-  --disabled-color: var(--text-muted, #bbb);
-  --disabled-placeholder-color: var(--text-muted, #bbb);
-  --disabled-placeholder-opacity: 0.7;
-  /* Error */
-  --error-background: #fff0f0;
-  --error-border: #d43c3c;
+/* ==========================================================================
+   WriteAid Panel Styles (Non-theming)
+   ========================================================================== */
+button:hover {
+  cursor: pointer;
 }
 
-.theme-dark {
-  --background: var(--background-primary, #23232b);
-  --border: var(--background-modifier-border, #333);
-  --border-focused: var(--interactive-accent, #7c5cff);
-  --border-hover: var(--interactive-accent, #7c5cff);
-  --font-size: 1em;
-  --list-background: var(--background-secondary, #23233a);
-  --list-border: var(--background-modifier-border, #333);
-  --item-color: var(--text-normal, #e0e0e0);
-  --item-hover-bg: var(--background-modifier-hover, #2a2a4a);
-  --item-hover-color: var(--text-normal, #e0e0e0);
-  --item-active-background: var(--background-modifier-active, #2a2a4a);
-  --item-is-active-bg: var(--background-modifier-active, #2a2a4a);
-  --item-is-active-color: var(--text-normal, #e0e0e0);
-  --placeholder-color: var(--text-muted, #aaa);
-  --chevron-color: var(--text-muted, #aaa);
-  --chevron-icon-colour: var(--text-muted, #aaa);
-  --icons-color: var(--text-muted, #aaa);
-  --disabled-background: var(--background-modifier-disabled, #23232b);
-  --disabled-border-color: var(--background-modifier-border, #333);
-  --disabled-color: var(--text-muted, #444);
-  --disabled-placeholder-color: var(--text-muted, #444);
-  --error-background: #2a1a1a;
-  --error-border: #d43c3c;
-}
 .writeaid-ribbon {
   padding-left: 6px;
 }
@@ -91,6 +17,44 @@
   height: 16px;
   fill: currentColor;
   display: block;
+}
+
+.view-content:has(.writeaid-project-panel) {
+  padding: 0;
+}
+
+.writeaid-project-panel {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.create-inline {
+  margin-top: 8px;
+  justify-content: center;
+}
+.wa-panel.project-list {
+  padding: 1em;
+  height: 100%;
+  border-radius: 0;
+}
+.wa-panel-header {
+  display: flex;
+  flex-direction: column;
+}
+.wa-draft-item.active .wa-draft-name {
+  font-weight: bold;
+  color: var(--color-accent, #3b82f6);
+}
+.wa-draft-active-indicator {
+  color: var(--color-accent, #3b82f6);
+  font-size: 1em;
+  vertical-align: middle;
+}
+@keyframes spin {
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 /* Slider and unit styling for panel debounce control */
@@ -245,7 +209,7 @@
 .wa-panel {
   background: var(--background-primary, #fff);
   color: var(--text-normal, #222);
-  border-radius: 8px;
+  padding: 1em;
 }
 
 .wa-title {
@@ -260,13 +224,15 @@
 
 .wa-row {
   display: flex;
-  flex-direction: row;
+  gap: 8px;
   align-items: center;
+  width: 100%;
 }
 
 .wa-button-group {
   display: flex;
   gap: 8px;
+  align-items: center;
 }
 
 .wa-draft-list {
@@ -302,84 +268,234 @@
   gap: 6px;
 }
 
-/* Custom svelte-select styles for Obsidian light/dark mode */
-.wa-panel .wa-select {
-  --select-bg: var(--background-primary, #fff);
-  --select-border: var(--background-modifier-border, #ccc);
-  --select-border-focus: var(--interactive-accent, #7c5cff);
-  --select-text: var(--text-normal, #222);
-  --select-placeholder: var(--text-muted, #888);
-  --select-dropdown-bg: var(--background-secondary, #f6f6f6);
-  --select-dropdown-border: var(--background-modifier-border, #e0e0e0);
-  --select-option-hover: var(--background-modifier-hover, #f0f0ff);
-  --select-option-active: var(--background-modifier-active, #eaeaff);
-  --select-chevron: var(--text-muted, #888);
-}
-.theme-dark .wa-panel .wa-select {
-  --select-bg: var(--background-primary, #23232b);
-  --select-border: var(--background-modifier-border, #333);
-  --select-border-focus: var(--interactive-accent, #7c5cff);
-  --select-text: var(--text-normal, #e0e0e0);
-  --select-placeholder: var(--text-muted, #aaa);
-  --select-dropdown-bg: var(--background-secondary, #23233a);
-  --select-dropdown-border: var(--background-modifier-border, #333);
-  --select-option-hover: var(--background-modifier-hover, #2a2a4a);
-  --select-option-active: var(--background-modifier-active, #2a2a4a);
-  --select-chevron: var(--text-muted, #aaa);
-}
-.wa-select {
-  background: var(--select-bg);
-  color: var(--select-text);
-}
-.wa-select:focus,
-.wa-select:focus-within {
-  border-color: var(--select-border-focus);
-}
-.wa-select .select-placeholder {
-  color: var(--select-placeholder);
-}
-.wa-select .select-dropdown {
-  background: var(--select-dropdown-bg);
-}
-.wa-select .select-option {
-  color: var(--select-text);
-}
-.wa-select .select-option:hover {
-  background: var(--select-option-hover);
-}
-.wa-select .select-option[aria-selected="true"],
-.wa-select .select-option.selected {
-  background: var(--select-option-active);
-}
-.wa-select .select-chevron {
-  color: var(--select-chevron);
-}
-.wa-select input[type="text"]:focus {
-  border-radius: 0;
+/* ==========================================================================
+   WriteAid Select Styles (Non-theming)
+   ========================================================================== */
+.wa-select-container.wa-select {
+  position: relative;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
-/* Support for dark mode */
-.theme-dark .wa-panel {
-  background: var(--background-primary, #23232b);
-  color: var(--text-normal, #e0e0e0);
-  border: 1px solid var(--background-modifier-border, #333);
+.wa-select-label-text {
+  font-size: 0.9em;
+  font-weight: 500;
+  color: var(--select-text, var(--text-normal, #222));
 }
-.theme-dark .wa-title {
-  color: var(--text-title, var(--text-normal, #e0e0e0));
+
+.wa-select-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  border: 1px solid var(--select-border, var(--background-modifier-border, #ccc));
+  border-radius: 6px;
+  background: var(--select-bg, var(--background-primary, #fff));
+  color: var(--select-text, var(--text-normal, #222));
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-height: 38px;
+  font-size: 1em;
 }
-.theme-dark .wa-muted {
-  color: var(--text-faint, var(--text-muted, #aaa));
+
+.wa-select-trigger:hover:not(.disabled) {
+  border-color: var(--select-border-focus, var(--interactive-accent, #7c5cff));
 }
-.theme-dark .wa-draft-list {
-  background: var(--background-secondary, #23233a);
+
+.wa-select-trigger.open {
+  border-color: var(--select-border-focus, var(--interactive-accent, #7c5cff));
 }
-.theme-dark .wa-draft-item {
-  color: var(--text-normal, #e0e0e0);
-  border-bottom: 1px solid var(--background-modifier-border, #333);
+
+.wa-select-trigger.disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background: var(--disabled-background, #f3f3f3);
 }
-.theme-dark .wa-draft-item.active {
-  background: var(--background-modifier-active, #2a2a4a);
+
+.wa-select-value {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
 }
-.theme-dark .wa-draft-name {
-  color: var(--text-normal, #e0e0e0);
+
+.wa-select-label,
+.wa-select-placeholder {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.wa-select-placeholder {
+  color: var(--select-placeholder, var(--text-muted, #888));
+}
+
+.wa-select-controls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  margin-left: 8px;
+}
+
+.wa-select-clear {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--select-chevron, var(--text-muted, #888));
+  cursor: pointer;
+  border-radius: 3px;
+  transition: background 0.2s;
+  font-size: 0.8em;
+}
+
+.wa-select-clear:hover {
+  background: var(--background-modifier-hover, #f0f0f0);
+}
+
+.wa-select-chevron {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  color: var(--select-chevron, var(--text-muted, #888));
+  font-size: 0.7em;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.wa-select-chevron.rotated {
+  transform: rotate(180deg);
+}
+
+.wa-select-dropdown {
+  position: absolute;
+  z-index: 1000;
+  background: var(--select-dropdown-bg, var(--background-secondary, #f6f6f6));
+  border: 1px solid var(--select-dropdown-border, var(--background-modifier-border, #e0e0e0));
+  border-radius: 8px;
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.15),
+    0 2px 4px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  animation: slideIn 0.15s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Placement variants */
+.wa-select-dropdown[data-placement*="top"] {
+  animation: slideInTop 0.15s ease-out;
+}
+
+@keyframes slideInTop {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.wa-select-search {
+  padding: 8px;
+  border-bottom: 1px solid var(--select-dropdown-border, var(--background-modifier-border, #e0e0e0));
+}
+
+.wa-select-search-input {
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid var(--select-border, var(--background-modifier-border, #ccc));
+  border-radius: 4px;
+  background: var(--select-bg, var(--background-primary, #fff));
+  color: var(--select-text, var(--text-normal, #222));
+  font-size: 0.95em;
+}
+
+.wa-select-search-input:focus {
+  outline: none;
+  border-color: var(--select-border-focus, var(--interactive-accent, #7c5cff));
+}
+
+.wa-select-list {
+  flex: 1;
+  overflow-y: auto;
+  max-height: 300px;
+}
+
+/* Custom scrollbar for webkit browsers */
+.wa-select-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.wa-select-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.wa-select-list::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb-bg, rgba(0, 0, 0, 0.2));
+  border-radius: 3px;
+}
+
+.wa-select-list::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover-bg, rgba(0, 0, 0, 0.3));
+}
+
+.wa-select-empty {
+  padding: 12px 10px;
+  text-align: center;
+  color: var(--select-placeholder, var(--text-muted, #888));
+  font-size: 0.95em;
+}
+
+.wa-select-option {
+  width: 100%;
+  margin-top: 2px;
+  padding: 8px 10px;
+  border-radius: 0;
+  box-shadow: none !important;
+  border: none;
+  background: transparent;
+  color: var(--select-text, var(--text-normal, #222));
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s;
+  font-size: 0.95em;
+}
+
+.wa-select-option:hover {
+  background: var(--select-option-hover, #f0f0ff);
+  box-shadow: none !important;
+}
+
+.wa-select-option.selected {
+  background: var(--select-option-active, #eaeaff);
+  box-shadow: none !important;
+}
+
+.wa-select-option.active {
+  background: var(--select-option-active, #eaeaff);
+  font-weight: 500;
+  box-shadow: none !important;
 }

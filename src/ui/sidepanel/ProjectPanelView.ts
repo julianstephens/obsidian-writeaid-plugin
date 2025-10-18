@@ -1,41 +1,30 @@
-import { DraftFileService } from "@/core/DraftFileService";
 import { ProjectFileService } from "@/core/ProjectFileService";
 import { ProjectService } from "@/core/ProjectService";
-import { APP_NAME, debug, DEBUG_PREFIX, suppress, WRITE_AID_ICON_NAME } from "@/core/utils";
+import { APP_NAME, debug, DEBUG_PREFIX, WRITE_AID_ICON_NAME } from "@/core/utils";
 import type { WriteAidManager } from "@/manager";
 import ProjectPanel from "@/ui/sidepanel/ProjectPanel.svelte";
 import { ItemView, Notice, type App, type WorkspaceLeaf } from "obsidian";
-import { mount } from "svelte";
-
-interface WriteAidPlugin {
-  manager?: WriteAidManager;
-}
+import type { SvelteComponent } from "svelte";
 
 export const VIEW_TYPE_PROJECT_PANEL = "writeaid-project-panel";
 
+interface ProjectPanelComponent extends SvelteComponent {
+  refreshDrafts?: () => void;
+}
+
 export class ProjectPanelView extends ItemView {
   app: App;
+  manager: WriteAidManager;
   projectService: ProjectService;
   projectFileService: ProjectFileService;
-  containerElInner: HTMLElement | null = null;
+  panelEl: HTMLElement | null = null;
   selectedProject: string | null = null;
-  svelteComponent:
-    | {
-        $destroy?: () => void;
-        destroy?: () => void;
-        $set?: (props: object) => void;
-        set?: (props: object) => void;
-        refreshPanel?: (() => void) | Promise<void>;
-        setActiveProject?: ((active: unknown) => void) | ((p: string | null) => void);
-        activeProject?: unknown;
-        $on?: (event: string, callback: (...args: unknown[]) => void) => void;
-      }
-    | HTMLElement
-    | null = null;
+  projectPanel: ProjectPanelComponent | undefined;
 
-  constructor(leaf: WorkspaceLeaf, app: App) {
+  constructor(leaf: WorkspaceLeaf, app: App, manager: WriteAidManager) {
     super(leaf);
     this.app = app;
+    this.manager = manager;
     this.projectService = new ProjectService(app);
     this.projectFileService = new ProjectFileService(app, this.projectService);
   }
@@ -53,292 +42,53 @@ export class ProjectPanelView extends ItemView {
   }
 
   async onOpen() {
-    this.containerElInner = this.containerEl.createDiv({
+    this.panelEl = this.contentEl.createEl("div", {
       cls: "writeaid-project-panel",
     });
 
-    // mount svelte component (handle both default and direct exports)
+    // Mount Svelte 5 component
     try {
-      const Component = (ProjectPanel as { default?: unknown })?.default ?? ProjectPanel;
-      if (!Component) {
-        new Notice(`${APP_NAME}: failed to load project panel component.`);
-        return;
-      }
-      // Get the manager
-      const manager = (
-        this.app as unknown as {
-          plugins: { getPlugin?: (id: string) => { manager?: WriteAidManager } };
-        }
-      ).plugins.getPlugin?.("obsidian-writeaid-plugin")?.manager;
-
-      // Ensure manager exists before mounting
-      if (!manager) {
+      if (!this.manager) {
+        debug(`${DEBUG_PREFIX} Manager not available in ProjectPanelView.onOpen`);
         new Notice(`${APP_NAME}: manager not available, cannot mount project panel.`);
         return;
       }
 
-      // dynamic constructor: Svelte component or custom element
-      const props = {
-        app: this.app,
-        manager,
-        projectService: this.projectService,
-        projectFileService: this.projectFileService,
-      };
+      debug(`${DEBUG_PREFIX} Mounting ProjectPanel with manager:`, !!this.manager);
 
-      // Prefer mounting as a DOM custom element when possible. This avoids
-      // calling into minified Svelte factory shapes and works well when the
-      // component is compiled with `customElement: true`.
-      let mounted = false;
-      let looksLikeHTMLElementClass =
-        typeof Component === "function" && Component.prototype instanceof HTMLElement;
-
-      if (looksLikeHTMLElementClass) {
-        try {
-          // construct custom element instance
-          const el = new (Component as { new (): HTMLElement })();
-          // set props directly on the element instance
-          suppress(() => {
-            (el as { projectService?: ProjectService }).projectService = this.projectService;
-          });
-          suppress(() => {
-            (el as { manager?: unknown }).manager = (
-              this.app as unknown as {
-                plugins: { getPlugin?: (id: string) => { manager?: unknown } };
-              }
-            ).plugins.getPlugin?.("obsidian-writeaid-plugin")?.manager;
-          });
-          suppress(() => {
-            (el as { draftService?: DraftFileService }).draftService =
-              this.projectFileService.drafts;
-          });
-          suppress(() => {
-            (el as { activeProject?: unknown }).activeProject =
-              (
-                this.app as unknown as {
-                  plugins: {
-                    getPlugin?: (id: string) => { manager?: { activeProject?: unknown } };
-                  };
-                }
-              ).plugins.getPlugin?.("obsidian-writeaid-plugin")?.manager?.activeProject ?? null;
-          });
-          this.svelteComponent = el;
-          mounted = true;
-        } catch (elErr) {
-          debug(`${DEBUG_PREFIX} creating custom element instance failed:`, elErr);
-        }
-      }
-
-      // If not mounted yet, try to create by known tag name if registered
-      if (!mounted && typeof customElements !== "undefined") {
-        try {
-          const tagName = "wa-project-panel";
-          if (customElements.get(tagName)) {
-            const el = document.createElement(tagName) as HTMLElement & {
-              projectService?: ProjectService;
-              manager?: unknown;
-              draftService?: DraftFileService;
-              activeProject?: unknown;
-            };
-            suppress(() => {
-              el.projectService = this.projectService;
-            });
-            suppress(() => {
-              el.manager = (
-                this.app as unknown as {
-                  plugins: { getPlugin?: (id: string) => { manager?: unknown } };
-                }
-              ).plugins.getPlugin?.("obsidian-writeaid-plugin")?.manager;
-            });
-            suppress(() => {
-              el.draftService = this.projectFileService.drafts;
-            });
-            suppress(() => {
-              el.activeProject =
-                (
-                  this.app as unknown as {
-                    plugins: {
-                      getPlugin?: (id: string) => { manager?: { activeProject?: unknown } };
-                    };
-                  }
-                ).plugins.getPlugin?.("obsidian-writeaid-plugin")?.manager?.activeProject ?? null;
-            });
-            this.svelteComponent = el;
-            mounted = true;
-          }
-        } catch (tagErr) {
-          debug(`${DEBUG_PREFIX} attempting to create by tag failed:`, tagErr);
-        }
-      }
-
-      // If custom element mounting didn't work, fall back to a clean runtime mount
-      if (!mounted) {
-        try {
-          // Try Svelte 5 mount API first
-          this.svelteComponent = mount(Component as typeof ProjectPanel, {
-            target: this.containerElInner!,
-            props,
-          });
-          mounted = true;
-        } catch (mountErr) {
-          debug(`${DEBUG_PREFIX} svelte.mount failed; trying constructor:`, mountErr);
-          try {
-            this.svelteComponent = new (Component as {
-              new (args: { target: HTMLElement; props: object }): unknown;
-            })({
-              target: this.containerElInner,
-              props,
-            }) as typeof this.svelteComponent;
-            mounted = true;
-          } catch (ctorErr) {
-            debug(
-              `${DEBUG_PREFIX} Failed to mount ProjectPanel (mount + constructor failed)`,
-              ctorErr,
-            );
-            suppress(() => {
-              debug(`${DEBUG_PREFIX} Component snapshot:`, Component);
-            });
-            new Notice(`${APP_NAME}: error mounting project panel component. See console.`);
-            return;
-          }
-        }
-      }
-
-      // Normalize instance API: some factories return an object with destroy(),
-      // others use Svelte's $destroy and $set naming. Provide a thin adapter so
-      // the rest of the code can call $destroy/$set/refreshPanel reliably.
-      if (this.svelteComponent) {
-        // Adapter for destroy
-        if (typeof (this.svelteComponent as { destroy?: () => void }).destroy === "function") {
-          (this.svelteComponent as { $destroy?: () => void; destroy?: () => void }).$destroy = (
-            this.svelteComponent as { destroy?: () => void }
-          ).destroy?.bind(this.svelteComponent);
-        }
-        if (typeof (this.svelteComponent as { set?: (props: object) => void }).set === "function") {
-          (
-            this.svelteComponent as {
-              $set?: (props: object) => void;
-              set?: (props: object) => void;
-            }
-          ).$set = (this.svelteComponent as { set?: (props: object) => void }).set?.bind(
-            this.svelteComponent,
-          );
-        }
-        // Some factories return an object with `refreshPanel` directly, others
-        // expose methods on the component instance — no change needed.
-      }
-      // Ensure the component receives the current active project initially
-      try {
-        const plugin = (
-          this.app as App & { plugins?: { getPlugin?: (id: string) => WriteAidPlugin } }
-        ).plugins?.getPlugin?.("obsidian-writeaid-plugin");
-        const initialActive = plugin?.manager?.activeProject ?? null;
-        if (initialActive !== null && this.svelteComponent) {
-          // If it's a Svelte instance, prefer $set
-          if (
-            typeof (this.svelteComponent as { $set?: (props: object) => void }).$set === "function"
-          ) {
-            suppress(() => {
-              (this.svelteComponent as { $set: (props: { activeProject: unknown }) => void }).$set({
-                activeProject: initialActive,
-              });
-            });
-          } else if (this.svelteComponent instanceof HTMLElement) {
-            suppress(() => {
-              (this.svelteComponent as { activeProject?: unknown }).activeProject = initialActive;
-            });
-          } else if (
-            typeof (this.svelteComponent as { set?: (props: object) => void }).set === "function"
-          ) {
-            suppress(() => {
-              (this.svelteComponent as { set: (props: { activeProject: unknown }) => void }).set({
-                activeProject: initialActive,
-              });
-            });
-          }
-          // If the component exposes a setActiveProject helper, call it as a stronger hook
-          if (
-            typeof (this.svelteComponent as { setActiveProject?: (active: unknown) => void })
-              .setActiveProject === "function"
-          ) {
-            suppress(() => {
-              (
-                this.svelteComponent as { setActiveProject: (active: unknown) => void }
-              ).setActiveProject(initialActive);
-            });
-          }
-        }
-      } catch {
-        // ignore
-        /* ignore error */
-      }
-
-      suppress(() => {
-        if (
-          this.svelteComponent &&
-          typeof (this.svelteComponent as { refreshPanel?: () => void }).refreshPanel === "function"
-        ) {
-          (this.svelteComponent as { refreshPanel: () => void }).refreshPanel();
-        }
+      // Instantiate Svelte 4 component with props
+      this.projectPanel = new ProjectPanel({
+        target: this.panelEl,
+        props: {
+          manager: this.manager,
+          projectService: this.projectService,
+          projectFileService: this.projectFileService,
+        },
       });
-      // Some hosts may set the manager.activeProject slightly after the view mounts.
-      // Re-apply the active project on the next tick to handle that timing window.
-      setTimeout(() => {
-        suppress(() => {
-          const plugin = (
-            this.app as App & { plugins?: { getPlugin?: (id: string) => WriteAidPlugin } }
-          ).plugins?.getPlugin?.("obsidian-writeaid-plugin");
-          const deferredActive = plugin?.manager?.activeProject ?? null;
-          if (deferredActive && this.svelteComponent) {
-            // If it's a Svelte instance, prefer $set
-            if (
-              typeof (this.svelteComponent as { $set?: (props: object) => void }).$set ===
-              "function"
-            ) {
-              (this.svelteComponent as { $set: (props: { activeProject: unknown }) => void }).$set({
-                activeProject: deferredActive,
-              });
-            } else if (this.svelteComponent instanceof HTMLElement) {
-              (this.svelteComponent as { activeProject?: unknown }).activeProject = deferredActive;
-            } else if (
-              typeof (this.svelteComponent as { set?: (props: object) => void }).set === "function"
-            ) {
-              (this.svelteComponent as { set: (props: { activeProject: unknown }) => void }).set({
-                activeProject: deferredActive,
-              });
-            }
-            // If the component exposes a setActiveProject helper, call it as a stronger hook
-            if (
-              typeof (this.svelteComponent as { setActiveProject?: (active: unknown) => void })
-                .setActiveProject === "function"
-            ) {
-              (
-                this.svelteComponent as { setActiveProject: (active: unknown) => void }
-              ).setActiveProject(deferredActive);
-            }
-          }
-        });
-      }, 0);
 
-      // Register listener to refresh when active project changes
-      suppress(() => {
-        const plugin = (
-          this.app as App & { plugins?: { getPlugin?: (id: string) => WriteAidPlugin } }
-        ).plugins?.getPlugin?.("obsidian-writeaid-plugin");
-        if (
-          plugin &&
-          plugin.manager &&
-          typeof plugin.manager.addActiveProjectListener === "function"
-        ) {
-          plugin.manager.addActiveProjectListener(this.onActiveProjectChanged.bind(this));
-        }
-      });
-    } catch {
-      // Ignore errors in onOpen
+      debug(`${DEBUG_PREFIX} ProjectPanel mounted successfully`);
+    } catch (err) {
+      debug(`${DEBUG_PREFIX} failed to mount project panel:`, err);
+      new Notice(`${APP_NAME}: failed to mount project panel. Check console for details.`);
     }
   }
 
-  // Add missing method to resolve error
-  onActiveProjectChanged() {
-    // TODO: Implement active project change handling if needed
+  async onClose() {
+    if (this.projectPanel) {
+      try {
+        // Destroy the Svelte 4 component
+        this.projectPanel.$destroy();
+      } catch (error) {
+        debug(`${DEBUG_PREFIX} Error destroying project panel:`, error);
+      }
+      this.projectPanel = undefined;
+    }
+  }
+
+  refreshDraftsSection() {
+    if (this.projectPanel && typeof this.projectPanel.refreshDrafts === "function") {
+      debug(`${DEBUG_PREFIX} Refreshing drafts section in project panel`);
+      this.projectPanel.refreshDrafts();
+    }
   }
 }

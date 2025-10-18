@@ -1,3 +1,4 @@
+import { debug, DEBUG_PREFIX } from "@/core/utils";
 import type { CreateDraftModalProps } from "@/types";
 import { Modal, Setting } from "obsidian";
 
@@ -37,8 +38,11 @@ export class CreateDraftModal extends Modal {
         .setButtonText("Create")
         .setCta()
         .onClick(() => {
-          this.close();
           const finalName = draftName && draftName.trim() ? draftName.trim() : suggestedName;
+          debug(
+            `${DEBUG_PREFIX} CreateDraftModal: creating draft "${finalName}", copyFrom: "${copyFrom || "none"}"`,
+          );
+          this.close();
           this.props.onSubmit(finalName, copyFrom || undefined);
         }),
     );

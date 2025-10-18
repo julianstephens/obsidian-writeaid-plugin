@@ -1,3 +1,4 @@
+import { debug, DEBUG_PREFIX } from "@/core/utils";
 import type { App } from "obsidian";
 import { Modal, Setting } from "obsidian";
 
@@ -27,6 +28,9 @@ export class ConfirmExistingProjectModal extends Modal {
 
     new Setting(contentEl).addButton((btn) =>
       btn.setButtonText("Open Existing").onClick(() => {
+        debug(
+          `${DEBUG_PREFIX} ConfirmExistingProjectModal: opening existing project "${this.path}"`,
+        );
         this.close();
         this.onOpenExisting();
       }),
@@ -37,6 +41,9 @@ export class ConfirmExistingProjectModal extends Modal {
         .setButtonText("Create Anyway")
         .setCta()
         .onClick(() => {
+          debug(
+            `${DEBUG_PREFIX} ConfirmExistingProjectModal: creating new project anyway "${this.path}"`,
+          );
           this.close();
           this.onCreateAnyway(true);
         }),
@@ -44,6 +51,7 @@ export class ConfirmExistingProjectModal extends Modal {
 
     new Setting(contentEl).addButton((btn) =>
       btn.setButtonText("Cancel").onClick(() => {
+        debug(`${DEBUG_PREFIX} ConfirmExistingProjectModal: cancelled for project "${this.path}"`);
         this.close();
       }),
     );

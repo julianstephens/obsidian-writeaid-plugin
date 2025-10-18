@@ -1,3 +1,4 @@
+import { debug, DEBUG_PREFIX } from "@/core/utils";
 import type { App } from "obsidian";
 import { Modal, Setting } from "obsidian";
 
@@ -18,6 +19,7 @@ export class SwitchDraftModal extends Modal {
     for (const draft of this.drafts) {
       new Setting(contentEl).setName(draft).addButton((btn) =>
         btn.setButtonText("Select").onClick(() => {
+          debug(`${DEBUG_PREFIX} SwitchDraftModal: selected draft "${draft}"`);
           this.close();
           this.onSubmit(draft);
         }),

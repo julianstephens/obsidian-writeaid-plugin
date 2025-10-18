@@ -1,12 +1,22 @@
 import type { WriteAidSettings } from "@/types";
 import { App, TFile, TFolder } from "obsidian";
-import { debug, DEBUG_PREFIX, FRONTMATTER_DELIMITER, getDraftsFolderName, getMetaFileName, type ProjectType } from "./utils";
+import {
+  debug,
+  DEBUG_PREFIX,
+  FRONTMATTER_DELIMITER,
+  getDraftsFolderName,
+  getMetaFileName,
+  type ProjectType,
+  WRITEAID_VERSION,
+} from "./utils";
 
 /**
  * Project metadata tracked in meta.md
  */
 export interface ProjectMetadata {
+  version?: string; // WriteAid project version for compatibility
   current_active_draft?: string;
+  current_draft_word_count?: number; // Word count of the currently activated draft
   total_drafts: number;
   target_word_count?: number;
   active_draft_last_modified?: string; // ISO 8601 timestamp
@@ -79,6 +89,7 @@ export async function updateMetaStats(
   let metadata = await readMetaFile(app, metaPath);
   if (!metadata) {
     metadata = {
+      version: WRITEAID_VERSION,
       total_drafts: 0,
     };
   }
@@ -116,7 +127,9 @@ export async function updateMetaStats(
  * Parse frontmatter from markdown content
  */
 function parseFrontmatter(content: string): ProjectMetadata | null {
-  const fmMatch = content.match(new RegExp(`${FRONTMATTER_DELIMITER}\\s*\\n([\\s\\S]*?)\\n${FRONTMATTER_DELIMITER}`));
+  const fmMatch = content.match(
+    new RegExp(`${FRONTMATTER_DELIMITER}\\s*\\n([\\s\\S]*?)\\n${FRONTMATTER_DELIMITER}`),
+  );
   if (!fmMatch) {
     return null;
   }
@@ -158,8 +171,14 @@ function formatMetaContent(metadata: ProjectMetadata): string {
   const lines: string[] = [FRONTMATTER_DELIMITER];
 
   // Write YAML frontmatter
+  if (metadata.version !== undefined) {
+    lines.push(`version: "${metadata.version}"`);
+  }
   if (metadata.current_active_draft !== undefined) {
     lines.push(`current_active_draft: "${metadata.current_active_draft}"`);
+  }
+  if (metadata.current_draft_word_count !== undefined) {
+    lines.push(`current_draft_word_count: ${metadata.current_draft_word_count}`);
   }
   lines.push(`total_drafts: ${metadata.total_drafts}`);
   if (metadata.target_word_count !== undefined) {
@@ -186,6 +205,11 @@ function formatMetaContent(metadata: ProjectMetadata): string {
   lines.push("");
   if (metadata.current_active_draft) {
     lines.push(`**Active Draft:** ${metadata.current_active_draft}`);
+  }
+  if (metadata.current_draft_word_count !== undefined) {
+    lines.push(
+      `**Current Draft Word Count:** ${metadata.current_draft_word_count.toLocaleString()}`,
+    );
   }
   lines.push(`**Total Drafts:** ${metadata.total_drafts}`);
   if (metadata.target_word_count) {

@@ -1,0 +1,95 @@
+/* ==========================================================================
+   WriteAid Theme System - Centralized Theming Styles
+   ========================================================================== */
+
+/* Core design tokens for WriteAid components */
+:root {
+  /* WriteAid general tokens */
+  --wa-bg: var(--background-primary, #ffffff);
+  --wa-surface: var(--background-modifier-hover, #f7f7fb);
+  --wa-muted: var(--text-muted, #6b7280);
+  --wa-text: var(--text-normal, #0f172a);
+  --wa-accent: var(--interactive-accent, #7c5cff);
+  --wa-border: rgba(15, 23, 42, 0.08);
+  --wa-radius: 8px;
+  --wa-gap: 8px;
+
+  /* Select theming variables (light mode) */
+  --select-bg: var(--background-primary, #fff);
+  --select-border: var(--background-modifier-border, #ccc);
+  --select-border-focus: var(--interactive-accent, #7c5cff);
+  --select-text: var(--text-normal, #222);
+  --select-placeholder: var(--text-muted, #888);
+  --select-dropdown-bg: var(--background-secondary, #f6f6f6);
+  --select-dropdown-border: var(--background-modifier-border, #e0e0e0);
+  --select-option-hover: #f0f0ff;
+  --select-option-active: #eaeaff;
+  --select-chevron: var(--text-muted, #888);
+}
+
+/* Dark mode fallbacks using prefers-color-scheme */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --wa-bg: var(--background-primary, #0b0b0c);
+    --wa-surface: var(--background-modifier-hover, #121212);
+    --wa-muted: var(--text-muted, #9aa4b2);
+    --wa-text: var(--text-normal, #e6eef8);
+    --wa-accent: var(--interactive-accent, #8b5cf6);
+    --wa-border: rgba(255, 255, 255, 0.06);
+  }
+}
+
+/* Obsidian dark theme overrides */
+.theme-dark {
+  /* WriteAid general tokens for dark mode */
+  --wa-bg: var(--background-primary, #23232b);
+  --wa-surface: var(--background-modifier-hover, #2a2a4a);
+  --wa-muted: var(--text-muted, #aaa);
+  --wa-text: var(--text-normal, #e0e0e0);
+  --wa-accent: var(--interactive-accent, #7c5cff);
+  --wa-border: rgba(255, 255, 255, 0.06);
+
+  /* Select theming variables (dark mode) */
+  --select-bg: var(--background-primary, #23232b);
+  --select-border: var(--background-modifier-border, #333);
+  --select-border-focus: var(--interactive-accent, #7c5cff);
+  --select-text: var(--text-normal, #e0e0e0);
+  --select-placeholder: var(--text-muted, #aaa);
+  --select-dropdown-bg: var(--background-secondary, #23233a);
+  --select-dropdown-border: var(--background-modifier-border, #333);
+  --select-option-hover: #2a2a4a;
+  --select-option-active: #2a2a4a;
+  --select-chevron: var(--text-muted, #aaa);
+}
+
+/* Panel theming for dark mode */
+.theme-dark .wa-panel {
+  background: var(--background-primary, #23232b);
+  color: var(--text-normal, #e0e0e0);
+  border: 1px solid var(--background-modifier-border, #333);
+}
+
+.theme-dark .wa-title {
+  color: var(--text-title, var(--text-normal, #e0e0e0));
+}
+
+.theme-dark .wa-muted {
+  color: var(--text-faint, var(--text-muted, #aaa));
+}
+
+.theme-dark .wa-draft-list {
+  background: var(--background-secondary, #23233a);
+}
+
+.theme-dark .wa-draft-item {
+  color: var(--text-normal, #e0e0e0);
+  border-bottom: 1px solid var(--background-modifier-border, #333);
+}
+
+.theme-dark .wa-draft-item.active {
+  background: var(--background-modifier-active, #2a2a4a);
+}
+
+.theme-dark .wa-draft-name {
+  color: var(--text-normal, #e0e0e0);
+}

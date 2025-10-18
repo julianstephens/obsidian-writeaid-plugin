@@ -1,5 +1,11 @@
 import { readMetaFile, writeMetaFile } from "@/core/meta";
-import { getDraftsFolderName, getMetaFileName, MARKDOWN_FILE_EXTENSION, PROJECT_TYPE, slugifyDraftName } from "@/core/utils";
+import {
+  getDraftsFolderName,
+  getMetaFileName,
+  MARKDOWN_FILE_EXTENSION,
+  PROJECT_TYPE,
+  slugifyDraftName,
+} from "@/core/utils";
 import type { WriteAidSettings } from "@/types";
 import { Notice, TFile, TFolder, type App } from "obsidian";
 
@@ -45,7 +51,9 @@ async function convertSingleToMultiFileProject(
     }
   }
   if (renamed) {
-    new Notice(`Converted to multi-file project. Draft files renamed to "Chapter 1${MARKDOWN_FILE_EXTENSION}".`);
+    new Notice(
+      `Converted to multi-file project. Draft files renamed to "Chapter 1${MARKDOWN_FILE_EXTENSION}".`,
+    );
   } else {
     new Notice("Converted to multi-file project. No draft files needed renaming.");
   }
