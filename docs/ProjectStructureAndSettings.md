@@ -510,6 +510,3 @@ Backups are stored as ZIP archives with this naming:
 - Refresh panel debounce: increase if experiencing lag
 - Consider archiving completed projects to separate folders
 
-```
-
-```
