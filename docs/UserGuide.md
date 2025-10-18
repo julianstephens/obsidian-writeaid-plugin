@@ -35,6 +35,7 @@ Welcome to the WriteAid Plugin for Obsidian! This guide will help you get starte
 WriteAid supports two project types:
 
 ### Single-File Projects
+
 Best for short stories or novellas. Each draft has one main file.
 
 ```
@@ -48,6 +49,7 @@ MyProject/
 ```
 
 ### Multi-File Projects
+
 Best for novels with multiple chapters. Each chapter is a separate file.
 
 ```
@@ -111,12 +113,14 @@ MyNovel/
 ### Chapter Metadata
 
 Each chapter file includes frontmatter with:
+
 - `id` - Unique identifier (auto-generated)
 - `order` - Chapter sequence number
 - `chapter_name` - Display name
 - `draft_id` - Links chapter to its draft
 
 Example:
+
 ```yaml
 ---
 id: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
@@ -169,6 +173,7 @@ The manuscript is ready for export or formatting!
 ### Backup Settings
 
 In the plugin settings, you can configure:
+
 - **Maximum backups per draft** - Number of backups to keep (default: 5)
 - **Maximum backup age** - Days to keep backups (default: 30 days)
 
@@ -184,6 +189,7 @@ Old backups are automatically cleaned up on plugin startup.
 ### Project Panel
 
 The Project Panel (toggle via command) shows:
+
 - All projects in your vault
 - Drafts within each project
 - Chapters within each draft (multi-file projects)
@@ -193,6 +199,7 @@ Click to select projects, drafts, or chapters.
 ### Status Bar
 
 The status bar at the bottom displays:
+
 - Active project name
 - Active draft name
 - Current word count
@@ -206,27 +213,33 @@ Open the command palette and search for **"Open Project Meta"** to quickly view 
 Access settings via Obsidian Settings → Community Plugins → WriteAid:
 
 ### Project Settings
+
 - **Active Project** - Currently selected project
 - **Slug Style** - How draft names are converted to filenames
   - `compact` (default): "Draft 1" → `draft1.md`
   - `kebab`: "Draft 1" → `draft-1.md`
 
 ### Backup Settings
+
 - **Maximum backups per draft** - How many backups to keep (default: 5)
 - **Maximum backup age (days)** - Retention period in days (default: 30)
 
 ### UI Settings
+
 - **Panel refresh debounce** - Delay before refreshing panels (milliseconds)
 
 ## Tips & Tricks
 
 ### Converting Project Types
+
 If you have a single-file project and want to convert it to multi-file:
+
 1. Open the command palette
 2. Search for **"Convert Single-File Project to Multi-File"**
 3. Chapter files are automatically created from your draft content
 
 ### Word Count Tracking
+
 - Word counts are automatically calculated when you:
   - Switch drafts
   - Create new drafts
@@ -234,12 +247,15 @@ If you have a single-file project and want to convert it to multi-file:
 - View your progress in the status bar
 
 ### Template Customization
+
 The plugin uses templates for new files. Edit these in the plugin settings to customize:
+
 - Outline template
 - Chapter template
 - Draft file template
 
 ### Backup Strategy
+
 - Create regular backups before major revisions
 - Use the manuscript generation to keep clean copies
 - Export your work regularly for external backup
@@ -247,21 +263,25 @@ The plugin uses templates for new files. Edit these in the plugin settings to cu
 ## Troubleshooting
 
 ### "No active project" message
+
 1. Open the command palette
 2. Search for "Select Active Project"
 3. Choose a project from the modal
 
 ### Chapter order seems wrong
+
 1. Check the `order` field in each chapter's frontmatter
 2. Use the Project Panel to reorder chapters (drag and drop)
 3. Run "Update Project Metadata" to refresh
 
 ### Backups not created
+
 1. Ensure you have an active draft
 2. Check that the `.writeaid-backups` folder is created in your vault
 3. Verify your backup settings allow creation (max backups limit)
 
 ### Word count not updating
+
 1. Make sure you've switched to the draft you want to count
 2. Run "Update Project Metadata" to manually refresh
 3. Check that chapter files have proper frontmatter
@@ -269,6 +289,7 @@ The plugin uses templates for new files. Edit these in the plugin settings to cu
 ## Getting Help
 
 For issues or feature requests:
+
 1. Visit the [GitHub Repository](https://github.com/julianstephens/obsidian-writeaid-plugin)
 2. Check existing issues
 3. Create a new issue with details about your problem
