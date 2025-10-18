@@ -1,6 +1,7 @@
 import type { WriteAidSettings } from "@/types";
 import { App, TFile, TFolder } from "obsidian";
 import {
+  buildFrontmatter,
   debug,
   DEBUG_PREFIX,
   FRONTMATTER_DELIMITER,
@@ -168,37 +169,36 @@ function parseFrontmatter(content: string): ProjectMetadata | null {
  * Format metadata as markdown with YAML frontmatter and human-readable section
  */
 function formatMetaContent(metadata: ProjectMetadata): string {
-  const lines: string[] = [FRONTMATTER_DELIMITER];
+  // Build frontmatter fields
+  const fields: Record<string, string | number> = {};
 
-  // Write YAML frontmatter
   if (metadata.version !== undefined) {
-    lines.push(`version: "${metadata.version}"`);
+    fields.version = metadata.version;
   }
   if (metadata.current_active_draft !== undefined) {
-    lines.push(`current_active_draft: "${metadata.current_active_draft}"`);
+    fields.current_active_draft = metadata.current_active_draft;
   }
   if (metadata.current_draft_word_count !== undefined) {
-    lines.push(`current_draft_word_count: ${metadata.current_draft_word_count}`);
+    fields.current_draft_word_count = metadata.current_draft_word_count;
   }
-  lines.push(`total_drafts: ${metadata.total_drafts}`);
+  fields.total_drafts = metadata.total_drafts;
   if (metadata.target_word_count !== undefined) {
-    lines.push(`target_word_count: ${metadata.target_word_count}`);
+    fields.target_word_count = metadata.target_word_count;
   }
   if (metadata.active_draft_last_modified !== undefined) {
-    lines.push(`active_draft_last_modified: "${metadata.active_draft_last_modified}"`);
+    fields.active_draft_last_modified = metadata.active_draft_last_modified;
   }
   if (metadata.total_word_count !== undefined) {
-    lines.push(`total_word_count: ${metadata.total_word_count}`);
+    fields.total_word_count = metadata.total_word_count;
   }
   if (metadata.average_draft_word_count !== undefined) {
-    lines.push(`average_draft_word_count: ${metadata.average_draft_word_count}`);
+    fields.average_draft_word_count = metadata.average_draft_word_count;
   }
   if (metadata.project_type !== undefined) {
-    lines.push(`project_type: ${metadata.project_type}`);
+    fields.project_type = metadata.project_type;
   }
 
-  lines.push(FRONTMATTER_DELIMITER);
-  lines.push("");
+  const lines: string[] = [buildFrontmatter(fields)];
 
   // Add human-readable section
   lines.push("# Project Statistics");

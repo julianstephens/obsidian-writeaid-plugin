@@ -2,7 +2,7 @@ import {
   buildFrontmatter,
   debug,
   DEBUG_PREFIX,
-  FRONTMATTER_DELIMITER,
+  extractFrontmatterFields,
   FRONTMATTER_REGEX,
   generateDraftId,
   getDraftsFolderName,
@@ -69,10 +69,9 @@ export class ChapterFileService {
             `${DEBUG_PREFIX} ChapterFileService.reorderChapters: updating order from current to ${i + 1}`,
           );
           content = content.replace(FRONTMATTER_REGEX, (match, fm) => {
-            let cleanedFm = fm.replace(/^order:.*\n?/gm, "");
-            if (!cleanedFm.endsWith("\n")) cleanedFm += "\n";
-            cleanedFm += `order: ${i + 1}\n`;
-            return `${FRONTMATTER_DELIMITER}\n${cleanedFm}${FRONTMATTER_DELIMITER}`;
+            const fields = extractFrontmatterFields(fm);
+            fields.order = i + 1;
+            return buildFrontmatter(fields);
           });
           debug(`${DEBUG_PREFIX} ChapterFileService.reorderChapters: modifying file`);
           await this.app.vault.modify(file, content);
@@ -299,10 +298,9 @@ export class ChapterFileService {
           let content = await this.app.vault.read(chapterFile);
           if (content.match(FRONTMATTER_REGEX)) {
             content = content.replace(FRONTMATTER_REGEX, (match, fm) => {
-              let cleanedFm = fm.replace(/^order:.*\n?/gm, "");
-              if (!cleanedFm.endsWith("\n")) cleanedFm += "\n";
-              cleanedFm += `order: ${i + 1}\n`;
-              return `${FRONTMATTER_DELIMITER}\n${cleanedFm}${FRONTMATTER_DELIMITER}`;
+              const fields = extractFrontmatterFields(fm);
+              fields.order = i + 1;
+              return buildFrontmatter(fields);
             });
             await this.app.vault.modify(chapterFile, content);
           }
@@ -340,10 +338,9 @@ export class ChapterFileService {
 
     if (content.match(FRONTMATTER_REGEX)) {
       content = content.replace(FRONTMATTER_REGEX, (match, fm) => {
-        let cleanedFm = fm.replace(/^chapter_name:.*\n?/gm, "");
-        if (!cleanedFm.endsWith("\n")) cleanedFm += "\n";
-        cleanedFm += `chapter_name: ${JSON.stringify(newName)}\n`;
-        return `${FRONTMATTER_DELIMITER}\n${cleanedFm}${FRONTMATTER_DELIMITER}`;
+        const fields = extractFrontmatterFields(fm);
+        fields.chapter_name = newName;
+        return buildFrontmatter(fields);
       });
     }
     content = content.replace(/^#.*$/m, title);

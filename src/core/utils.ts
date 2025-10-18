@@ -219,3 +219,45 @@ export function buildFrontmatter(fields: Record<string, string | number>): strin
   }
   return `${FRONTMATTER_DELIMITER}\n${lines.join("\n")}\n${FRONTMATTER_DELIMITER}\n`;
 }
+
+/**
+ * Extract frontmatter fields from a frontmatter string (without delimiters)
+ * @param frontmatterContent - The frontmatter content string (without --- delimiters)
+ * @returns Object containing key-value pairs from frontmatter, or empty object if invalid
+ */
+export function extractFrontmatterFields(
+  frontmatterContent: string,
+): Record<string, string | number> {
+  const fields: Record<string, string | number> = {};
+  const lines = frontmatterContent.split("\n");
+
+  for (const line of lines) {
+    if (!line.trim()) continue;
+    const match = line.match(/^([a-zA-Z_][a-zA-Z0-9_-]*):\s*(.*)$/);
+    if (match) {
+      const key = match[1];
+      let value: string | number = match[2].trim();
+
+      // Parse numbers
+      if (/^-?\d+(\.\d+)?$/.test(value)) {
+        value = Number(value);
+      }
+      // Handle quoted strings (from JSON.stringify)
+      else if (
+        (value.startsWith('"') && value.endsWith('"')) ||
+        (value.startsWith("'") && value.endsWith("'"))
+      ) {
+        try {
+          value = JSON.parse(value);
+        } catch {
+          // If JSON.parse fails, just remove the quotes
+          value = (value as string).slice(1, -1);
+        }
+      }
+
+      fields[key] = value;
+    }
+  }
+
+  return fields;
+}
