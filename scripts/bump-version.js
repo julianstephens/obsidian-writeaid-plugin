@@ -53,9 +53,10 @@ async function generateChangelogWithGemini(commits) {
 
   const prompt = `You are a helpful assistant that summarizes git commits for changelog entries.
 
-Given the following git commit messages, generate a concise CHANGELOG entry with a bulleted list of features, fixes, and enhancements.
+Given the following git commit messages, generate ONLY a bulleted list of features, fixes, and enhancements.
 
-Format the output as a bulleted list with full sentences describing what was changed.
+Output ONLY the bulleted list with no introductory text or preamble.
+Format as a bulleted list with full sentences describing what was changed.
 Each line should start with "- " and describe the change in a user-friendly way.
 Group related items together (features, fixes, enhancements, etc).
 Keep descriptions concise but informative.
@@ -63,11 +64,25 @@ Keep descriptions concise but informative.
 Git commits:
 ${commitMessages}
 
-Generate the changelog entries:`;
+Generate the changelog entries (list only, no intro):`;
 
   try {
     info("Generating changelog with Gemini API...");
-    const response = await callGeminiAPI(prompt);
+    let response = await callGeminiAPI(prompt);
+    
+    // Clean up the response: remove any introductory lines that don't start with - or *
+    const lines = response.split("\n");
+    const changelogLines = lines.filter((line) => {
+      const trimmed = line.trim();
+      return trimmed.startsWith("-") || trimmed.startsWith("*") || trimmed === "";
+    });
+    
+    // Join back and clean up extra blank lines
+    response = changelogLines
+      .join("\n")
+      .replace(/\n\n+/g, "\n") // Replace multiple blank lines with single blank line
+      .trim();
+    
     success("Generated changelog with AI");
     return response;
   } catch (err) {
