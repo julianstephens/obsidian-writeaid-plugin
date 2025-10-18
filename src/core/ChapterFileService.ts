@@ -1,13 +1,13 @@
 import {
-    debug,
-    DEBUG_PREFIX,
-    FRONTMATTER_DELIMITER,
-    FRONTMATTER_REGEX,
-    generateDraftId,
-    getDraftsFolderName,
-    MARKDOWN_FILE_EXTENSION,
-    slugifyDraftName,
-    suppressAsync,
+  debug,
+  DEBUG_PREFIX,
+  FRONTMATTER_DELIMITER,
+  FRONTMATTER_REGEX,
+  generateDraftId,
+  getDraftsFolderName,
+  MARKDOWN_FILE_EXTENSION,
+  slugifyDraftName,
+  suppressAsync,
 } from "@/core/utils";
 import type { WriteAidManager } from "@/manager";
 import type { WriteAidSettings } from "@/types";
@@ -36,7 +36,9 @@ export class ChapterFileService {
     draftName: string,
     newOrder: Array<{ name: string; chapterName: string; order: number }>,
   ) {
-    debug(`${DEBUG_PREFIX} ChapterFileService.reorderChapters: starting reorder for ${projectPath}/${draftName}`);
+    debug(
+      `${DEBUG_PREFIX} ChapterFileService.reorderChapters: starting reorder for ${projectPath}/${draftName}`,
+    );
     debug(`${DEBUG_PREFIX} ChapterFileService.reorderChapters: newOrder:`, newOrder);
     const project = this.resolveProjectPath(projectPath);
     if (!project) {
@@ -58,9 +60,13 @@ export class ChapterFileService {
       debug(`${DEBUG_PREFIX} ChapterFileService.reorderChapters: file found:`, !!file);
       if (file && file instanceof TFile) {
         let content = await this.app.vault.read(file);
-        debug(`${DEBUG_PREFIX} ChapterFileService.reorderChapters: read content, length=${content.length}`);
+        debug(
+          `${DEBUG_PREFIX} ChapterFileService.reorderChapters: read content, length=${content.length}`,
+        );
         if (content.match(FRONTMATTER_REGEX)) {
-          debug(`${DEBUG_PREFIX} ChapterFileService.reorderChapters: updating order from current to ${i + 1}`);
+          debug(
+            `${DEBUG_PREFIX} ChapterFileService.reorderChapters: updating order from current to ${i + 1}`,
+          );
           content = content.replace(FRONTMATTER_REGEX, (match, fm) => {
             let cleanedFm = fm.replace(/^order:.*\n?/gm, "");
             if (!cleanedFm.endsWith("\n")) cleanedFm += "\n";

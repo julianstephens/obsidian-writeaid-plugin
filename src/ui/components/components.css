@@ -44,7 +44,10 @@ button.wa-icon-btn {
   cursor: pointer;
   background: none;
   border: none;
-  transition: opacity 0.2s, color 0.2s, transform 0.2s;
+  transition:
+    opacity 0.2s,
+    color 0.2s,
+    transform 0.2s;
   color: var(--wa-text);
 }
 button.wa-icon-btn:hover:not(:disabled) {
