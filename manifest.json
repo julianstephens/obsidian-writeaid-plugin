@@ -13,10 +13,7 @@
       "name": "Create New Draft",
       "hotkeys": [
         {
-          "modifiers": [
-            "Mod",
-            "Alt"
-          ],
+          "modifiers": ["Mod", "Alt"],
           "key": "D"
         }
       ]
@@ -26,10 +23,7 @@
       "name": "Create Outline",
       "hotkeys": [
         {
-          "modifiers": [
-            "Mod",
-            "Alt"
-          ],
+          "modifiers": ["Mod", "Alt"],
           "key": "O"
         }
       ]
@@ -39,10 +33,7 @@
       "name": "Create New Project",
       "hotkeys": [
         {
-          "modifiers": [
-            "Mod",
-            "Shift"
-          ],
+          "modifiers": ["Mod", "Shift"],
           "key": "P"
         }
       ]
@@ -52,10 +43,7 @@
       "name": "Switch Active Draft",
       "hotkeys": [
         {
-          "modifiers": [
-            "Mod",
-            "Alt"
-          ],
+          "modifiers": ["Mod", "Alt"],
           "key": "S"
         }
       ]
@@ -65,10 +53,7 @@
       "name": "Update Project Metadata",
       "hotkeys": [
         {
-          "modifiers": [
-            "Mod",
-            "Alt"
-          ],
+          "modifiers": ["Mod", "Alt"],
           "key": "M"
         }
       ]
@@ -78,10 +63,7 @@
       "name": "Select Active Project",
       "hotkeys": [
         {
-          "modifiers": [
-            "Mod",
-            "Alt"
-          ],
+          "modifiers": ["Mod", "Alt"],
           "key": "A"
         }
       ]
@@ -91,10 +73,7 @@
       "name": "Generate Manuscript",
       "hotkeys": [
         {
-          "modifiers": [
-            "Mod",
-            "Shift"
-          ],
+          "modifiers": ["Mod", "Shift"],
           "key": "M"
         }
       ]
@@ -108,10 +87,7 @@
       "name": "Navigate to Next Chapter",
       "hotkeys": [
         {
-          "modifiers": [
-            "Mod",
-            "Alt"
-          ],
+          "modifiers": ["Mod", "Alt"],
           "key": "N"
         }
       ]
@@ -121,10 +97,7 @@
       "name": "Navigate to Previous Chapter",
       "hotkeys": [
         {
-          "modifiers": [
-            "Mod",
-            "Alt"
-          ],
+          "modifiers": ["Mod", "Alt"],
           "key": "P"
         }
       ]

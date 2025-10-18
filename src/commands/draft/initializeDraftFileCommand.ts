@@ -1,8 +1,9 @@
 import {
+  buildFrontmatter,
   checkActive,
   debug,
   DEBUG_PREFIX,
-  FRONTMATTER_DELIMITER,
+  extractFrontmatterFields,
   FRONTMATTER_REGEX,
   generateDraftId,
   getDraftsFolderName,
@@ -79,41 +80,24 @@ function updateFileWithMetadata(content: string, metadata: DraftMetadata): strin
     const oldFrontmatter = fmMatch[1];
     const body = content.substring(fmMatch[0].length);
 
-    // Parse existing lines
-    const lines = oldFrontmatter.split("\n");
-    const updatedLines: string[] = [];
-    const fieldsSet = new Set<string>();
+    // Parse existing frontmatter into fields
+    const fields = extractFrontmatterFields(oldFrontmatter);
 
-    for (const line of lines) {
-      if (line.match(/^id:/i)) {
-        updatedLines.push(`id: ${metadata.id}`);
-        fieldsSet.add("id");
-      } else if (line.match(/^draft:/i)) {
-        updatedLines.push(`draft: ${metadata.draft}`);
-        fieldsSet.add("draft");
-      } else if (line.match(/^project:/i)) {
-        updatedLines.push(`project: ${metadata.project}`);
-        fieldsSet.add("project");
-      } else if (line.match(/^created:/i)) {
-        updatedLines.push(`created: ${metadata.created}`);
-        fieldsSet.add("created");
-      } else {
-        updatedLines.push(line);
-      }
-    }
+    // Update with new metadata
+    if (metadata.id) fields.id = metadata.id;
+    if (metadata.draft) fields.draft = metadata.draft;
+    if (metadata.project) fields.project = metadata.project;
+    if (metadata.created) fields.created = metadata.created;
 
-    // Add missing fields
-    if (!fieldsSet.has("id")) updatedLines.push(`id: ${metadata.id}`);
-    if (!fieldsSet.has("draft")) updatedLines.push(`draft: ${metadata.draft}`);
-    if (!fieldsSet.has("project")) updatedLines.push(`project: ${metadata.project}`);
-    if (!fieldsSet.has("created")) updatedLines.push(`created: ${metadata.created}`);
-
-    const newFrontmatter = updatedLines.join("\n");
-    return `${FRONTMATTER_DELIMITER}\n${newFrontmatter}\n${FRONTMATTER_DELIMITER}${body}`;
+    return `${buildFrontmatter(fields)}${body}`;
   } else {
     // No frontmatter, create it
-    const fm = `${FRONTMATTER_DELIMITER}\nid: ${metadata.id}\ndraft: ${metadata.draft}\nproject: ${metadata.project}\ncreated: ${metadata.created}\n${FRONTMATTER_DELIMITER}\n\n`;
-    return fm + content;
+    return `${buildFrontmatter({
+      id: metadata.id || "",
+      draft: metadata.draft || "",
+      project: metadata.project || "",
+      created: metadata.created || "",
+    })}\n${content}`;
   }
 }
 

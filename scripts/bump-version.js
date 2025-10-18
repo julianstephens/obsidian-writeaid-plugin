@@ -42,14 +42,10 @@ function info(message) {
 async function generateChangelogWithGemini(commits) {
   if (!GEMINI_API_KEY) {
     info("GEMINI_API_KEY not set, using raw commit messages");
-    return commits
-      .map((commit) => `- ${commit.replace(/^[a-f0-9]+ /, "")}`)
-      .join("\n");
+    return commits.map((commit) => `- ${commit.replace(/^[a-f0-9]+ /, "")}`).join("\n");
   }
 
-  const commitMessages = commits
-    .map((commit) => commit.replace(/^[a-f0-9]+ /, ""))
-    .join("\n");
+  const commitMessages = commits.map((commit) => commit.replace(/^[a-f0-9]+ /, "")).join("\n");
 
   const prompt = `You are a helpful assistant that summarizes git commits for changelog entries.
 
@@ -69,28 +65,26 @@ Generate the changelog entries (list only, no intro):`;
   try {
     info("Generating changelog with Gemini API...");
     let response = await callGeminiAPI(prompt);
-    
+
     // Clean up the response: remove any introductory lines that don't start with - or *
     const lines = response.split("\n");
     const changelogLines = lines.filter((line) => {
       const trimmed = line.trim();
       return trimmed.startsWith("-") || trimmed.startsWith("*") || trimmed === "";
     });
-    
+
     // Join back and clean up extra blank lines
     response = changelogLines
       .join("\n")
       .replace(/\n\n+/g, "\n") // Replace multiple blank lines with single blank line
       .trim();
-    
+
     success("Generated changelog with AI");
     return response;
   } catch (err) {
     const errMsg = err instanceof Error ? err.message : String(err);
     info(`Failed to generate changelog with Gemini: ${errMsg}, using raw commits`);
-    return commits
-      .map((commit) => `- ${commit.replace(/^[a-f0-9]+ /, "")}`)
-      .join("\n");
+    return commits.map((commit) => `- ${commit.replace(/^[a-f0-9]+ /, "")}`).join("\n");
   }
 }
 
@@ -152,7 +146,7 @@ const testMode = process.argv.includes("--test") || process.argv.includes("-t");
 
 if (!newVersion) {
   error(
-    "Please provide a version in the format: <major>.<minor>.<patch>\nUsage: npm run bump-version 0.1.2\n\nOptions:\n  --test, -t    Test mode (simulate without modifying files or creating commits)"
+    "Please provide a version in the format: <major>.<minor>.<patch>\nUsage: npm run bump-version 0.1.2\n\nOptions:\n  --test, -t    Test mode (simulate without modifying files or creating commits)",
   );
 }
 
@@ -347,7 +341,12 @@ if (testMode) {
       log(colors.cyan, "  [TEST] Would create annotated tag v" + newVersion);
       console.log("  Tag message:");
       console.log("  ---");
-      console.log(tagMessage.split("\n").map((line) => "  " + line).join("\n"));
+      console.log(
+        tagMessage
+          .split("\n")
+          .map((line) => "  " + line)
+          .join("\n"),
+      );
       console.log("  ---");
     }
 

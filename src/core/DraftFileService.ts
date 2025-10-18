@@ -1,9 +1,11 @@
 import { TemplateService } from "@/core/TemplateService";
 import { readMetaFile, updateMetaStats } from "@/core/meta";
 import {
+  buildFrontmatter,
   countWords,
   debug,
   DEBUG_PREFIX,
+  extractFrontmatterFields,
   FRONTMATTER_DELIMITER,
   FRONTMATTER_REGEX,
   generateDraftId,
@@ -182,7 +184,12 @@ export class DraftFileService {
         const draftMainPath = `${newDraftFolder}/${draftFileName}`;
         if (!this.app.vault.getAbstractFileByPath(draftMainPath)) {
           const draftId = generateDraftId();
-          const fm = `${FRONTMATTER_DELIMITER}\ndraft: ${draftName}\nid: ${draftId}\nproject: ${projectName}\ncreated: ${new Date().toISOString()}\n${FRONTMATTER_DELIMITER}\n\n`;
+          const fm = buildFrontmatter({
+            draft: draftName,
+            id: draftId,
+            project: projectName,
+            created: new Date().toISOString(),
+          });
           const projectContent = await this.tpl.render("# {{draftName}}", {
             draftName,
           });
@@ -319,10 +326,9 @@ export class DraftFileService {
             if (!frontmatter.match(/^id:\s*/m)) {
               // Add the draft ID to the frontmatter
               const body = content.substring(fmMatch[0].length);
-              const lines = frontmatter.split("\n");
-              lines.push(`id: ${draftId}`);
-              const updatedFrontmatter = lines.join("\n");
-              const updatedContent = `${FRONTMATTER_DELIMITER}\n${updatedFrontmatter}\n${FRONTMATTER_DELIMITER}${body}`;
+              const fields = extractFrontmatterFields(frontmatter);
+              fields.id = draftId;
+              const updatedContent = `${buildFrontmatter(fields)}${body}`;
               await this.app.vault.modify(file, updatedContent);
               debug(`${DEBUG_PREFIX} ensureChaptersDraftId: added draft ID to ${file.path}`);
             }
@@ -802,41 +808,15 @@ function updateDuplicatedFileMetadata(
   const frontmatter = fmMatch[1];
   const body = content.substring(fmMatch[0].length);
 
-  // Split frontmatter into lines
-  const lines = frontmatter.split("\n");
-  const updatedLines: string[] = [];
-  let hasId = false;
+  // Parse frontmatter into fields
+  const fields = extractFrontmatterFields(frontmatter);
 
-  for (const line of lines) {
-    // Update draft name
-    if (line.match(/^draft:/i)) {
-      updatedLines.push(`draft: ${draftName}`);
-    }
-    // Generate a new draft ID for the duplicate
-    else if (line.match(/^id:/i)) {
-      updatedLines.push(`id: ${generateDraftId()}`);
-      hasId = true;
-    }
-    // Update project name
-    else if (line.match(/^project:/i)) {
-      updatedLines.push(`project: ${projectName}`);
-    }
-    // Update created date to current timestamp
-    else if (line.match(/^created:/i)) {
-      updatedLines.push(`created: ${new Date().toISOString()}`);
-    }
-    // Keep other lines as-is
-    else {
-      updatedLines.push(line);
-    }
-  }
-
-  // If there was no id in the frontmatter, add one
-  if (!hasId) {
-    updatedLines.push(`id: ${generateDraftId()}`);
-  }
+  // Update fields for the duplicated draft
+  fields.draft = draftName;
+  fields.id = generateDraftId();
+  fields.project = projectName;
+  fields.created = new Date().toISOString();
 
   // Reconstruct the content
-  const updatedFrontmatter = updatedLines.join("\n");
-  return `${FRONTMATTER_DELIMITER}\n${updatedFrontmatter}\n${FRONTMATTER_DELIMITER}${body}`;
+  return `${buildFrontmatter(fields)}${body}`;
 }
