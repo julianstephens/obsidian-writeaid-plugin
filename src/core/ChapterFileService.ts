@@ -1,15 +1,15 @@
 import {
-  buildFrontmatter,
-  debug,
-  DEBUG_PREFIX,
-  extractFrontmatterFields,
-  FRONTMATTER_REGEX,
-  generateChapterId,
-  generateDraftId,
-  getDraftsFolderName,
-  MARKDOWN_FILE_EXTENSION,
-  slugifyDraftName,
-  suppressAsync,
+    buildFrontmatter,
+    debug,
+    DEBUG_PREFIX,
+    extractFrontmatterFields,
+    FRONTMATTER_REGEX,
+    generateChapterId,
+    generateDraftId,
+    getDraftsFolderName,
+    MARKDOWN_FILE_EXTENSION,
+    slugifyDraftName,
+    suppressAsync,
 } from "@/core/utils";
 import type { WriteAidManager } from "@/manager";
 import type { WriteAidSettings } from "@/types";
