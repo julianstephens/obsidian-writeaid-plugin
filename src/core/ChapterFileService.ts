@@ -19,6 +19,16 @@ export class ChapterFileService {
   app: App;
   manager: WriteAidManager | null;
 
+  // Required chapter frontmatter fields
+  private static readonly REQUIRED_CHAPTER_FIELDS = [
+    "chapter_id",
+    "order",
+    "chapter_name",
+    "draft_id",
+    "word_count",
+    "last_updated",
+  ] as const;
+
   constructor(app: App) {
     this.app = app;
     this.manager =
@@ -126,7 +136,7 @@ export class ChapterFileService {
               `${DEBUG_PREFIX} ChapterFileService.listChapters: content length ${content.length}`,
             );
 
-            // Check if this is a valid chapter (has all required fields: id, order, chapter_name)
+            // Check if this is a valid chapter (has all required fields)
             if (!this.isValidChapter(content)) {
               debug(
                 `${DEBUG_PREFIX} ChapterFileService.listChapters: ${file.path} is not a valid chapter (missing required fields)`,
@@ -405,12 +415,12 @@ export class ChapterFileService {
   }
 
   /**
-   * Check if a chapter file has all required frontmatter fields: id, order, chapter_name
+   * Check if a chapter file has all required frontmatter fields
    * @param frontmatter The frontmatter content (without delimiters)
    * @returns true if the chapter has all required fields
    */
   private hasRequiredChapterFields(frontmatter: string): boolean {
-    // Check for all 6 required fields
+    // Check for all required fields defined in REQUIRED_CHAPTER_FIELDS
     const hasChapterId = /^chapter_id:\s*\S+/im.test(frontmatter);
     const hasOrder = /^order:\s*\d+/im.test(frontmatter);
     const hasChapterName = /^chapter_name:\s*\S+/im.test(frontmatter);
@@ -418,7 +428,7 @@ export class ChapterFileService {
     const hasWordCount = /^word_count:\s*\d+/im.test(frontmatter);
     const hasLastUpdated = /^last_updated:\s*\S+/im.test(frontmatter);
 
-    // Require all 6 fields for new chapter design
+    // Require all fields as defined in REQUIRED_CHAPTER_FIELDS constant
     return (
       hasChapterId && hasOrder && hasChapterName && hasDraftId && hasWordCount && hasLastUpdated
     );
@@ -427,7 +437,7 @@ export class ChapterFileService {
   /**
    * Extract chapter metadata from frontmatter
    * @param frontmatter The frontmatter content (without delimiters)
-   * @returns Object with all 6 required chapter fields or null if missing required fields
+   * @returns Object with all required chapter fields or null if missing required fields
    */
   private extractChapterMetadata(frontmatter: string): {
     chapterId?: string;
@@ -483,7 +493,7 @@ export class ChapterFileService {
 
   /**
    * Check if a file is a valid chapter (has all required frontmatter fields)
-   * Requires all 6 fields: id, order, chapter_name, draft_id, word_count, last_updated
+   * See REQUIRED_CHAPTER_FIELDS constant for the full list of required fields
    */
   isValidChapter(content: string): boolean {
     const fmMatch = content.match(FRONTMATTER_REGEX);
