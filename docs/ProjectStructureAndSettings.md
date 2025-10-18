@@ -194,9 +194,6 @@ Your chapter content...
 
 **Note on Timestamps:** All timestamps are stored in UTC (the `Z` suffix means Zulu/UTC time). Your editor may display them in your local timezone, which could appear different from UTC. See [TIMEZONE_NOTES.md](TIMEZONE_NOTES.md) for details.
 
-````
-```
-
 **Frontmatter Fields:**
 
 - `id` (UUID): Unique chapter identifier
