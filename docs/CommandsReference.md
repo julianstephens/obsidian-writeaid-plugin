@@ -261,7 +261,7 @@ drafts:
 - **What it does:**
   1. Prompts for chapter name
   2. Generates chapter file with all 6 frontmatter fields:
-     - `id`: Unique chapter identifier with `ch-` prefix
+     - `chapter_id`: Unique chapter identifier with `ch-` prefix
      - `order`: Auto-calculated from existing chapters
      - `chapter_name`: User-provided display name
      - `draft_id`: Linked to parent draft
@@ -275,7 +275,7 @@ drafts:
 
 ```yaml
 ---
-id: "ch-[auto-generated-uuid]"
+chapter_id: "ch-[auto-generated-uuid]"
 order: [next-available-number]
 chapter_name: "[chapter-name]"
 draft_id: "[parent-draft-id]"
