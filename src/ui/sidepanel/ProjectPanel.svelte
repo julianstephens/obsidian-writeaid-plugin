@@ -68,6 +68,12 @@
   let isMultiFileProject = false;
   let initialized = false;
 
+  // Debounce flags to prevent infinite refresh loops (especially on Windows)
+  let refreshChaptersTimeout: ReturnType<typeof setTimeout> | null = null;
+  let lastRefreshChaptersCall = 0;
+  let refreshTimeout: ReturnType<typeof setTimeout> | null = null;
+  let isRefreshing = false;
+
   // Initialize on component mount - use reactive to trigger on prop availability
   $: if (manager && projectService && projectFileService && !initialized) {
     initialized = true;
@@ -120,6 +126,13 @@
       if (manager && activeProjectListener) {
         manager.removeActiveProjectListener(activeProjectListener);
       }
+      // Clean up any pending refresh timeouts
+      if (refreshChaptersTimeout) {
+        clearTimeout(refreshChaptersTimeout);
+      }
+      if (refreshTimeout) {
+        clearTimeout(refreshTimeout);
+      }
     } catch (e) {
       // ignore
     }
@@ -157,24 +170,21 @@
     projects = newProjects;
     projectOptions = newProjects.map((p) => ({ value: p, label: p }));
 
+    // Track what the new active project should be
+    let newActiveProjectValue: string | null = null;
+
     // If there are no projects, clear selection
     if (newProjects.length === 0) {
       activeProject = null;
       selected = undefined;
       selectedValue = null;
-      // Notify manager to clear active project (triggers status bar update)
-      if (manager?.setActiveProject) {
-        await manager.setActiveProject(null);
-      }
+      newActiveProjectValue = null;
     } else if (newProjects.length === 1) {
       // If only one project exists, always set it as active
       activeProject = newProjects[0];
       selected = projectOptions[0];
       selectedValue = newProjects[0];
-      // Notify manager of the new active project (triggers status bar update)
-      if (manager?.setActiveProject) {
-        await manager.setActiveProject(newProjects[0]);
-      }
+      newActiveProjectValue = newProjects[0];
       // Debug: log project selection
       try {
         debug(`${DEBUG_PREFIX} panel refresh selected single project '${selectedValue}'`);
@@ -186,10 +196,7 @@
       activeProject = newProjects[0];
       selected = projectOptions[0];
       selectedValue = newProjects[0];
-      // Notify manager of the new active project (triggers status bar update)
-      if (manager?.setActiveProject) {
-        await manager.setActiveProject(newProjects[0]);
-      }
+      newActiveProjectValue = newProjects[0];
       // Debug: log fallback selection
       try {
         debug(`${DEBUG_PREFIX} panel refresh selected fallback project '${selectedValue}'`);
@@ -203,6 +210,7 @@
         activeProject = prevActive;
         selected = found;
         selectedValue = found.value;
+        newActiveProjectValue = prevActive;
         try {
           debug(`${DEBUG_PREFIX} panel refresh kept project '${selectedValue}'`);
         } catch (e) {
@@ -212,10 +220,7 @@
         activeProject = null;
         selected = undefined;
         selectedValue = null;
-        // Notify manager to clear active project (triggers status bar update)
-        if (manager?.setActiveProject) {
-          await manager.setActiveProject(null);
-        }
+        newActiveProjectValue = null;
       }
     } else {
       // prevActive is null/undefined - don't notify manager, let startup logic set it
@@ -223,6 +228,17 @@
       activeProject = null;
       selected = undefined;
       selectedValue = null;
+      newActiveProjectValue = null;
+    }
+
+    // Only notify manager if the project value actually changed
+    if (manager && newActiveProjectValue !== prevActive) {
+      debug(
+        `${DEBUG_PREFIX} panel refresh: active project changed from '${prevActive}' to '${newActiveProjectValue}'`,
+      );
+      if (manager?.setActiveProject) {
+        await manager.setActiveProject(newActiveProjectValue);
+      }
     }
 
     await minSpin;
@@ -267,8 +283,29 @@
     }
   }
 
-  // Refresh chapters (multi-file projects)
+  // Refresh chapters (multi-file projects) - debounced to prevent infinite loops on Windows
   async function refreshChapters() {
+    if (!manager || !projectFileService) return;
+
+    // Debounce: prevent rapid successive calls (Windows file system issue)
+    const now = Date.now();
+    if (now - lastRefreshChaptersCall < 500) {
+      // Clear existing timeout and schedule a new one
+      if (refreshChaptersTimeout) clearTimeout(refreshChaptersTimeout);
+      refreshChaptersTimeout = setTimeout(() => {
+        refreshChaptersInternal();
+      }, 500);
+      return;
+    }
+
+    lastRefreshChaptersCall = now;
+    if (refreshChaptersTimeout) clearTimeout(refreshChaptersTimeout);
+    refreshChaptersTimeout = null;
+    await refreshChaptersInternal();
+  }
+
+  // Internal implementation of refreshChapters
+  async function refreshChaptersInternal() {
     if (!manager || !projectFileService) return;
 
     loadingChapters = true;

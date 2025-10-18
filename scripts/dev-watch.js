@@ -5,28 +5,33 @@ const path = require("path");
 const repoRoot = path.resolve(__dirname, "..");
 const distDir = path.join(repoRoot, "dist");
 const manifest = path.join(repoRoot, "manifest.json");
-const dest = path.join(repoRoot, "test-vault", ".obsidian", "plugins", "obsidian-writeaid-plugin");
+const pluginPath = ".obsidian/plugins/obsidian-writeaid-plugin";
+const wslDest = path.join(repoRoot, "test-vault", pluginPath);
+const windowsDest = path.join("/mnt/c/Users/leahs/Onedrive/Writing/WIP", pluginPath);
+const destinations = [wslDest, windowsDest];
 
 /**
  * @type {string | number | NodeJS.Timeout | null | undefined}
  */
 let timeout = null;
 async function copyDist() {
-  try {
-    await fs.rm(dest, { recursive: true, force: true });
-    await fs.mkdir(dest, { recursive: true });
-    // copy dist contents if present
-    await fs.cp(distDir, dest, { recursive: true });
-    // ensure manifest is present at dest
+  for (const dest of destinations) {
     try {
-      await fs.copyFile(manifest, path.join(dest, "manifest.json"));
+      await fs.rm(dest, { recursive: true, force: true });
+      await fs.mkdir(dest, { recursive: true });
+      // copy dist contents if present
+      await fs.cp(distDir, dest, { recursive: true });
+      // ensure manifest is present at dest
+      try {
+        await fs.copyFile(manifest, path.join(dest, "manifest.json"));
+      } catch (e) {
+        // ignore if manifest doesn't exist
+      }
+      // Informational copy output (keep this visible by default)
+      console.log("[dev-watch] Copied dist ->", dest);
     } catch (e) {
-      // ignore if manifest doesn't exist
+      console.error("[dev-watch] Copy failed to dest", dest, e);
     }
-    // Informational copy output (keep this visible by default)
-    console.log("[dev-watch] Copied dist ->", dest);
-  } catch (e) {
-    console.error("[dev-watch] Copy failed", e);
   }
 }
 
