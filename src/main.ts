@@ -5,6 +5,7 @@ import { listBackupsCommand } from "@/commands/backup/listBackupsCommand";
 import { createNewDraftCommand } from "@/commands/draft/createNewDraftCommand";
 import { createOutlineCommand } from "@/commands/draft/createOutlineCommand";
 import { generateManuscriptCommand } from "@/commands/draft/generateManuscriptCommand";
+import { initializeDraftFileCommand } from "@/commands/draft/initializeDraftFileCommand";
 import { switchDraftCommand } from "@/commands/draft/switchDraftCommand";
 import { navigateToNextChapterCommand } from "@/commands/navigation/navigateToNextChapterCommand";
 import { navigateToPreviousChapterCommand } from "@/commands/navigation/navigateToPreviousChapterCommand";
@@ -503,6 +504,12 @@ export default class WriteAidPlugin extends Plugin {
       id: "clear-old-backups",
       name: "Clear Old Backups",
       callback: clearOldBackupsCommand(this.manager),
+    });
+
+    this.addCommand({
+      id: "initialize-draft-file",
+      name: "Initialize Draft File Metadata",
+      callback: initializeDraftFileCommand(this.manager),
     });
 
     this.addSettingTab(new WriteAidSettingTab(this.app, this));

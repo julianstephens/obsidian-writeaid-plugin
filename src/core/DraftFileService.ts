@@ -5,6 +5,7 @@ import {
   DEBUG_PREFIX,
   FRONTMATTER_DELIMITER,
   FRONTMATTER_REGEX,
+  generateDraftId,
   getDraftsFolderName,
   getManuscriptsFolderName,
   getMetaFileName,
@@ -174,7 +175,8 @@ export class DraftFileService {
         const draftFileName = `${slug}${MARKDOWN_FILE_EXTENSION}`;
         const draftMainPath = `${newDraftFolder}/${draftFileName}`;
         if (!this.app.vault.getAbstractFileByPath(draftMainPath)) {
-          const fm = `${FRONTMATTER_DELIMITER}\ndraft: ${draftName}\nproject: ${projectName}\ncreated: ${new Date().toISOString()}\n${FRONTMATTER_DELIMITER}\n\n`;
+          const draftId = generateDraftId();
+          const fm = `${FRONTMATTER_DELIMITER}\ndraft: ${draftName}\nid: ${draftId}\nproject: ${projectName}\ncreated: ${new Date().toISOString()}\n${FRONTMATTER_DELIMITER}\n\n`;
           const projectContent = await this.tpl.render("# {{draftName}}", {
             draftName,
           });
@@ -252,6 +254,32 @@ export class DraftFileService {
   }
 
   /**
+   * Get the draft ID from a draft folder by reading the frontmatter of any markdown file.
+   * Returns null if the draft ID cannot be found.
+   */
+  async getDraftId(draftFolderPath: string): Promise<string | null> {
+    try {
+      const files = this.app.vault.getFiles().filter((f) => f.path.startsWith(draftFolderPath));
+      for (const file of files) {
+        if (file.extension === MARKDOWN_FILE_EXTENSION.slice(1)) {
+          const content = await this.app.vault.read(file);
+          const fmMatch = content.match(FRONTMATTER_REGEX);
+          if (fmMatch) {
+            const frontmatter = fmMatch[1];
+            const idMatch = frontmatter.match(/^id:\s*(.+?)$/m);
+            if (idMatch) {
+              return idMatch[1].trim();
+            }
+          }
+        }
+      }
+      return null;
+    } catch {
+      return null;
+    }
+  }
+
+  /**
    * Open a draft in the workspace. Tries outline.md first, then falls back to the first file in the draft folder.
    * Returns true if a file was opened.
    */
@@ -306,22 +334,35 @@ export class DraftFileService {
         await this.app.vault.createFolder(newFolder);
       }
       const files = this.app.vault.getFiles().filter((f) => f.path.startsWith(oldFolder));
-      // Compute old and new slug for main draft file
-      let oldSlug = "";
+
+      // Compute slugs for main draft file
       let newSlug = "";
       if (renameFile) {
         const slugStyle = settings?.slugStyle;
-        oldSlug = slugifyDraftName(oldName, slugStyle);
         newSlug = slugifyDraftName(newName, slugStyle);
       }
+
+      // Find the main draft file (any .md file directly in the draft folder, not in subfolders)
+      let mainDraftFile: TFile | null = null;
+      for (const file of files) {
+        const rel = file.path.substring(oldFolder.length + 1);
+        // Check if file is directly in the draft folder (no path separators)
+        if (file.extension === MARKDOWN_FILE_EXTENSION.slice(1) && !rel.includes("/")) {
+          mainDraftFile = file;
+          break;
+        }
+      }
+
       for (const file of files) {
         let rel = file.path.substring(oldFolder.length + 1);
         let dest = `${newFolder}/${rel}`;
-        // Only rename the main draft file (oldSlug.md) if requested
-        if (renameFile && oldSlug && newSlug && rel === `${oldSlug}${MARKDOWN_FILE_EXTENSION}`) {
+
+        // If this is the main draft file and renameFile is true, rename it to the new slug
+        if (renameFile && newSlug && file === mainDraftFile && !rel.includes("/")) {
           rel = `${newSlug}${MARKDOWN_FILE_EXTENSION}`;
           dest = `${newFolder}/${rel}`;
         }
+
         let content = await this.app.vault.read(file);
         // If this is a Markdown file, update its frontmatter draft property
         if (file.extension === MARKDOWN_FILE_EXTENSION.slice(1)) {
@@ -343,17 +384,20 @@ export class DraftFileService {
         await this.app.vault.create(dest, content);
         await this.app.vault.delete(file);
       }
+
       // Remove the old draft folder if it exists (force delete, even if not empty)
       const oldFolderObj = this.app.vault.getAbstractFileByPath(oldFolder);
       if (oldFolderObj && oldFolderObj instanceof TFolder) {
         await this.app.vault.delete(oldFolderObj, true);
       }
+
       // Update meta.md in the project root
       await suppressAsync(async () => {
         await import("./meta").then((meta) =>
           meta.updateMetaStats(this.app, project, newName, undefined, this.manager?.settings),
         );
       });
+
       // Update meta.md in the renamed draft folder if it exists
       const draftMetaPath = `${newFolder}/${getMetaFileName(this.manager?.settings)}`;
       const draftMetaFile = this.app.vault.getAbstractFileByPath(draftMetaPath);
@@ -375,7 +419,7 @@ export class DraftFileService {
   }
 
   /**
-   * Delete a draft folder. If createBackup is true, copy the draft folder to .writeaid-backups/<ts>/<name> before deleting.
+   * Delete a draft folder. If createBackup is true, copy the draft folder to .writeaid-backups using draft ID before deleting.
    */
   async deleteDraft(
     projectPath: string | undefined,
@@ -390,7 +434,11 @@ export class DraftFileService {
     try {
       const files = this.app.vault.getFiles().filter((f) => f.path.startsWith(draftFolder));
       if (createBackup) {
-        await this.backupSvc.createBackup(draftFolder, this.manager?.settings);
+        // Get the draft ID before deleting
+        const draftId = await this.getDraftId(draftFolder);
+        if (draftId) {
+          await this.backupSvc.createBackup(draftFolder, draftId, this.manager?.settings);
+        }
       }
       // delete original files
       for (const file of files) {
@@ -554,11 +602,17 @@ function updateDuplicatedFileMetadata(
   // Split frontmatter into lines
   const lines = frontmatter.split("\n");
   const updatedLines: string[] = [];
+  let hasId = false;
 
   for (const line of lines) {
     // Update draft name
     if (line.match(/^draft:/i)) {
       updatedLines.push(`draft: ${draftName}`);
+    }
+    // Generate a new draft ID for the duplicate
+    else if (line.match(/^id:/i)) {
+      updatedLines.push(`id: ${generateDraftId()}`);
+      hasId = true;
     }
     // Update project name
     else if (line.match(/^project:/i)) {
@@ -572,6 +626,11 @@ function updateDuplicatedFileMetadata(
     else {
       updatedLines.push(line);
     }
+  }
+
+  // If there was no id in the frontmatter, add one
+  if (!hasId) {
+    updatedLines.push(`id: ${generateDraftId()}`);
   }
 
   // Reconstruct the content

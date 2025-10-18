@@ -153,6 +153,19 @@ export async function suppressAsync<T>(
 }
 
 /**
+ * Generate a unique draft ID using crypto.randomUUID() or fallback to timestamp + random string
+ */
+export function generateDraftId(): string {
+  if (typeof crypto !== "undefined" && crypto.randomUUID) {
+    return crypto.randomUUID();
+  }
+  // Fallback for environments without crypto.randomUUID
+  const timestamp = Date.now().toString(36);
+  const random = Math.random().toString(36).substring(2, 15);
+  return `${timestamp}-${random}`;
+}
+
+/**
  * Helper function for conditional debug logging.
  * Only logs when the global __WRITEAID_DEBUG__ flag is set to true.
  */

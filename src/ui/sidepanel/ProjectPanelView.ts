@@ -4,6 +4,7 @@ import { APP_NAME, debug, DEBUG_PREFIX, WRITE_AID_ICON_NAME } from "@/core/utils
 import type { WriteAidManager } from "@/manager";
 import ProjectPanel from "@/ui/sidepanel/ProjectPanel.svelte";
 import { ItemView, Notice, type App, type WorkspaceLeaf } from "obsidian";
+import type { SvelteComponent } from "svelte";
 
 export const VIEW_TYPE_PROJECT_PANEL = "writeaid-project-panel";
 
@@ -14,7 +15,7 @@ export class ProjectPanelView extends ItemView {
   projectFileService: ProjectFileService;
   panelEl: HTMLElement | null = null;
   selectedProject: string | null = null;
-  projectPanel: any;
+  projectPanel: SvelteComponent | undefined;
 
   constructor(leaf: WorkspaceLeaf, app: App, manager: WriteAidManager) {
     super(leaf);

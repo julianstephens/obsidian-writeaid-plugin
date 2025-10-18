@@ -11,6 +11,7 @@
   import { ConfirmDeleteModal } from "@/ui/modals/ConfirmDeleteModal";
   import { DuplicateDraftModal } from "@/ui/modals/DuplicateDraftModal";
   import { RenameChapterModal } from "@/ui/modals/RenameChapterModal";
+  import { RenameDraftModal } from "@/ui/modals/RenameDraftModal";
   import {
     ArrowDown,
     ArrowUp,
@@ -188,10 +189,7 @@
     await minSpin;
     loadingProjects = false;
     // Optionally, refresh drafts for the selected project
-    if (selectedValue) {
-      await refreshDrafts();
-      await refreshChapters();
-    }
+    if (selectedValue) await refreshDrafts();
     return newProjects;
   }
 
@@ -315,17 +313,20 @@
 
   async function renameDraft(draftName) {
     if (!manager || !selectedValue) return;
-    // For now, prompt simple rename via browser prompt (modal would be better)
-    const newName = window?.prompt
-      ? window.prompt(`Rename draft '${draftName}' to:`, draftName)
-      : null;
-    if (!newName) return;
-    try {
-      await manager.renameDraft(draftName, newName, selectedValue, false);
-      await refreshDrafts();
-    } catch (e) {
-      // ignore
-    }
+
+    const modal = new RenameDraftModal(manager.app, draftName, async (newName, renameFile) => {
+      try {
+        debug(`${DEBUG_PREFIX} renameDraft: user entered: ${newName}, renameFile: ${renameFile}`);
+        await manager.renameDraft(draftName, newName, selectedValue || undefined, renameFile);
+        debug(`${DEBUG_PREFIX} renameDraft: rename successful, refreshing drafts`);
+        await refreshDrafts();
+        new Notice(`Draft '${draftName}' renamed to '${newName}'.`);
+      } catch (e) {
+        debug(`${DEBUG_PREFIX} renameDraft: error:`, e);
+        new Notice("Failed to rename draft.");
+      }
+    });
+    modal.open();
   }
 
   async function deleteDraftHandler(draftName) {

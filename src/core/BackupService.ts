@@ -23,7 +23,11 @@ export class BackupService {
     return this.settings?.maxBackupAgeDays ?? 30;
   }
 
-  async createBackup(draftFolder: string, settings?: WriteAidSettings): Promise<boolean> {
+  async createBackup(
+    draftFolder: string,
+    draftId: string,
+    settings?: WriteAidSettings,
+  ): Promise<boolean> {
     try {
       const folder = this.app.vault.getAbstractFileByPath(draftFolder);
       if (!folder || !(folder instanceof TFolder)) {
@@ -39,11 +43,10 @@ export class BackupService {
         return false;
       }
 
-      // Create backup directory path - match draft location exactly
+      // Create backup directory path using draft ID instead of draft name
       const projectName = draftFolder.split("/")[0] || "unknown";
       const draftsFolderName = draftFolder.split("/")[1] || "drafts";
-      const draftName = draftFolder.split("/").pop() || "unknown";
-      const backupDir = `${getBackupsFolderName(settings)}/${projectName}/${draftsFolderName}/${draftName}`;
+      const backupDir = `${getBackupsFolderName(settings)}/${projectName}/${draftsFolderName}/${draftId}`;
 
       // Ensure backup directory exists
       const dirExists = await this.app.vault.adapter.exists(backupDir);
@@ -53,7 +56,7 @@ export class BackupService {
 
       // Generate timestamp for backup filename
       const timestamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, -5);
-      const backupFileName = `${draftName}_${timestamp}${BACKUP_FILE_EXTENSION}`;
+      const backupFileName = `${timestamp}${BACKUP_FILE_EXTENSION}`;
       const backupPath = `${backupDir}/${backupFileName}`;
 
       // Create zip archive
@@ -87,28 +90,26 @@ export class BackupService {
     }
   }
 
-  async listBackups(draftFolder: string, settings?: WriteAidSettings): Promise<string[]> {
+  async listBackups(
+    draftFolder: string,
+    draftId: string,
+    settings?: WriteAidSettings,
+  ): Promise<string[]> {
     try {
       const projectName = draftFolder.split("/")[0] || "unknown";
       const draftsFolderName = draftFolder.split("/")[1] || "drafts";
-      const draftFolderName = draftFolder.split("/").pop() || "unknown";
-      const backupDir = `${getBackupsFolderName(settings)}/${projectName}/${draftsFolderName}/${draftFolderName}`;
+      const backupDir = `${getBackupsFolderName(settings)}/${projectName}/${draftsFolderName}/${draftId}`;
 
       const folder = this.app.vault.getAbstractFileByPath(backupDir);
       if (!folder || !(folder instanceof TFolder)) {
         return [];
       }
 
-      const draftName = draftFolder.split("/").pop() || "unknown";
       const backups: string[] = [];
 
       for (const child of folder.children) {
-        if (
-          child instanceof TFile &&
-          child.name.startsWith(`${draftName}_`) &&
-          child.name.endsWith(BACKUP_FILE_EXTENSION)
-        ) {
-          // Extract timestamp from filename (format: draftName_YYYY-MM-DDTHH-MM-SS.zip)
+        if (child instanceof TFile && child.name.endsWith(BACKUP_FILE_EXTENSION)) {
+          // Extract timestamp from filename (format: YYYY-MM-DDTHH-MM-SS.zip)
           const timestampMatch = child.name.match(BACKUP_TIMESTAMP_REGEX);
           if (timestampMatch) {
             backups.push(timestampMatch[1]);
@@ -126,15 +127,15 @@ export class BackupService {
 
   async restoreBackup(
     draftFolder: string,
+    draftId: string,
     timestamp: string,
     settings?: WriteAidSettings,
   ): Promise<boolean> {
     try {
       const projectName = draftFolder.split("/")[0] || "unknown";
       const draftsFolderName = draftFolder.split("/")[1] || "drafts";
-      const draftName = draftFolder.split("/").pop() || "unknown";
-      const backupDir = `${getBackupsFolderName(settings)}/${projectName}/${draftsFolderName}/${draftName}`;
-      const backupFileName = `${draftName}_${timestamp}${BACKUP_FILE_EXTENSION}`;
+      const backupDir = `${getBackupsFolderName(settings)}/${projectName}/${draftsFolderName}/${draftId}`;
+      const backupFileName = `${timestamp}${BACKUP_FILE_EXTENSION}`;
       const backupPath = `${backupDir}/${backupFileName}`;
 
       // Check if backup file exists using adapter
@@ -195,15 +196,15 @@ export class BackupService {
 
   async deleteBackup(
     draftFolder: string,
+    draftId: string,
     timestamp: string,
     settings?: WriteAidSettings,
   ): Promise<boolean> {
     try {
       const projectName = draftFolder.split("/")[0] || "unknown";
       const draftsFolderName = draftFolder.split("/")[1] || "drafts";
-      const draftName = draftFolder.split("/").pop() || "unknown";
-      const backupDir = `${getBackupsFolderName(settings)}/${projectName}/${draftsFolderName}/${draftName}`;
-      const backupFileName = `${draftName}_${timestamp}${BACKUP_FILE_EXTENSION}`;
+      const backupDir = `${getBackupsFolderName(settings)}/${projectName}/${draftsFolderName}/${draftId}`;
+      const backupFileName = `${timestamp}${BACKUP_FILE_EXTENSION}`;
       const backupPath = `${backupDir}/${backupFileName}`;
 
       // Check if backup file exists using adapter
@@ -223,16 +224,20 @@ export class BackupService {
     }
   }
 
-  async clearOldBackups(draftFolder: string, settings?: WriteAidSettings): Promise<void> {
+  async clearOldBackups(
+    draftFolder: string,
+    draftId: string,
+    settings?: WriteAidSettings,
+  ): Promise<void> {
     try {
-      const backups = await this.listBackups(draftFolder, settings);
+      const backups = await this.listBackups(draftFolder, draftId, settings);
       const cutoffDate = new Date();
       cutoffDate.setDate(cutoffDate.getDate() - this.maxBackupAgeDays);
 
       for (const timestamp of backups) {
         const backupDate = new Date(timestamp.replace(/-/g, ":"));
         if (backupDate < cutoffDate) {
-          await this.deleteBackup(draftFolder, timestamp, settings);
+          await this.deleteBackup(draftFolder, draftId, timestamp, settings);
         }
       }
     } catch (error) {

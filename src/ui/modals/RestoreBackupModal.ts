@@ -17,6 +17,7 @@ interface BackupItem {
   displayText: string;
   draftName: string;
   draftFolder: string;
+  draftId: string;
 }
 
 export class RestoreBackupModal extends SuggestModal<BackupItem> {
@@ -71,35 +72,45 @@ export class RestoreBackupModal extends SuggestModal<BackupItem> {
     const backupProjectDir = `${getBackupsFolderName(this.manager.settings)}/${projectName}`;
 
     try {
-      // First, list all items in the project backup directory
-      // const projectItems = await this.app.vault.adapter.list(backupProjectDir);
-
       const backupDetails: BackupItem[] = [];
       const draftsFolderName = getDraftsFolderName(this.manager.settings);
 
-      // Look for the drafts folder
+      // Look for the drafts folder in backups
       const draftsBackupDir = `${backupProjectDir}/${draftsFolderName}`;
       const draftsItems = await this.app.vault.adapter.list(draftsBackupDir);
 
-      // For each draft folder in backups
-      for (const draftFolderFullPath of draftsItems.folders) {
-        // Extract just the folder name from the full path
-        const draftFolderName = draftFolderFullPath.split("/").pop() || draftFolderFullPath;
+      // For each draft ID folder in backups
+      for (const draftIdFolderPath of draftsItems.folders) {
+        // Extract just the folder name (which is now the draft ID)
+        const draftId = draftIdFolderPath.split("/").pop() || draftIdFolderPath;
 
-        const draftBackupDir = `${draftsBackupDir}/${draftFolderName}`;
+        // Get the draft name from the actual draft folder by finding which draft has this ID
+        let draftName = draftId; // Fallback to ID if we can't find the name
+
+        // List all drafts in the current project to find the one with this ID
+        const draftsFolderPath = `${projectName}/${draftsFolderName}`;
+        const drafts = this.manager.projectFileService.drafts.listDrafts(projectName);
+        for (const draft of drafts) {
+          const draftPath = `${draftsFolderPath}/${draft}`;
+          const draftIdFromFolder =
+            await this.manager.projectFileService.drafts.getDraftId(draftPath);
+          if (draftIdFromFolder === draftId) {
+            draftName = draft;
+            break;
+          }
+        }
+
+        const draftBackupDir = `${draftsBackupDir}/${draftId}`;
         const draftItems = await this.app.vault.adapter.list(draftBackupDir);
 
         // Get the actual draft folder path for restoration
-        const draftFolderPath = `${projectName}/${draftsFolderName}/${draftFolderName}`;
+        const draftFolderPath = `${projectName}/${draftsFolderName}/${draftName}`;
 
         for (const fileName of draftItems.files) {
           // adapter.list() returns full paths, extract just the filename
           const baseName = fileName.split("/").pop() || fileName;
-          // More flexible matching: look for files that contain the draft name followed by underscore and timestamp
-          const draftNamePattern = draftFolderName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); // Escape special regex chars
-          const backupPattern = new RegExp(
-            `^${draftNamePattern}_(\\d{4}-\\d{2}-\\d{2}T\\d{2}-\\d{2}-\\d{2})\\.zip$`,
-          );
+          // Match the new backup filename format: YYYY-MM-DDTHH-MM-SS.zip
+          const backupPattern = new RegExp(`^(\\d{4}-\\d{2}-\\d{2}T\\d{2}-\\d{2}-\\d{2})\\.zip$`);
           const match = baseName.match(backupPattern);
 
           if (match) {
@@ -118,9 +129,10 @@ export class RestoreBackupModal extends SuggestModal<BackupItem> {
             backupDetails.push({
               timestamp,
               size,
-              displayText: `${draftFolderName}: ${formattedDate} (${sizeText})`,
-              draftName: draftFolderName,
+              displayText: `${draftName}: ${formattedDate} (${sizeText})`,
+              draftName,
               draftFolder: draftFolderPath,
+              draftId,
             });
           }
         }
@@ -172,6 +184,7 @@ export class RestoreBackupModal extends SuggestModal<BackupItem> {
     // Restore the backup
     const success = await this.manager.projectFileService.backups.restoreBackup(
       backup.draftFolder,
+      backup.draftId,
       backup.timestamp,
       this.manager.settings,
     );
