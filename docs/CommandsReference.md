@@ -252,6 +252,41 @@ drafts:
 
 ### Chapter Management (Multi-File Projects)
 
+#### Create Chapter
+
+- **Command ID:** `create-chapter`
+- **Hotkey:** None
+- **Description:** Create a new chapter in a multi-file project
+- **Requirements:** Multi-file project with active draft
+- **What it does:**
+  1. Prompts for chapter name
+  2. Generates chapter file with all 6 frontmatter fields:
+     - `chapter_id`: Unique chapter identifier with `ch-` prefix
+     - `order`: Auto-calculated from existing chapters
+     - `chapter_name`: User-provided display name
+     - `draft_id`: Linked to parent draft
+     - `word_count`: Initialized to 0
+     - `last_updated`: Set to current ISO 8601 timestamp
+  3. Creates new chapter file in draft folder
+  4. Updates chapter count in project metadata
+  5. Refreshes Project Panel
+
+**Generated Frontmatter:**
+
+```yaml
+---
+chapter_id: "ch-[auto-generated-uuid]"
+order: [next-available-number]
+chapter_name: "[chapter-name]"
+draft_id: "[parent-draft-id]"
+word_count: 0
+last_updated: 2025-01-15T14:30:45Z
+---
+# [chapter-name]
+```
+
+---
+
 #### Navigate to Next Chapter
 
 - **Command ID:** `navigate-next-chapter`
@@ -288,7 +323,8 @@ drafts:
   1. Shows chapter selection modal
   2. Prompts for new chapter name
   3. Updates chapter `chapter_name` in frontmatter
-  4. Refreshes Project Panel
+  4. Updates `last_updated` timestamp
+  5. Refreshes Project Panel
 
 ---
 

@@ -138,30 +138,61 @@ Once upon a time...
 
 Each chapter is a separate file with frontmatter:
 
-```yaml
+#### Multi-File Project Chapters
+
+Each chapter is a separate file with frontmatter containing comprehensive metadata:
+
+````yaml
 ---
-id: "ch001-uuid"
+chapter_id: "ch-[uuid]"
 order: 1
 chapter_name: "Chapter 1: The Beginning"
-draft_id: "draft-uuid"
-word_count: 4567
+draft_id: "draft-[uuid]"
+word_count: 0
 last_updated: 2025-01-15T14:30:45Z
 ---
 # Chapter 1: The Beginning
 
 Your chapter content...
-```
 
 **Frontmatter Fields:**
 
-- `id` (UUID): Unique chapter identifier
-- `order` (number): Chapter sequence (used for navigation)
-- `chapter_name` (string): Display name
-- `draft_id` (UUID): Links to parent draft
-- `word_count` (number): Auto-calculated
-- `last_updated` (ISO 8601 timestamp): Auto-updated
+- `chapter_id` (UUID): Unique chapter identifier with `ch-` prefix (e.g., `ch-a1b2c3d4...`)
+  - **Purpose**: Distinguishes chapter files from other file types
+  - **Generated**: Automatically on chapter creation
+  - **Format**: `ch-` followed by UUID-style string
 
-**Ordering:** Chapters are sorted by `order` value for navigation and manuscript generation.
+- `order` (number): Chapter sequence number for navigation and manuscript generation
+  - **Purpose**: Controls chapter ordering in navigation and manuscript output
+  - **Generated**: Automatically calculated from existing chapters (starts at 1)
+  - **Used By**: Navigation commands, manuscript generation
+
+- `chapter_name` (string): Display name shown in UI and navigation
+  - **Purpose**: Human-readable chapter title
+  - **Generated**: From user input during chapter creation
+  - **Format**: Can contain spaces and special characters
+
+- `draft_id` (UUID): Links chapter to parent draft
+  - **Purpose**: Establishes chapter-to-draft relationship for programmatic access
+  - **Generated**: Inherited from parent draft automatically
+  - **Used By**: Multi-chapter draft organization, manuscript assembly
+
+- `word_count` (number): Current word count of the chapter content
+  - **Purpose**: Tracks chapter length for statistics
+  - **Initial Value**: 0 when chapter created
+  - **Updated**: When chapter content is modified
+
+- `last_updated` (ISO 8601 timestamp): Creation and modification timestamp
+  - **Purpose**: Tracks when chapter was created or last modified
+  - **Generated**: ISO 8601 format (e.g., `2025-01-15T14:30:45Z`)
+  - **Format**: UTC time with `Z` suffix (always timezone-independent)
+  - **Updated**: Automatically when chapter is modified
+
+**Ordering:** Chapters are sorted by `order` value for navigation and manuscript generation. When creating a new chapter, the order is automatically set to one more than the highest existing chapter order.
+
+**Metadata Maintenance:** The `last_updated` and `word_count` fields are automatically maintained by WriteAid as chapters are created and edited.
+
+**Note on Timestamps:** All timestamps are stored in UTC (the `Z` suffix means Zulu/UTC time). Your editor may display them in your local timezone, which could appear different from UTC. See [TIMEZONE_NOTES.md](TIMEZONE_NOTES.md) for details.
 
 ---
 
@@ -214,7 +245,7 @@ The hero must save the kingdom from darkness.
 - Consider adding romance subplot
 - Flesh out antagonist motivations
 - Plan pacing for Act 2
-```
+````
 
 ---
 

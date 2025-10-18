@@ -4,7 +4,9 @@ import {
   buildFrontmatter,
   debug,
   DEBUG_PREFIX,
+  extractFrontmatterFields,
   FRONTMATTER_DELIMITER,
+  FRONTMATTER_REGEX,
   getDraftsFolderName,
   getMetaFileName,
   type ProjectType,
@@ -101,6 +103,39 @@ export async function updateMetaStats(
   if (draftsFolder && draftsFolder instanceof TFolder) {
     const draftFolders = draftsFolder.children.filter((child) => child instanceof TFolder);
     metadata.total_drafts = draftFolders.length;
+
+    // Update last_updated timestamp on all draft and chapter files
+    const now = new Date().toISOString();
+    for (const draftFolder of draftFolders) {
+      if (draftFolder instanceof TFolder) {
+        // Update timestamps on all markdown files in this draft
+        for (const file of draftFolder.children) {
+          if (file instanceof TFile && file.extension === "md") {
+            try {
+              const content = await app.vault.read(file);
+              const fmMatch = content.match(FRONTMATTER_REGEX);
+              if (fmMatch) {
+                // Extract existing frontmatter fields using utility function
+                const frontmatterContent = fmMatch[1];
+                const fields = extractFrontmatterFields(frontmatterContent);
+
+                // Update the last_updated field
+                fields.last_updated = now;
+
+                // Rebuild frontmatter with updated timestamp using utility function
+                const updatedFrontmatter = buildFrontmatter(fields);
+                const body = content.substring(fmMatch[0].length);
+                const updatedContent = `${updatedFrontmatter}${body}`;
+
+                await app.vault.modify(file, updatedContent);
+              }
+            } catch (error) {
+              debug(`Error updating metadata for ${file.path}:`, error);
+            }
+          }
+        }
+      }
+    }
   }
 
   // Update active draft if provided
