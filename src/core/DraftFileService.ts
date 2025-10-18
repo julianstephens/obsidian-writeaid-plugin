@@ -701,7 +701,7 @@ export class DraftFileService {
 
     // Generate frontmatter with metadata if enabled
     let frontmatter = "";
-    if (this.manager?.settings?.includeOutlineMetadata !== false) {
+    if (this.manager?.settings?.includeOutlineMetadata ?? true) {
       const defaultFields = ["draft_id", "type", "created"];
       const enabledFields = this.manager?.settings?.outlineMetadataFields ?? defaultFields;
 
