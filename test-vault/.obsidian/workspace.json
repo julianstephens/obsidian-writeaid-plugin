@@ -85,6 +85,7 @@
             }
           }
         ]
+        ]
       }
     ],
     "direction": "horizontal",
@@ -179,6 +180,7 @@
     }
   },
   "active": "5280a970130968c9",
+  "active": "5280a970130968c9",
   "lastOpenFiles": [
     "Novel/drafts/Draft 1/outline.md",
     "Novel/drafts/Draft 1/chapter1.md",
@@ -215,6 +217,7 @@
     "Test/drafts/Draft 1/draft1.md",
     "Story/Drafts/Draft 2/draft2.md",
     "Story/Drafts/Draft 4/draft4.md",
+    "Story/Drafts/Draft 3/draft3.md"
     "Story/Drafts/Draft 3/draft3.md"
   ]
 }
