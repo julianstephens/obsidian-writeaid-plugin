@@ -2,6 +2,14 @@ name: Validation
 
 on:
   pull_request:
+    paths:
+      - "src/**"
+      - ".prettierrc"
+      - "eslint.config.mjs"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - "tsconfig.json"
+      - "vite.config.mjs"
   workflow_dispatch:
 
 jobs:
@@ -61,7 +69,7 @@ jobs:
             }
 
             failureDetails += '\n### Next Steps:\n';
-            failureDetails += '1. Review the workflow logs for detailed error messages\n';
+            failureDetails += '1. [Review the workflow logs](https://github.com/' + context.repo.owner + '/' + context.repo.repo + '/actions/runs/' + context.runId + ') for detailed error messages\n';
             failureDetails += '2. Run the suggested fix commands locally\n';
             failureDetails += '3. Commit and push the fixes\n';
             failureDetails += '4. The workflow will re-run automatically\n';
