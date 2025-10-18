@@ -144,7 +144,7 @@ Each chapter is a separate file with frontmatter containing comprehensive metada
 
 ````yaml
 ---
-id: "ch-[uuid]"
+chapter_id: "ch-[uuid]"
 order: 1
 chapter_name: "Chapter 1: The Beginning"
 draft_id: "draft-[uuid]"
@@ -157,7 +157,7 @@ Your chapter content...
 
 **Frontmatter Fields:**
 
-- `id` (UUID): Unique chapter identifier with `ch-` prefix (e.g., `ch-a1b2c3d4...`)
+- `chapter_id` (UUID): Unique chapter identifier with `ch-` prefix (e.g., `ch-a1b2c3d4...`)
   - **Purpose**: Distinguishes chapter files from other file types
   - **Generated**: Automatically on chapter creation
   - **Format**: `ch-` followed by UUID-style string
@@ -196,7 +196,7 @@ Your chapter content...
 
 **Frontmatter Fields:**
 
-- `id` (UUID): Unique chapter identifier
+- `chapter_id` (UUID): Unique chapter identifier
 - `order` (number): Chapter sequence (used for navigation)
 - `chapter_name` (string): Display name
 - `draft_id` (UUID): Links to parent draft

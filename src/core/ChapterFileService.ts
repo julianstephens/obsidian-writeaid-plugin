@@ -260,7 +260,7 @@ export class ChapterFileService {
     const now = new Date().toISOString();
     const chapterId = generateChapterId();
     const frontmatter = buildFrontmatter({
-      id: chapterId,
+      chapter_id: chapterId,
       order: order,
       chapter_name: chapterName,
       draft_id: finalDraftId,
@@ -411,7 +411,7 @@ export class ChapterFileService {
    */
   private hasRequiredChapterFields(frontmatter: string): boolean {
     // Check for all 6 required fields
-    const hasId = /^id:\s*\S+/im.test(frontmatter);
+    const hasChapterId = /^chapter_id:\s*\S+/im.test(frontmatter);
     const hasOrder = /^order:\s*\d+/im.test(frontmatter);
     const hasChapterName = /^chapter_name:\s*\S+/im.test(frontmatter);
     const hasDraftId = /^draft_id:\s*\S+/im.test(frontmatter);
@@ -419,7 +419,9 @@ export class ChapterFileService {
     const hasLastUpdated = /^last_updated:\s*\S+/im.test(frontmatter);
 
     // Require all 6 fields for new chapter design
-    return hasId && hasOrder && hasChapterName && hasDraftId && hasWordCount && hasLastUpdated;
+    return (
+      hasChapterId && hasOrder && hasChapterName && hasDraftId && hasWordCount && hasLastUpdated
+    );
   }
 
   /**
@@ -428,7 +430,7 @@ export class ChapterFileService {
    * @returns Object with all 6 required chapter fields or null if missing required fields
    */
   private extractChapterMetadata(frontmatter: string): {
-    id?: string;
+    chapterId?: string;
     order?: number;
     chapterName?: string;
     draftId?: string;
@@ -439,7 +441,7 @@ export class ChapterFileService {
       return null;
     }
 
-    let id: string | undefined;
+    let chapterId: string | undefined;
     let order: number | undefined;
     let chapterName: string | undefined;
     let draftId: string | undefined;
@@ -448,8 +450,8 @@ export class ChapterFileService {
 
     const lines = frontmatter.split(/\r?\n/);
     for (const line of lines) {
-      const idMatch = line.match(/^id:\s*(.+?)$/i);
-      if (idMatch) id = idMatch[1].trim();
+      const chapterIdMatch = line.match(/^chapter_id:\s*(.+?)$/i);
+      if (chapterIdMatch) chapterId = chapterIdMatch[1].trim();
 
       const orderMatch = line.match(/^order:\s*(\d+)/i);
       if (orderMatch) order = parseInt(orderMatch[1], 10);
@@ -476,7 +478,7 @@ export class ChapterFileService {
       if (lastUpdatedMatch) lastUpdated = lastUpdatedMatch[1].trim();
     }
 
-    return { id, order, chapterName, draftId, wordCount, lastUpdated };
+    return { chapterId, order, chapterName, draftId, wordCount, lastUpdated };
   }
 
   /**
