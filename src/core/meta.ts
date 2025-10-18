@@ -18,6 +18,10 @@ import {
  */
 export interface ProjectMetadata {
   version?: string; // WriteAid project version for compatibility
+  project_name?: string; // User-friendly project name
+  description?: string; // Optional project description/notes
+  date_created?: string; // ISO 8601 creation date
+  date_updated?: string; // ISO 8601 last update date
   current_active_draft?: string;
   current_draft_word_count?: number; // Word count of the currently activated draft
   total_drafts: number;
@@ -25,6 +29,7 @@ export interface ProjectMetadata {
   active_draft_last_modified?: string; // ISO 8601 timestamp
   total_word_count?: number;
   average_draft_word_count?: number;
+  total_chapters?: number; // Count of chapters in active draft
   project_type?: ProjectType;
   draft?: string; // for per-draft meta.md
 }
@@ -97,6 +102,9 @@ export async function updateMetaStats(
     };
   }
 
+  // Always update date_updated timestamp
+  metadata.date_updated = new Date().toISOString();
+
   // Count drafts in the Drafts folder
   const draftsFolderName = getDraftsFolderName(settings);
   const draftsFolder = app.vault.getAbstractFileByPath(`${projectPath}/${draftsFolderName}`);
@@ -142,6 +150,38 @@ export async function updateMetaStats(
   if (activeDraft !== undefined) {
     metadata.current_active_draft = activeDraft;
     metadata.active_draft_last_modified = new Date().toISOString();
+
+    // Calculate total_chapters for the active draft
+    const draftFolderPath = `${projectPath}/${draftsFolderName}/${activeDraft}`;
+    const draftFolder = app.vault.getAbstractFileByPath(draftFolderPath);
+    if (draftFolder && draftFolder instanceof TFolder) {
+      let chapterCount = 0;
+      for (const file of draftFolder.children) {
+        if (file instanceof TFile && file.extension === "md") {
+          try {
+            const content = await app.vault.read(file);
+            // Check if this is a valid chapter (has required fields: id, order, chapter_name)
+            // Import the isValidChapter logic inline to avoid circular dependencies
+            const fmMatch = content.match(FRONTMATTER_REGEX);
+            if (fmMatch) {
+              const frontmatterContent = fmMatch[1];
+              const hasId = /^id:\s/m.test(frontmatterContent);
+              const hasOrder = /^order:\s/m.test(frontmatterContent);
+              const hasChapterName = /^chapter_name:\s/m.test(frontmatterContent);
+              if (hasId && hasOrder && hasChapterName) {
+                chapterCount++;
+              }
+            }
+          } catch (error) {
+            debug(`Error checking chapter validity for ${file.path}:`, error);
+          }
+        }
+      }
+      metadata.total_chapters = chapterCount;
+    } else {
+      // If draft folder doesn't exist, set to 0
+      metadata.total_chapters = 0;
+    }
   }
 
   // Apply optional metadata updates
@@ -210,6 +250,18 @@ function formatMetaContent(metadata: ProjectMetadata): string {
   if (metadata.version !== undefined) {
     fields.version = metadata.version;
   }
+  if (metadata.project_name !== undefined) {
+    fields.project_name = metadata.project_name;
+  }
+  if (metadata.description !== undefined && metadata.description !== "") {
+    fields.description = metadata.description;
+  }
+  if (metadata.date_created !== undefined) {
+    fields.date_created = metadata.date_created;
+  }
+  if (metadata.date_updated !== undefined) {
+    fields.date_updated = metadata.date_updated;
+  }
   if (metadata.current_active_draft !== undefined) {
     fields.current_active_draft = metadata.current_active_draft;
   }
@@ -229,6 +281,9 @@ function formatMetaContent(metadata: ProjectMetadata): string {
   if (metadata.average_draft_word_count !== undefined) {
     fields.average_draft_word_count = metadata.average_draft_word_count;
   }
+  if (metadata.total_chapters !== undefined) {
+    fields.total_chapters = metadata.total_chapters;
+  }
   if (metadata.project_type !== undefined) {
     fields.project_type = metadata.project_type;
   }
@@ -238,6 +293,20 @@ function formatMetaContent(metadata: ProjectMetadata): string {
   // Add human-readable section
   lines.push("# Project Statistics");
   lines.push("");
+  if (metadata.project_name) {
+    lines.push(`**Project Name:** ${metadata.project_name}`);
+  }
+  if (metadata.description) {
+    lines.push(`**Description:** ${metadata.description}`);
+  }
+  if (metadata.date_created) {
+    const date = new Date(metadata.date_created);
+    lines.push(`**Created:** ${date.toLocaleString()}`);
+  }
+  if (metadata.date_updated) {
+    const date = new Date(metadata.date_updated);
+    lines.push(`**Last Updated:** ${date.toLocaleString()}`);
+  }
   if (metadata.current_active_draft) {
     lines.push(`**Active Draft:** ${metadata.current_active_draft}`);
   }
@@ -247,6 +316,9 @@ function formatMetaContent(metadata: ProjectMetadata): string {
     );
   }
   lines.push(`**Total Drafts:** ${metadata.total_drafts}`);
+  if (metadata.total_chapters !== undefined) {
+    lines.push(`**Total Chapters:** ${metadata.total_chapters}`);
+  }
   if (metadata.target_word_count) {
     lines.push(`**Target Word Count:** ${metadata.target_word_count.toLocaleString()}`);
   }
