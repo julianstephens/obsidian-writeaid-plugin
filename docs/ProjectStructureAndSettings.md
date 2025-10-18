@@ -192,16 +192,7 @@ Your chapter content...
 
 **Metadata Maintenance:** The `last_updated` and `word_count` fields are automatically maintained by WriteAid as chapters are created and edited.
 
-**Frontmatter Fields:**
-
-- `chapter_id` (UUID): Unique chapter identifier
-- `order` (number): Chapter sequence (used for navigation)
-- `chapter_name` (string): Display name
-- `draft_id` (UUID): Links to parent draft
-- `word_count` (number): Auto-calculated
-- `last_updated` (ISO 8601 timestamp): Auto-updated
-
-**Ordering:** Chapters are sorted by `order` value for navigation and manuscript generation.
+**Note on Timestamps:** All timestamps are stored in UTC (the `Z` suffix means Zulu/UTC time). Your editor may display them in your local timezone, which could appear different from UTC. See [TIMEZONE_NOTES.md](TIMEZONE_NOTES.md) for details.
 
 ---
 
