@@ -71,7 +71,9 @@ export class RenameChapterModal extends Modal {
       return;
     }
     if (this.errorEl) this.errorEl.style.display = "none";
-    debug(`${DEBUG_PREFIX} RenameChapterModal: renaming chapter from "${this.oldName}" to "${value}"`);
+    debug(
+      `${DEBUG_PREFIX} RenameChapterModal: renaming chapter from "${this.oldName}" to "${value}"`,
+    );
     this.onSubmit(value);
     this.close();
   }

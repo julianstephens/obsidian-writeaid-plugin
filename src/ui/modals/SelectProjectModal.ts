@@ -28,7 +28,9 @@ export class SelectProjectModal extends Modal {
         .setButtonText("Select")
         .setCta()
         .onClick(() => {
-          debug(`${DEBUG_PREFIX} SelectProjectModal: selected project "${selected || "(Vault root)"}"`);
+          debug(
+            `${DEBUG_PREFIX} SelectProjectModal: selected project "${selected || "(Vault root)"}"`,
+          );
           this.close();
           this.props.onSubmit(selected || "");
         }),

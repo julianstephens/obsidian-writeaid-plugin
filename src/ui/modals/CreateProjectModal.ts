@@ -42,7 +42,9 @@ export class CreateProjectModal extends Modal {
         .setButtonText("Create Project")
         .setCta()
         .onClick(() => {
-          debug(`${DEBUG_PREFIX} CreateProjectModal: creating project "${projectName}", singleFile: ${singleFile}, initialDraftName: ${initialDraftName}`);
+          debug(
+            `${DEBUG_PREFIX} CreateProjectModal: creating project "${projectName}", singleFile: ${singleFile}, initialDraftName: ${initialDraftName}`,
+          );
           this.close();
           this.onSubmit(projectName, singleFile, initialDraftName || undefined);
         }),

@@ -11,10 +11,14 @@
             "id": "5280a970130968c9",
             "type": "leaf",
             "state": {
-              "type": "empty",
-              "state": {},
+              "type": "markdown",
+              "state": {
+                "file": "Test/meta.md",
+                "mode": "source",
+                "source": false
+              },
               "icon": "lucide-file",
-              "title": "New tab"
+              "title": "meta"
             }
           }
         ]
@@ -80,8 +84,7 @@
               "title": "WriteAid Projects"
             }
           }
-        ],
-        "currentTab": 3
+        ]
       }
     ],
     "direction": "horizontal",
@@ -175,8 +178,21 @@
       "bases:Create new base": false
     }
   },
-  "active": "36a4b021559a3158",
+  "active": "5280a970130968c9",
   "lastOpenFiles": [
+    "Test/drafts/Draft 1/draft1.md",
+    "Test/drafts/Draft 1",
+    "Test/meta.md",
+    "Test/drafts",
+    "Test",
+    "Test 2/drafts/Draft 1/draft1.md",
+    "Test 2/drafts/Draft 1",
+    "Test 2/meta.md",
+    "Test 2/drafts",
+    "Test 2",
+    "Story/Drafts/Draft 8/draft8.md",
+    "Story/Drafts/Draft 8",
+    "Story/Drafts/Draft 2/draft2.md",
     "Story/Drafts/Draft 7/draft7.md",
     "Story/Drafts/Draft 7",
     "Story/Drafts/Draft 6/draft6.md",
@@ -185,33 +201,19 @@
     "Story/Drafts/Draft 5",
     "Story/Drafts/Draft 4/draft4.md",
     "Story/Drafts/Draft 3/draft3.md",
-    "Story/Drafts/Draft 3",
-    "Story/Drafts/Draft 2/draft2.md",
-    "Story/Drafts/Draft 2",
     "Story/Drafts/c1444281-337a-48c9-8e56-13f910865a88/draft2.md",
-    "Story/Drafts/c1444281-337a-48c9-8e56-13f910865a88",
     "Story/Drafts/Draft 4/draft2.md",
     "Story/Manuscripts/Draft 3.md",
     "novel/Drafts/Draft 2/chapter1.md",
-    "Story/Drafts/Draft 4",
     "Story/Drafts/Draft 1/draft2.md",
-    "Story/Drafts/Draft 1",
     "novel/Drafts/Draft 2/Chapter 3.md",
     "novel/Drafts/Draft 2/chapter2.md",
     "novel/Drafts/Draft 1/Chapter 2.md",
-    "novel/Drafts/Draft 2",
-    "novel/drafts/Draft 2",
     "novel/Drafts/Draft 1/Chapter 1.md",
     "Story/Manuscripts/2025-10-15_Draft 3.md",
     "Story/Manuscripts/2025-10-Draft 3.md",
     "Story/Manuscripts/3rpmftADpm323.md",
     "Story/Manuscripts/3rpmftADpm263.md",
-    "Story/Manuscripts/3rpmftADpm223.md",
-    "Story/Manuscripts/3rpmftADpm13.md",
-    "Story/Manuscripts/3ramftADam123.md",
-    "novel/Drafts/Draft 3/The Rule.md",
-    "novel/Drafts/Draft 3/Chapter 1.md",
-    "Story/Drafts/Draft 1/draft1.md",
-    "Story/Drafts/Draft 4 Copy/draft2.md"
+    "Story/Manuscripts/3rpmftADpm223.md"
   ]
 }

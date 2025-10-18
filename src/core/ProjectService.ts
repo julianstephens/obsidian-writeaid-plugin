@@ -3,19 +3,18 @@ import { TemplateService } from "@/core/TemplateService";
 import type { WriteAidManager } from "@/manager";
 import type { WriteAidSettings } from "@/types";
 import { App, normalizePath, Notice, TFile, TFolder } from "obsidian";
-import { readMetaFile } from "./meta";
+import { readMetaFile, updateMetaStats } from "./meta";
 import {
-    asyncFilter,
-    debug,
-    DEBUG_PREFIX,
-    FRONTMATTER_DELIMITER,
-    getDraftsFolderName,
-    getManuscriptsFolderName,
-    getMetaFileName,
-    getOutlineFileName,
-    MARKDOWN_FILE_EXTENSION,
-    PROJECT_TYPE,
-    type ProjectType,
+  asyncFilter,
+  debug,
+  DEBUG_PREFIX,
+  getDraftsFolderName,
+  getManuscriptsFolderName,
+  getMetaFileName,
+  getOutlineFileName,
+  MARKDOWN_FILE_EXTENSION,
+  PROJECT_TYPE,
+  type ProjectType,
 } from "./utils";
 
 export class ProjectService {
@@ -71,8 +70,17 @@ export class ProjectService {
       const targetWordCount = singleFile
         ? (settings?.defaultSingleTargetWordCount ?? 20000)
         : (settings?.defaultMultiTargetWordCount ?? 50000);
-      const metaContent = `${FRONTMATTER_DELIMITER}\nproject_type: ${projectType}\ntarget_word_count: ${targetWordCount}\n${FRONTMATTER_DELIMITER}\n`;
-      await this.app.vault.create(metaPath, metaContent);
+      // Use updateMetaStats to create meta.md with proper formatting and version
+      await updateMetaStats(
+        this.app,
+        projectPath,
+        undefined,
+        {
+          project_type: projectType,
+          target_word_count: targetWordCount,
+        },
+        settings,
+      );
     }
 
     const draftName = initialDraftName || "Draft 1";

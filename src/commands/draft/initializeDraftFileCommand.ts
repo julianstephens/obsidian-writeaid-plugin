@@ -1,12 +1,12 @@
 import {
-    checkActive,
-    debug,
-    DEBUG_PREFIX,
-    FRONTMATTER_DELIMITER,
-    FRONTMATTER_REGEX,
-    generateDraftId,
-    getDraftsFolderName,
-    MARKDOWN_FILE_EXTENSION,
+  checkActive,
+  debug,
+  DEBUG_PREFIX,
+  FRONTMATTER_DELIMITER,
+  FRONTMATTER_REGEX,
+  generateDraftId,
+  getDraftsFolderName,
+  MARKDOWN_FILE_EXTENSION,
 } from "@/core/utils";
 import type { WriteAidManager } from "@/manager";
 import { App, Notice, SuggestModal, TFile, TFolder } from "obsidian";
@@ -176,10 +176,13 @@ export function initializeDraftFileCommand(manager: WriteAidManager) {
       const configuredDraftsFolderName = getDraftsFolderName(manager.settings);
       const projectFolder = manager.app.vault.getAbstractFileByPath(activeProjectPath);
       let actualDraftsFolderName = configuredDraftsFolderName;
-      
+
       if (projectFolder && projectFolder instanceof TFolder) {
         for (const child of projectFolder.children) {
-          if (child instanceof TFolder && child.name.toLowerCase() === configuredDraftsFolderName.toLowerCase()) {
+          if (
+            child instanceof TFolder &&
+            child.name.toLowerCase() === configuredDraftsFolderName.toLowerCase()
+          ) {
             actualDraftsFolderName = child.name;
             break;
           }
@@ -189,7 +192,9 @@ export function initializeDraftFileCommand(manager: WriteAidManager) {
       const draftFolder = `${activeProjectPath}/${actualDraftsFolderName}/${activeDraftName}`;
       const projectName = activeProjectPath.split("/").pop() || activeProjectPath;
 
-      debug(`${DEBUG_PREFIX} Initialize draft file: using drafts folder: ${actualDraftsFolderName}`);
+      debug(
+        `${DEBUG_PREFIX} Initialize draft file: using drafts folder: ${actualDraftsFolderName}`,
+      );
 
       // Get all files in the draft folder
       const draftFolderObj = manager.app.vault.getAbstractFileByPath(draftFolder);
@@ -206,72 +211,76 @@ export function initializeDraftFileCommand(manager: WriteAidManager) {
 
       debug(`${DEBUG_PREFIX} Found ${files.length} markdown files in draft folder`);
 
-    if (files.length === 0) {
-      // Create a new draft file
-      debug(`${DEBUG_PREFIX} No files found, creating new draft file`);
-      const metadata = ensureCompleteMetadata({}, activeDraftName, projectName);
-      const newContent = updateFileWithMetadata("", metadata);
-      const fileName = `${activeDraftName}${MARKDOWN_FILE_EXTENSION}`;
+      if (files.length === 0) {
+        // Create a new draft file
+        debug(`${DEBUG_PREFIX} No files found, creating new draft file`);
+        const metadata = ensureCompleteMetadata({}, activeDraftName, projectName);
+        const newContent = updateFileWithMetadata("", metadata);
+        const fileName = `${activeDraftName}${MARKDOWN_FILE_EXTENSION}`;
 
-      await manager.app.vault.create(`${draftFolder}/${fileName}`, newContent);
-      new Notice(`Draft file created with metadata for "${activeDraftName}".`);
-      return;
-    }
-
-    if (files.length === 1) {
-      // Check if the file already has complete metadata
-      const file = files[0];
-      const content = await manager.app.vault.read(file);
-      const metadata = extractMetadata(content);
-
-      if (isMetadataComplete(metadata)) {
-        debug(`${DEBUG_PREFIX} Initialize draft file: file already has complete metadata`);
-        new Notice(`"${file.name}" already has complete draft metadata.`);
+        await manager.app.vault.create(`${draftFolder}/${fileName}`, newContent);
+        new Notice(`Draft file created with metadata for "${activeDraftName}".`);
         return;
       }
 
-      // Add missing metadata
-      debug(`${DEBUG_PREFIX} Adding missing metadata to ${file.name}`);
-      const completeMetadata = ensureCompleteMetadata(metadata, activeDraftName, projectName);
-      const updatedContent = updateFileWithMetadata(content, completeMetadata);
+      if (files.length === 1) {
+        // Check if the file already has complete metadata
+        const file = files[0];
+        const content = await manager.app.vault.read(file);
+        const metadata = extractMetadata(content);
 
-      await manager.app.vault.modify(file, updatedContent);
-      debug(`${DEBUG_PREFIX} Initialize draft file: successfully updated ${file.name}`);
-      new Notice(`Draft metadata added to "${file.name}".`);
-      return;
-    }
+        if (isMetadataComplete(metadata)) {
+          debug(`${DEBUG_PREFIX} Initialize draft file: file already has complete metadata`);
+          new Notice(`"${file.name}" already has complete draft metadata.`);
+          return;
+        }
 
-    // Multiple files - show modal for selection
-    debug(`${DEBUG_PREFIX} Multiple files found, showing selection modal`);
-    const fileItems: FileItem[] = files.map((file) => ({
-      path: file.path,
-      name: file.name,
-      file,
-    }));
+        // Add missing metadata
+        debug(`${DEBUG_PREFIX} Adding missing metadata to ${file.name}`);
+        const completeMetadata = ensureCompleteMetadata(metadata, activeDraftName, projectName);
+        const updatedContent = updateFileWithMetadata(content, completeMetadata);
 
-    const modal = new SelectDraftFileModal(manager.app, fileItems, async (selectedItem) => {
-      const file = selectedItem.file;
-      const content = await manager.app.vault.read(file);
-      const metadata = extractMetadata(content);
-
-      // Check if already complete
-      if (isMetadataComplete(metadata)) {
-        debug(`${DEBUG_PREFIX} Initialize draft file: selected file already has complete metadata`);
-        new Notice(`"${file.name}" already has complete draft metadata.`);
+        await manager.app.vault.modify(file, updatedContent);
+        debug(`${DEBUG_PREFIX} Initialize draft file: successfully updated ${file.name}`);
+        new Notice(`Draft metadata added to "${file.name}".`);
         return;
       }
 
-      // Add missing metadata
-      debug(`${DEBUG_PREFIX} Adding missing metadata to ${file.name}`);
-      const completeMetadata = ensureCompleteMetadata(metadata, activeDraftName, projectName);
-      const updatedContent = updateFileWithMetadata(content, completeMetadata);
+      // Multiple files - show modal for selection
+      debug(`${DEBUG_PREFIX} Multiple files found, showing selection modal`);
+      const fileItems: FileItem[] = files.map((file) => ({
+        path: file.path,
+        name: file.name,
+        file,
+      }));
 
-      await manager.app.vault.modify(file, updatedContent);
-      debug(`${DEBUG_PREFIX} Initialize draft file: successfully updated ${file.name} from modal`);
-      new Notice(`Draft metadata added to "${file.name}".`);
-    });
+      const modal = new SelectDraftFileModal(manager.app, fileItems, async (selectedItem) => {
+        const file = selectedItem.file;
+        const content = await manager.app.vault.read(file);
+        const metadata = extractMetadata(content);
 
-    modal.open();
+        // Check if already complete
+        if (isMetadataComplete(metadata)) {
+          debug(
+            `${DEBUG_PREFIX} Initialize draft file: selected file already has complete metadata`,
+          );
+          new Notice(`"${file.name}" already has complete draft metadata.`);
+          return;
+        }
+
+        // Add missing metadata
+        debug(`${DEBUG_PREFIX} Adding missing metadata to ${file.name}`);
+        const completeMetadata = ensureCompleteMetadata(metadata, activeDraftName, projectName);
+        const updatedContent = updateFileWithMetadata(content, completeMetadata);
+
+        await manager.app.vault.modify(file, updatedContent);
+        debug(
+          `${DEBUG_PREFIX} Initialize draft file: successfully updated ${file.name} from modal`,
+        );
+        new Notice(`Draft metadata added to "${file.name}".`);
+      });
+
+      modal.open();
     } catch (error) {
       debug(`${DEBUG_PREFIX} Initialize draft file command error:`, error);
       new Notice("Failed to initialize draft file metadata.");

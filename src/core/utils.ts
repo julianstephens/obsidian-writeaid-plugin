@@ -29,6 +29,7 @@ export const VALID_PROJECT_TYPES = Object.values(PROJECT_TYPE);
 export const APP_NAME = "WriteAid";
 export const DEBUG_PREFIX = `${APP_NAME} debug:`;
 export const WRITE_AID_ICON_NAME = "pen-tool";
+export const WRITEAID_VERSION = "1.0.0";
 
 export const MARKDOWN_FILE_EXTENSION = ".md";
 

@@ -55,7 +55,9 @@ export class ConfirmReorderModal extends Modal {
         .setButtonText("Confirm")
         .setCta()
         .onClick(() => {
-          debug(`${DEBUG_PREFIX} ConfirmReorderModal: confirmed reorder, createBackups: ${this.createBackups}`);
+          debug(
+            `${DEBUG_PREFIX} ConfirmReorderModal: confirmed reorder, createBackups: ${this.createBackups}`,
+          );
           this.close();
           this.onConfirm(this.createBackups);
         }),

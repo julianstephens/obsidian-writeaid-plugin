@@ -2,7 +2,14 @@
   import { readMetaFile } from "@/core/meta";
   import type { ProjectFileService } from "@/core/ProjectFileService";
   import type { ProjectService } from "@/core/ProjectService";
-  import { APP_NAME, debug, DEBUG_PREFIX, getMetaFileName, suppress } from "@/core/utils";
+  import {
+    APP_NAME,
+    asyncFilter,
+    debug,
+    DEBUG_PREFIX,
+    getMetaFileName,
+    suppress,
+  } from "@/core/utils";
   import type { WriteAidManager } from "@/manager";
   import type { Chapter } from "@/types";
   import BaseButton from "@/ui/components/BaseButton.svelte";
@@ -212,7 +219,9 @@
       // Preserve the active draft - do not change it during refresh
       // activeDraft is controlled by manager listeners, not by this function
       try {
-        debug(`${DEBUG_PREFIX} refreshDrafts: loaded ${drafts.length} drafts, preserving active draft: ${previousActiveDraft}`);
+        debug(
+          `${DEBUG_PREFIX} refreshDrafts: loaded ${drafts.length} drafts, preserving active draft: ${previousActiveDraft}`,
+        );
       } catch (e) {
         // ignore debug errors
       }
@@ -462,6 +471,20 @@
     let projectPath: string | null = null;
     const modal = new CreateProjectModal(app, async (projectName, singleFile, initialDraftName) => {
       if (!projectName || !manager || !projectService) return;
+
+      // Check if a project with this name already exists
+      const allFolders = manager.listAllFolders();
+      const existingProjects = await asyncFilter(allFolders, (p) =>
+        manager.projectService.isProjectFolder(p),
+      );
+      const projectNames = existingProjects.map((p) => p.split("/").pop() || p);
+      if (projectNames.includes(projectName)) {
+        new Notice(
+          `A project with the name "${projectName}" already exists. Please choose a different name.`,
+        );
+        return;
+      }
+
       projectPath = await projectService.createProject(
         projectName,
         singleFile,

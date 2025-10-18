@@ -7,12 +7,14 @@ import {
   getDraftsFolderName,
   getMetaFileName,
   type ProjectType,
+  WRITEAID_VERSION,
 } from "./utils";
 
 /**
  * Project metadata tracked in meta.md
  */
 export interface ProjectMetadata {
+  version?: string; // WriteAid project version for compatibility
   current_active_draft?: string;
   total_drafts: number;
   target_word_count?: number;
@@ -86,6 +88,7 @@ export async function updateMetaStats(
   let metadata = await readMetaFile(app, metaPath);
   if (!metadata) {
     metadata = {
+      version: WRITEAID_VERSION,
       total_drafts: 0,
     };
   }
@@ -167,6 +170,9 @@ function formatMetaContent(metadata: ProjectMetadata): string {
   const lines: string[] = [FRONTMATTER_DELIMITER];
 
   // Write YAML frontmatter
+  if (metadata.version !== undefined) {
+    lines.push(`version: "${metadata.version}"`);
+  }
   if (metadata.current_active_draft !== undefined) {
     lines.push(`current_active_draft: "${metadata.current_active_draft}"`);
   }

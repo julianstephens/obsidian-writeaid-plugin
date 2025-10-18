@@ -35,7 +35,9 @@ export class DuplicateDraftModal extends Modal {
         .onClick(() => {
           const finalName =
             draftName && draftName.trim() ? draftName.trim() : this.props.suggestedName;
-          debug(`${DEBUG_PREFIX} DuplicateDraftModal: duplicating draft from "${this.props.sourceDraftName}" to "${finalName}"`);
+          debug(
+            `${DEBUG_PREFIX} DuplicateDraftModal: duplicating draft from "${this.props.sourceDraftName}" to "${finalName}"`,
+          );
           this.close();
           this.props.onSubmit(finalName);
         }),

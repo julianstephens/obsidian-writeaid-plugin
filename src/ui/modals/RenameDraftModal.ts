@@ -77,7 +77,9 @@ export class RenameDraftModal extends Modal {
       return;
     }
     if (this.errorEl) this.errorEl.style.display = "none";
-    debug(`${DEBUG_PREFIX} RenameDraftModal: renaming draft from "${this.oldName}" to "${value}", renameFile: ${renameFile}`);
+    debug(
+      `${DEBUG_PREFIX} RenameDraftModal: renaming draft from "${this.oldName}" to "${value}", renameFile: ${renameFile}`,
+    );
     this.onSubmit(value, renameFile);
     this.close();
   }

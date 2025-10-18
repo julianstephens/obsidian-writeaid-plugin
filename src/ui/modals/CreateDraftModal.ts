@@ -39,7 +39,9 @@ export class CreateDraftModal extends Modal {
         .setCta()
         .onClick(() => {
           const finalName = draftName && draftName.trim() ? draftName.trim() : suggestedName;
-          debug(`${DEBUG_PREFIX} CreateDraftModal: creating draft "${finalName}", copyFrom: "${copyFrom || "none"}"`);
+          debug(
+            `${DEBUG_PREFIX} CreateDraftModal: creating draft "${finalName}", copyFrom: "${copyFrom || "none"}"`,
+          );
           this.close();
           this.props.onSubmit(finalName, copyFrom || undefined);
         }),

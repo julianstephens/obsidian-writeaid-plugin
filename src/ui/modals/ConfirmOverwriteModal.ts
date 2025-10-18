@@ -24,7 +24,9 @@ export class ConfirmOverwriteModal extends Modal {
 
     const cancelButton = new ButtonComponent(buttonContainer);
     cancelButton.setButtonText("Cancel").onClick(() => {
-      debug(`${DEBUG_PREFIX} ConfirmOverwriteModal: cancelled overwrite for ${this.isDraft ? "draft" : "manuscript"} "${this.path}"`);
+      debug(
+        `${DEBUG_PREFIX} ConfirmOverwriteModal: cancelled overwrite for ${this.isDraft ? "draft" : "manuscript"} "${this.path}"`,
+      );
       this.resolve(false);
       this.close();
     });
@@ -34,7 +36,9 @@ export class ConfirmOverwriteModal extends Modal {
       .setButtonText("Overwrite")
       .setCta()
       .onClick(() => {
-        debug(`${DEBUG_PREFIX} ConfirmOverwriteModal: confirmed overwrite for ${this.isDraft ? "draft" : "manuscript"} "${this.path}"`);
+        debug(
+          `${DEBUG_PREFIX} ConfirmOverwriteModal: confirmed overwrite for ${this.isDraft ? "draft" : "manuscript"} "${this.path}"`,
+        );
         this.resolve(true);
         this.close();
       });

@@ -27,7 +27,10 @@ export function deleteBackupCommand(manager: WriteAidManager) {
 
     if (projectFolder && projectFolder instanceof TFolder) {
       for (const child of projectFolder.children) {
-        if (child instanceof TFolder && child.name.toLowerCase() === configuredDraftsFolderName.toLowerCase()) {
+        if (
+          child instanceof TFolder &&
+          child.name.toLowerCase() === configuredDraftsFolderName.toLowerCase()
+        ) {
           actualDraftsFolderName = child.name;
           break;
         }

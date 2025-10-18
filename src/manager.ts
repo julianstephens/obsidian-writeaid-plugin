@@ -1,14 +1,7 @@
 import { updateMetaStats } from "@/core/meta";
 import { ProjectFileService } from "@/core/ProjectFileService";
 import { ProjectService } from "@/core/ProjectService";
-import {
-    APP_NAME,
-    asyncFilter,
-    debug,
-    DEBUG_PREFIX,
-    suppress,
-    suppressAsync
-} from "@/core/utils";
+import { APP_NAME, asyncFilter, debug, DEBUG_PREFIX, suppress, suppressAsync } from "@/core/utils";
 import type { PluginLike, WriteAidSettings } from "@/types";
 import { App, Notice } from "obsidian";
 
@@ -193,6 +186,19 @@ export class WriteAidManager {
       ) => {
         if (!projectName) {
           new Notice("Project name is required.");
+          return;
+        }
+
+        // Check if a project with this name already exists
+        const allFolders = this.listAllFolders();
+        const existingProjects = await asyncFilter(allFolders, (p) =>
+          this.projectService.isProjectFolder(p),
+        );
+        const projectNames = existingProjects.map((p) => p.split("/").pop() || p);
+        if (projectNames.includes(projectName)) {
+          new Notice(
+            `A project with the name "${projectName}" already exists. Please choose a different name.`,
+          );
           return;
         }
 
