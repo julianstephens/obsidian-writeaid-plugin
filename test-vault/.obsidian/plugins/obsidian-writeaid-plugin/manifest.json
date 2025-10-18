@@ -80,6 +80,10 @@
     {
       "id": "clear-old-backups",
       "name": "Clear Old Backups"
+    },
+    {
+      "id": "open-project-meta",
+      "name": "Open Project Meta"
     }
   ]
 }

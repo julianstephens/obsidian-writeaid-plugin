@@ -11,6 +11,7 @@ import { navigateToNextChapterCommand } from "@/commands/navigation/navigateToNe
 import { navigateToPreviousChapterCommand } from "@/commands/navigation/navigateToPreviousChapterCommand";
 import { convertSingleToMultiFileProjectCommand } from "@/commands/project/convertSingleToMultiFileProjectCommand";
 import { createNewProjectCommand } from "@/commands/project/createNewProjectCommand";
+import { openProjectMetaCommand } from "@/commands/project/openProjectMetaCommand";
 import { selectActiveProjectCommand } from "@/commands/project/selectActiveProjectCommand";
 import { toggleProjectPanelCommand } from "@/commands/project/toggleProjectPanelCommand";
 import { updateProjectMetadataCommand } from "@/commands/project/updateProjectMetadataCommand";
@@ -473,6 +474,12 @@ export default class WriteAidPlugin extends Plugin {
       id: "select-active-project",
       name: "Select Active Project",
       callback: selectActiveProjectCommand(this.manager),
+    });
+
+    this.addCommand({
+      id: "open-project-meta",
+      name: "Open Project Meta",
+      callback: openProjectMetaCommand(this.manager),
     });
 
     this.addCommand({
