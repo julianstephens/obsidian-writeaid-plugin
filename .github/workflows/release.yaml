@@ -23,7 +23,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install
       - name: Build project
-        run: pnpm build
+        run: |
+          pnpm vite build
+          cp ./manifest.json ./dist/manifest.json
       - name: Create Release
         uses: ncipollo/release-action@v1
         with:
