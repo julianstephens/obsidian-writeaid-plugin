@@ -26,6 +26,12 @@ export interface WriteAidSettings {
   // If true, create an outline.md file when creating a new draft
   includeDraftOutline?: boolean;
 
+  // If true, include frontmatter metadata in outline files
+  includeOutlineMetadata?: boolean;
+
+  // Which metadata fields to include in outline frontmatter
+  outlineMetadataFields?: string[];
+
   // Customizable folder names
   draftsFolderName?: string;
   manuscriptsFolderName?: string;

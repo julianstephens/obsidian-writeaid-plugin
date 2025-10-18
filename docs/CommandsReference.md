@@ -205,19 +205,48 @@ drafts:
 
 - **Command ID:** `create-outline`
 - **Hotkey:** None
-- **Description:** Generate an outline file for your draft
+- **Description:** Generate a structured outline file for your draft
 - **Requirements:** Active draft selected
 - **What it does:**
-  1. Creates `outline.md` in the draft folder
-  2. Adds outline template with structure prompts
-  3. For multi-file projects: auto-populates with chapter list
+  1. Creates `outline.md` in the draft folder (if it doesn't exist)
+  2. Adds frontmatter metadata (if enabled in settings)
+  3. Applies the outline template with comprehensive structure
+  4. Links outline to parent draft via `draft_id`
 
-**Template includes sections for:**
+**Frontmatter metadata (when enabled):**
 
-- Story premise
-- Main plot points
-- Character arcs
-- Key scenes
+```yaml
+---
+draft_id: "draft-abc123def456"
+type: "outline"
+created: "2025-01-15T14:30:45.123Z"
+---
+```
+
+**Template structure includes:**
+
+- **Story Premise:** Central story concept
+- **Main Plot Points:** Key story beats (Setup, Inciting Incident, Rising Action, Climax, Resolution)
+- **Character Arcs:** Protagonist and supporting character development
+- **Key Scenes:** Important scenes with chapter references
+- **Thematic Elements:** Central and supporting themes
+- **Notes:** Pacing, research, and TODO items
+
+**Settings that control behavior:**
+
+- **Include metadata in outline files:** Toggle frontmatter generation (default: ON)
+- **Outline metadata fields:** Which fields to include (default: `draft_id, type, created`)
+- **Outline template:** Custom template content (default: comprehensive 6-section structure)
+
+**Template variables:**
+
+- `{{draftName}}`: Replaced with the actual draft name
+
+**Error conditions:**
+
+- Fails if outline file already exists
+- Fails if draft folder doesn't exist
+- Shows error message in both cases
 
 ---
 

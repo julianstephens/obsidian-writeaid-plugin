@@ -167,12 +167,19 @@ Your chapter content...
 
 ### Outline File (outline.md)
 
-Optional file for planning and organizing your draft:
+Optional file for planning and organizing your draft. Created automatically when "Create Outline" command is used or when creating new drafts with outline enabled.
+
+**Frontmatter Fields:**
+
+- `draft_id` (UUID): Links outline to parent draft for tracking
+- `type` (string): Always "outline" to identify file type
+- `created` (ISO 8601 timestamp): When the outline was created
 
 ```yaml
 ---
-draft_id: "draft-uuid"
+draft_id: "draft-abc123def456"
 type: "outline"
+created: "2025-01-15T14:30:45.123Z"
 ---
 
 # Outline for Draft 1
@@ -183,38 +190,47 @@ The hero must save the kingdom from darkness.
 
 ## Main Plot Points
 
-1. Hero discovers mysterious artifact
-2. Hero learns of threat
-3. Hero gathers companions
-4. Hero faces trials
-5. Final confrontation
-6. Resolution
+1. Setup: Introduce the world and protagonist
+2. Inciting Incident: The event that starts the story
+3. Rising Action: Complications and obstacles
+4. Climax: The turning point
+5. Resolution: How things are resolved
 
 ## Character Arcs
 
-### Hero
-- Starts as: Reluctant farm boy
-- Ends as: Legendary warrior
-- Key scenes: Discovery, Training, Sacrifice
+### Protagonist
+- Starting State: How they begin
+- Motivation: What drives them
+- Transformation: How they change
+- Ending State: Who they become
 
-### Mentor
-- Starts as: Mysterious wanderer
-- Ends as: Fallen guide
-- Key scenes: Meeting, Teaching, Betrayal
+### Supporting Characters
+- Character Name: Key traits and role
 
 ## Key Scenes
 
-- [ ] Market meeting (Chapter 1)
-- [ ] Training montage (Chapter 4)
-- [ ] Betrayal reveal (Chapter 8)
-- [ ] Final battle (Chapter 12)
+- [ ] Scene Title (Chapter X)
+- [ ] Scene Title (Chapter X)
+
+## Thematic Elements
+
+- Central theme: [Description]
+- Supporting themes: [List]
 
 ## Notes
 
-- Consider adding romance subplot
-- Flesh out antagonist motivations
-- Plan pacing for Act 2
+- Pacing considerations
+- Structural notes
+- Research needed
+- TODO items
 ```
+
+**Metadata Control:**
+
+- Frontmatter generation controlled by "Include metadata in outline files" setting
+- Which fields are included controlled by "Outline metadata fields" setting
+- Template content customizable via "Outline template" setting
+- Use `{{draftName}}` variable for dynamic draft name insertion
 
 ---
 
@@ -295,6 +311,66 @@ Access WriteAid settings via Obsidian Settings → Community Plugins → WriteAi
   - `kebab`: "Draft 1" → `draft-1/`
 - **Default:** `compact`
 - **Note:** Only applies to new drafts; existing folders unaffected
+
+---
+
+### Template Settings
+
+#### Include Outline File on Draft Creation
+
+- **Type:** Toggle (on/off)
+- **Description:** Automatically create outline.md when creating new drafts
+- **Default:** OFF (false)
+- **When used:** Creating new drafts via "Create New Draft" command
+
+#### Include Metadata in Outline Files
+
+- **Type:** Toggle (on/off)
+- **Description:** Include frontmatter metadata in outline files
+- **Default:** ON (true)
+- **Fields included:** Controlled by "Outline metadata fields" setting
+
+#### Outline Metadata Fields
+
+- **Type:** Text input (comma-separated)
+- **Description:** Which metadata fields to include in outline frontmatter
+- **Default:** `draft_id, type, created`
+- **Available fields:**
+  - `draft_id`: UUID linking to parent draft
+  - `type`: Always "outline"
+  - `created`: ISO 8601 timestamp
+- **Example:** `draft_id, type` (excludes created timestamp)
+
+#### Outline Template
+
+- **Type:** Multi-line text editor
+- **Description:** Template for new outline files
+- **Default:** Comprehensive 6-section template (see Outline File section above)
+- **Variables:** `{{draftName}}` - replaced with actual draft name
+- **File picker:** Button to load template from existing file
+
+#### Chapter Template
+
+- **Type:** Multi-line text editor
+- **Description:** Template for newly created chapter files
+- **Default:** Basic structure with summary and scene placeholders
+- **Variables:** `{{chapterName}}` - replaced with actual chapter name
+- **File picker:** Button to load template from existing file
+
+#### Manuscript Name Template
+
+- **Type:** Text input
+- **Description:** Template for manuscript filenames
+- **Default:** `{{draftName}}`
+- **Variables:**
+  - `{{draftName}}`: Draft folder name
+  - `{{projectName}}`: Project folder name
+  - `{{draftSlug}}`: Slugified draft name
+  - Date qualifiers: `{{YYYY-MM-DD}}`, `{{YYYY}}`, etc.
+- **Examples:**
+  - `{{draftName}}` → `Draft 1.md`
+  - `{{projectName}} - {{draftName}}` → `MyNovel - Draft 1.md`
+  - `{{draftSlug}}-{{YYYY-MM-DD}}` → `draft-1-2025-01-15.md`
 
 ---
 

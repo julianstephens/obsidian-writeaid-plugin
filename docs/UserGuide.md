@@ -97,9 +97,68 @@ MyNovel/
 
 ### Creating an Outline
 
+Outlines help you organize your story before diving into writing. WriteAid creates comprehensive outline files with structured sections.
+
 1. Ensure you have an active draft
 2. Open the command palette and search for **"Create Outline"**
-3. A new `outline.md` file is created in your draft folder
+3. A new `outline.md` file is created in your draft folder with:
+   - Frontmatter metadata linking it to your draft
+   - Six structured sections for comprehensive planning
+   - Template variables automatically filled in
+
+**Outline sections include:**
+
+- **Story Premise** - Central concept and hook
+- **Main Plot Points** - Key story beats and structure
+- **Character Arcs** - How characters develop and change
+- **Key Scenes** - Important moments with chapter references
+- **Thematic Elements** - Central themes and motifs
+- **Notes** - Pacing, research needs, and TODO items
+
+**Outline metadata:**
+The outline file includes frontmatter that links it to your draft:
+
+```yaml
+---
+draft_id: "draft-abc123def456"
+type: "outline"
+created: "2025-01-15T14:30:45.123Z"
+---
+```
+
+This makes outlines machine-readable and trackable across your project.
+
+### Outline Best Practices
+
+**When to create outlines:**
+
+- **Before writing** - Plan your story structure first
+- **After first draft** - Identify plot holes and pacing issues
+- **Before revisions** - Organize changes and improvements
+
+**Using the outline template:**
+
+1. **Story Premise** - Write 1-2 sentences capturing your core concept
+2. **Main Plot Points** - List 5-7 major turning points in order
+3. **Character Arcs** - Define starting and ending states for key characters
+4. **Key Scenes** - Note memorable moments and where they occur
+5. **Thematic Elements** - Identify central themes and supporting motifs
+6. **Notes** - Track research needed, pacing concerns, or structural ideas
+
+**Outline customization:**
+
+- **Template variables** - Use `{{draftName}}` in custom templates
+- **Metadata control** - Toggle frontmatter generation in settings
+- **Field selection** - Choose which metadata fields to include
+- **Template editing** - Customize the outline structure in settings
+
+**Outline workflow tips:**
+
+- Update outlines as you write to track progress
+- Use checkboxes `[ ]` for scenes to mark completion
+- Reference chapter numbers in key scenes section
+- Keep outlines updated during revisions
+- Use outlines to communicate story structure to beta readers
 
 ## Working with Chapters (Multi-File Projects)
 

@@ -60,23 +60,45 @@ function truncateProjectName(projectName: string, maxLength: number = 20): strin
 const DEFAULT_SETTINGS: WriteAidSettings = {
   outlineTemplate: `# {{draftName}} Outline
 
-## Overview
-Brief description of the story goes here.
+## Story Premise
 
-## Characters
-- Character 1: Description
-- Character 2: Description
+Brief description of the central story premise goes here.
 
-## Plot Points
-- Opening: 
-- Middle: 
-- Climax: 
-- Resolution: 
+## Main Plot Points
 
-## Chapters
-- Chapter 1: Title
-- Chapter 2: Title
-- Chapter 3: Title`,
+1. Setup: Introduce the world and protagonist
+2. Inciting Incident: The event that starts the story
+3. Rising Action: Complications and obstacles
+4. Climax: The turning point
+5. Resolution: How things are resolved
+
+## Character Arcs
+
+### Protagonist
+- Starting State: How they begin
+- Motivation: What drives them
+- Transformation: How they change
+- Ending State: Who they become
+
+### Supporting Characters
+- Character Name: Key traits and role
+
+## Key Scenes
+
+- [ ] Scene Title (Chapter X)
+- [ ] Scene Title (Chapter X)
+
+## Thematic Elements
+
+- Central theme: [Description]
+- Supporting themes: [List]
+
+## Notes
+
+- Pacing considerations
+- Structural notes
+- Research needed
+- TODO items`,
   chapterTemplate: `# {{chapterName}}
 
 ## Summary
@@ -97,6 +119,8 @@ Scene content goes here.`,
   panelRefreshDebounceMs: 250,
   debug: false,
   includeDraftOutline: false,
+  includeOutlineMetadata: true,
+  outlineMetadataFields: ["draft_id", "type", "created"],
   draftsFolderName: FOLDERS.DRAFTS,
   manuscriptsFolderName: FOLDERS.MANUSCRIPTS,
   backupsFolderName: FOLDERS.BACKUPS,
