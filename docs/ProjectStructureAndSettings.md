@@ -154,7 +154,6 @@ last_updated: 2025-01-15T14:30:45Z
 # Chapter 1: The Beginning
 
 Your chapter content...
-````
 
 **Frontmatter Fields:**
 
