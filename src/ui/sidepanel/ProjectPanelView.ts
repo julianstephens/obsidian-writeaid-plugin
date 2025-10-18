@@ -80,4 +80,11 @@ export class ProjectPanelView extends ItemView {
       this.projectPanel = undefined;
     }
   }
+
+  refreshDraftsSection() {
+    if (this.projectPanel && typeof (this.projectPanel as any).refreshDrafts === 'function') {
+      debug(`${DEBUG_PREFIX} Refreshing drafts section in project panel`);
+      (this.projectPanel as any).refreshDrafts();
+    }
+  }
 }

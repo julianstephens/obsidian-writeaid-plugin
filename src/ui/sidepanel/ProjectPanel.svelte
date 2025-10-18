@@ -199,6 +199,7 @@
       drafts = [];
       return;
     }
+    const previousActiveDraft = activeDraft;
     loadingDrafts = true;
     const minSpin = new Promise((resolve) => setTimeout(resolve, 400));
     try {
@@ -208,8 +209,13 @@
       drafts = Array.from(drafts);
       drafts.sort((a, b) => (a > b ? 1 : a < b ? -1 : 0));
       if (!sortAsc) drafts.reverse();
-      // set active draft UI state if manager has one
-      // isMultiFileProject detection can be deferred
+      // Preserve the active draft - do not change it during refresh
+      // activeDraft is controlled by manager listeners, not by this function
+      try {
+        debug(`${DEBUG_PREFIX} refreshDrafts: loaded ${drafts.length} drafts, preserving active draft: ${previousActiveDraft}`);
+      } catch (e) {
+        // ignore debug errors
+      }
     } catch (e) {
       drafts = [];
     } finally {
@@ -257,16 +263,18 @@
 
   // Minimal action handlers used by the template
   async function createInlineDraft() {
-    if (!projectFileService || !selectedValue || !newDraftName.trim()) return;
+    if (!manager || !selectedValue || !newDraftName.trim()) return;
+
+    const draftName = newDraftName.trim();
+
     try {
-      // Use the new projectFileService for creating drafts
-      await projectFileService.drafts.createDraft(
-        newDraftName.trim(),
-        copyFrom || undefined,
-        selectedValue,
-      );
+      await manager.createNewDraft(draftName, copyFrom || undefined, selectedValue);
+      // Update the local activeDraft to reflect the newly created active draft
+      activeDraft = manager.activeDraft;
+      new Notice(`Draft "${draftName}" created.`);
     } catch (e) {
-      // ignore
+      debug(`${DEBUG_PREFIX} Failed to create draft:`, e);
+      new Notice("Failed to create draft.");
     }
     newDraftName = "";
     showCreateInline = false;
@@ -476,11 +484,9 @@
         activeProject = newProject;
         selected = { value: newProject, label: newProject };
         selectedValue = newProject;
-        // Set the new draft as active
+        // Set the new draft as active using manager API (draftName, projectPath)
         if (manager.setActiveDraft) {
-          await manager.setActiveDraft(newProject, initialDraftName);
-        } else {
-          manager.activeDraft = initialDraftName ?? null;
+          await manager.setActiveDraft(initialDraftName ?? "Draft 1", newProject);
         }
         await refreshDrafts();
         await refreshChapters();

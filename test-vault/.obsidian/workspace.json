@@ -11,14 +11,10 @@
             "id": "5280a970130968c9",
             "type": "leaf",
             "state": {
-              "type": "markdown",
-              "state": {
-                "file": "Story/Drafts/Draft 2/draft2.md",
-                "mode": "source",
-                "source": false
-              },
+              "type": "empty",
+              "state": {},
               "icon": "lucide-file",
-              "title": "draft2"
+              "title": "New tab"
             }
           }
         ]
@@ -181,23 +177,30 @@
   },
   "active": "36a4b021559a3158",
   "lastOpenFiles": [
-    "Story/Drafts/Draft 4/draft2.md",
+    "Story/Drafts/Draft 7/draft7.md",
+    "Story/Drafts/Draft 7",
+    "Story/Drafts/Draft 6/draft6.md",
+    "Story/Drafts/Draft 6",
+    "Story/Drafts/Draft 5/draft5.md",
+    "Story/Drafts/Draft 5",
+    "Story/Drafts/Draft 4/draft4.md",
+    "Story/Drafts/Draft 3/draft3.md",
+    "Story/Drafts/Draft 3",
     "Story/Drafts/Draft 2/draft2.md",
+    "Story/Drafts/Draft 2",
+    "Story/Drafts/c1444281-337a-48c9-8e56-13f910865a88/draft2.md",
+    "Story/Drafts/c1444281-337a-48c9-8e56-13f910865a88",
+    "Story/Drafts/Draft 4/draft2.md",
     "Story/Manuscripts/Draft 3.md",
     "novel/Drafts/Draft 2/chapter1.md",
-    "Story/Drafts/Draft 3/draft3.md",
-    "Story/Drafts/Draft 2",
     "Story/Drafts/Draft 4",
     "Story/Drafts/Draft 1/draft2.md",
     "Story/Drafts/Draft 1",
-    "Story/Drafts/Draft 4/draft4.md",
     "novel/Drafts/Draft 2/Chapter 3.md",
     "novel/Drafts/Draft 2/chapter2.md",
-    "Story/Drafts/Draft 3",
     "novel/Drafts/Draft 1/Chapter 2.md",
     "novel/Drafts/Draft 2",
     "novel/drafts/Draft 2",
-    "novel/drafts",
     "novel/Drafts/Draft 1/Chapter 1.md",
     "Story/Manuscripts/2025-10-15_Draft 3.md",
     "Story/Manuscripts/2025-10-Draft 3.md",
@@ -206,15 +209,9 @@
     "Story/Manuscripts/3rpmftADpm223.md",
     "Story/Manuscripts/3rpmftADpm13.md",
     "Story/Manuscripts/3ramftADam123.md",
-    "Story/Manuscripts",
     "novel/Drafts/Draft 3/The Rule.md",
     "novel/Drafts/Draft 3/Chapter 1.md",
-    "novel/Drafts/Draft 3",
     "Story/Drafts/Draft 1/draft1.md",
-    "Story/Drafts/Draft 4 Copy/draft2.md",
-    "Story/Drafts/Draft 4 Copy",
-    "Story/Drafts/Draft 2 Copy/draft2.md",
-    "novel/Drafts/Draft 1/The Rule.md",
-    "Story/Drafts/Test draft/testdraft.md"
+    "Story/Drafts/Draft 4 Copy/draft2.md"
   ]
 }

@@ -15,6 +15,7 @@ import { selectActiveProjectCommand } from "@/commands/project/selectActiveProje
 import { toggleProjectPanelCommand } from "@/commands/project/toggleProjectPanelCommand";
 import { updateProjectMetadataCommand } from "@/commands/project/updateProjectMetadataCommand";
 import { ProjectService } from "@/core/ProjectService";
+import { readMetaFile } from "@/core/meta";
 import {
   APP_NAME,
   asyncFilter,
@@ -23,6 +24,7 @@ import {
   FILES,
   FOLDERS,
   getDraftsFolderName,
+  getMetaFileName,
   suppress,
   suppressAsync,
   WRITE_AID_ICON_NAME,
@@ -264,6 +266,22 @@ export default class WriteAidPlugin extends Plugin {
       if (toActivate) {
         await this.manager.setActiveProject(toActivate);
         this.settings.activeProject = toActivate;
+
+        // Auto-restore the active draft for this project (Phase 8: Startup Draft Restoration)
+        const projectMeta = await readMetaFile(
+          this.app,
+          `${toActivate}/${getMetaFileName(this.settings)}`,
+        );
+        if (projectMeta?.current_active_draft) {
+          const drafts = this.manager.listDrafts(toActivate);
+          if (drafts.includes(projectMeta.current_active_draft)) {
+            debug(
+              `${DEBUG_PREFIX} auto-restoring draft '${projectMeta.current_active_draft}' for project '${toActivate}'`,
+            );
+            await this.manager.setActiveDraft(projectMeta.current_active_draft, toActivate, false);
+          }
+        }
+
         await this.saveSettings();
         // open the panel only if user has enabled auto-open
         if (this.settings.autoOpenPanelOnStartup) {

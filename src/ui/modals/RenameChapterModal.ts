@@ -1,3 +1,4 @@
+import { debug, DEBUG_PREFIX } from "@/core/utils";
 import { App, Modal } from "obsidian";
 
 export class RenameChapterModal extends Modal {
@@ -70,6 +71,7 @@ export class RenameChapterModal extends Modal {
       return;
     }
     if (this.errorEl) this.errorEl.style.display = "none";
+    debug(`${DEBUG_PREFIX} RenameChapterModal: renaming chapter from "${this.oldName}" to "${value}"`);
     this.onSubmit(value);
     this.close();
   }

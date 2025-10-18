@@ -1,3 +1,4 @@
+import { debug, DEBUG_PREFIX } from "@/core/utils";
 import type { App } from "obsidian";
 import { Modal, Setting } from "obsidian";
 
@@ -54,6 +55,7 @@ export class ConfirmReorderModal extends Modal {
         .setButtonText("Confirm")
         .setCta()
         .onClick(() => {
+          debug(`${DEBUG_PREFIX} ConfirmReorderModal: confirmed reorder, createBackups: ${this.createBackups}`);
           this.close();
           this.onConfirm(this.createBackups);
         }),
@@ -61,6 +63,7 @@ export class ConfirmReorderModal extends Modal {
 
     new Setting(contentEl).addButton((b) =>
       b.setButtonText("Cancel").onClick(() => {
+        debug(`${DEBUG_PREFIX} ConfirmReorderModal: cancelled reorder`);
         this.close();
         if (this.onCancel) this.onCancel();
       }),

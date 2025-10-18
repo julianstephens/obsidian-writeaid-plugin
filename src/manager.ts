@@ -1,15 +1,13 @@
-import { readMetaFile, updateMetaStats } from "@/core/meta";
+import { updateMetaStats } from "@/core/meta";
 import { ProjectFileService } from "@/core/ProjectFileService";
 import { ProjectService } from "@/core/ProjectService";
 import {
-  APP_NAME,
-  asyncFilter,
-  debug,
-  DEBUG_PREFIX,
-  getDraftsFolderName,
-  getMetaFileName,
-  suppress,
-  suppressAsync,
+    APP_NAME,
+    asyncFilter,
+    debug,
+    DEBUG_PREFIX,
+    suppress,
+    suppressAsync
 } from "@/core/utils";
 import type { PluginLike, WriteAidSettings } from "@/types";
 import { App, Notice } from "obsidian";
@@ -179,65 +177,9 @@ export class WriteAidManager {
     for (const l of this.activeProjectListeners) {
       suppress(() => l(path));
     }
-
-    // Ensure an active draft is set for the newly activated project.
-    try {
-      if (!path) {
-        this.activeDraft = null;
-        this.notifyActiveDraftListeners(null);
-        return;
-      }
-      const drafts = this.listDrafts(path);
-      if (!drafts || drafts.length === 0) {
-        this.activeDraft = null;
-        return;
-      }
-      if (drafts.length === 1) {
-        await this.setActiveDraft(drafts[0], path, false);
-        debug(`${DEBUG_PREFIX} auto-selected single draft '${drafts[0]}' for project '${path}'`);
-        return;
-      }
-
-      // Multiple drafts: prefer meta.md's current_active_draft when valid
-      await suppressAsync(async () => {
-        const meta = await readMetaFile(this.app, `${path}/${getMetaFileName(this.settings)}`);
-        if (meta && meta.current_active_draft && drafts.includes(meta.current_active_draft)) {
-          await this.setActiveDraft(meta.current_active_draft, path, false);
-          debug(
-            `${DEBUG_PREFIX} auto-selected meta draft '${meta.current_active_draft}' for project '${path}'`,
-          );
-          return;
-        }
-      });
-
-      // Fallback: choose the draft with the most recently modified file inside it
-      let bestDraft: string | null = null;
-      let bestMtime = 0;
-      const files = this.app.vault.getFiles();
-      const draftsFolderName = getDraftsFolderName(this.settings);
-      for (const d of drafts) {
-        const folderPrefix = `${path}/${draftsFolderName}/${d}/`;
-        let maxM = 0;
-        for (const f of files) {
-          if (f.path.startsWith(folderPrefix)) {
-            // f.stat may be undefined in some hosts; guard access
-            const m = f.stat && typeof f.stat.mtime === "number" ? f.stat.mtime : 0;
-            if (m > maxM) maxM = m;
-          }
-        }
-        if (maxM > bestMtime) {
-          bestMtime = maxM;
-          bestDraft = d;
-        }
-      }
-      if (!bestDraft) bestDraft = drafts[0];
-      // Optionally surface debug notice when debug setting is enabled so we can
-      // observe what draft was auto-selected during startup.
-      debug(`${DEBUG_PREFIX} auto-selected draft '${bestDraft}' for project '${path}'`);
-      await this.setActiveDraft(bestDraft, path, false);
-    } catch {
-      // Ignore errors selecting active draft
-    }
+    // Do not change activeDraft automatically here. Active draft should only
+    // be modified via explicit user actions: switching, creating, or deleting
+    // drafts. The UI or callers can choose to call setActiveDraft when desired.
   }
 
   async createNewProjectPrompt() {
@@ -341,12 +283,7 @@ export class WriteAidManager {
           drafts: this.listDrafts(projectPath),
           projectPath,
           onSubmit: async (draftName: string, copyFrom?: string) => {
-            await this.projectFileService.drafts.createDraft(
-              draftName,
-              copyFrom,
-              projectPath,
-              this.settings,
-            );
+            await this.createNewDraft(draftName, copyFrom, projectPath);
             new Notice(`Draft "${draftName}" created in ${projectPath}.`);
           },
         }).open();
@@ -361,13 +298,10 @@ export class WriteAidManager {
       return;
     }
     new SwitchDraftModal(this.app, drafts, async (draftName: string) => {
-      this.activeDraft = draftName;
-      new Notice(`Switched to draft: ${draftName}`);
-
-      // Update meta.md with the new active draft
-      const projectPath = this.getCurrentProjectPath();
-      if (projectPath) {
-        await updateMetaStats(this.app, projectPath, draftName, undefined, this.settings);
+      // Use the manager API so the active draft change is centralized and persistent
+      const ok = await this.setActiveDraft(draftName);
+      if (ok) {
+        new Notice(`Switched to draft: ${draftName}`);
       }
     }).open();
   }
@@ -413,14 +347,36 @@ export class WriteAidManager {
   }
 
   async createNewDraft(draftName: string, copyFromDraft?: string, projectPath?: string) {
-    const res = await this.projectFileService.drafts.createDraft(
+    const project = projectPath || this.activeProject || this.getCurrentProjectPath();
+    if (!project) {
+      new Notice("No project folder detected. Please open a folder named after your project.");
+      return;
+    }
+
+    // Check if draft name already exists
+    const existingDrafts = this.listDrafts(project);
+    if (existingDrafts.includes(draftName)) {
+      new Notice(`Draft with name "${draftName}" already exists. Please choose a different name.`);
+      return;
+    }
+
+    await this.projectFileService.drafts.createDraft(
       draftName,
       copyFromDraft,
-      projectPath,
+      project,
       this.settings,
     );
+    // Notify panels and set the newly created draft as active (creation scenario)
     suppress(() => this.notifyPanelRefresh());
-    return res;
+    if (project && draftName) {
+      // Best-effort: set active draft to the created draft
+      try {
+        await this.setActiveDraft(draftName, project, false);
+      } catch {
+        // ignore failures to set active draft
+      }
+    }
+    return;
   }
 
   listDrafts(projectPath?: string): string[] {

@@ -5,17 +5,17 @@ import type { WriteAidSettings } from "@/types";
 import { App, normalizePath, Notice, TFile, TFolder } from "obsidian";
 import { readMetaFile } from "./meta";
 import {
-  asyncFilter,
-  debug,
-  DEBUG_PREFIX,
-  FRONTMATTER_DELIMITER,
-  getDraftsFolderName,
-  getManuscriptsFolderName,
-  getMetaFileName,
-  getOutlineFileName,
-  MARKDOWN_FILE_EXTENSION,
-  PROJECT_TYPE,
-  type ProjectType,
+    asyncFilter,
+    debug,
+    DEBUG_PREFIX,
+    FRONTMATTER_DELIMITER,
+    getDraftsFolderName,
+    getManuscriptsFolderName,
+    getMetaFileName,
+    getOutlineFileName,
+    MARKDOWN_FILE_EXTENSION,
+    PROJECT_TYPE,
+    type ProjectType,
 } from "./utils";
 
 export class ProjectService {
@@ -187,7 +187,6 @@ export class ProjectService {
   // Simple heuristic to determine whether a folder looks like a project managed by WriteAid
   // We consider a folder a project if it contains a meta.md file or a Drafts/ subfolder.
   async isProjectFolder(path: string): Promise<boolean> {
-    debug(`${DEBUG_PREFIX} isProjectFolder called with path: ${path}`);
     if (!path || typeof path !== "string") {
       debug(`${DEBUG_PREFIX} isProjectFolder: invalid path`);
       return false;

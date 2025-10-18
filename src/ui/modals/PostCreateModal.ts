@@ -1,3 +1,4 @@
+import { debug, DEBUG_PREFIX } from "@/core/utils";
 import type { App } from "obsidian";
 import { Modal, Setting } from "obsidian";
 
@@ -23,13 +24,17 @@ export class PostCreateModal extends Modal {
         .setButtonText("Open Project")
         .setCta()
         .onClick(async () => {
+          debug(`${DEBUG_PREFIX} PostCreateModal: opening project "${this.projectPath}"`);
           this.close();
           if (this.onOpenProject) await this.onOpenProject();
         }),
     );
 
     new Setting(contentEl).addButton((btn) =>
-      btn.setButtonText("Close").onClick(() => this.close()),
+      btn.setButtonText("Close").onClick(() => {
+        debug(`${DEBUG_PREFIX} PostCreateModal: closed for project "${this.projectPath}"`);
+        this.close();
+      }),
     );
   }
 

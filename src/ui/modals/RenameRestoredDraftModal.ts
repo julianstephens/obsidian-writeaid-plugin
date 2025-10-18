@@ -1,15 +1,14 @@
 import { debug, DEBUG_PREFIX } from "@/core/utils";
 import { App, Modal } from "obsidian";
 
-export class RenameDraftModal extends Modal {
+export class RenameRestoredDraftModal extends Modal {
   oldName: string;
-  onSubmit: (newName: string, renameFile: boolean) => void;
+  onSubmit: (newName: string) => void;
   inputEl: HTMLInputElement | undefined;
-  checkboxEl: HTMLInputElement | undefined;
   errorEl: HTMLElement | undefined;
   cancelBtn: HTMLButtonElement | undefined;
 
-  constructor(app: App, oldName: string, onSubmit: (newName: string, renameFile: boolean) => void) {
+  constructor(app: App, oldName: string, onSubmit: (newName: string) => void) {
     super(app);
     this.oldName = oldName;
     this.onSubmit = onSubmit;
@@ -18,8 +17,11 @@ export class RenameDraftModal extends Modal {
   onOpen() {
     const { contentEl } = this;
     contentEl.empty();
-    contentEl.createEl("h3", { text: `Rename Draft` });
-    contentEl.createEl("div", { text: `Current name: '${this.oldName}'`, cls: "wa-rename-info" });
+    contentEl.createEl("h3", { text: `Rename Restored Draft` });
+    contentEl.createEl("div", {
+      text: `The original draft '${this.oldName}' no longer exists. Please provide a new name for the restored draft.`,
+      cls: "wa-rename-info",
+    });
     const label = contentEl.createEl("label", { text: "New draft name", cls: "wa-rename-label" });
     this.inputEl = contentEl.createEl("input", {
       type: "text",
@@ -33,12 +35,8 @@ export class RenameDraftModal extends Modal {
     this.errorEl.style.color = "var(--color-red, #d43c3c)";
     this.errorEl.style.display = "none";
 
-    const cbLabel = contentEl.createEl("label", { cls: "wa-rename-checkbox-label" });
-    this.checkboxEl = cbLabel.createEl("input", { type: "checkbox", attr: { checked: "checked" } });
-    cbLabel.appendText(" Also rename the main draft file (filename)");
-
     const btnRow = contentEl.createEl("div", { cls: "wa-rename-btn-row" });
-    const confirmBtn = btnRow.createEl("button", { text: "Rename", cls: "mod-cta" });
+    const confirmBtn = btnRow.createEl("button", { text: "Restore", cls: "mod-cta" });
     this.cancelBtn = btnRow.createEl("button", { text: "Cancel", cls: "mod-cancel" });
 
     setTimeout(() => {
@@ -59,7 +57,6 @@ export class RenameDraftModal extends Modal {
 
   submit() {
     const value = this.inputEl?.value.trim();
-    const renameFile = this.checkboxEl ? this.checkboxEl.checked : false;
     if (!value) {
       if (this.errorEl) {
         this.errorEl.textContent = "Draft name cannot be empty.";
@@ -68,17 +65,13 @@ export class RenameDraftModal extends Modal {
       this.inputEl?.focus();
       return;
     }
-    if (value === this.oldName) {
-      if (this.errorEl) {
-        this.errorEl.textContent = "Please enter a different name.";
-        this.errorEl.style.display = "";
-      }
-      this.inputEl?.focus();
-      return;
-    }
     if (this.errorEl) this.errorEl.style.display = "none";
-    debug(`${DEBUG_PREFIX} RenameDraftModal: renaming draft from "${this.oldName}" to "${value}", renameFile: ${renameFile}`);
-    this.onSubmit(value, renameFile);
+    debug(`${DEBUG_PREFIX} RenameRestoredDraftModal: restoring draft as "${value}"`);
+    this.onSubmit(value);
     this.close();
+  }
+
+  onClose() {
+    this.contentEl.empty();
   }
 }

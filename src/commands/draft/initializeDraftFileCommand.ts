@@ -1,12 +1,12 @@
 import {
-  checkActive,
-  debug,
-  DEBUG_PREFIX,
-  FRONTMATTER_DELIMITER,
-  FRONTMATTER_REGEX,
-  generateDraftId,
-  getDraftsFolderName,
-  MARKDOWN_FILE_EXTENSION,
+    checkActive,
+    debug,
+    DEBUG_PREFIX,
+    FRONTMATTER_DELIMITER,
+    FRONTMATTER_REGEX,
+    generateDraftId,
+    getDraftsFolderName,
+    MARKDOWN_FILE_EXTENSION,
 } from "@/core/utils";
 import type { WriteAidManager } from "@/manager";
 import { App, Notice, SuggestModal, TFile, TFolder } from "obsidian";
@@ -160,32 +160,51 @@ export function initializeDraftFileCommand(manager: WriteAidManager) {
     debug(`${DEBUG_PREFIX} Initialize draft file command called`);
     debug(`${DEBUG_PREFIX} Active project: ${activeProjectPath}, active draft: ${activeDraftName}`);
 
-    if (!checkActive(activeProjectPath, activeDraftName)) {
-      return;
-    }
+    try {
+      if (!checkActive(activeProjectPath, activeDraftName)) {
+        debug(`${DEBUG_PREFIX} Initialize draft file: active project/draft check failed`);
+        return;
+      }
 
-    if (!activeProjectPath || !activeDraftName) {
-      new Notice("Active project or draft not found.");
-      return;
-    }
+      if (!activeProjectPath || !activeDraftName) {
+        debug(`${DEBUG_PREFIX} Initialize draft file: no active project or draft`);
+        new Notice("Active project or draft not found.");
+        return;
+      }
 
-    const draftsFolderName = getDraftsFolderName(manager.settings);
-    const draftFolder = `${activeProjectPath}/${draftsFolderName}/${activeDraftName}`;
-    const projectName = activeProjectPath.split("/").pop() || activeProjectPath;
+      // Find the actual drafts folder name (case-insensitive)
+      const configuredDraftsFolderName = getDraftsFolderName(manager.settings);
+      const projectFolder = manager.app.vault.getAbstractFileByPath(activeProjectPath);
+      let actualDraftsFolderName = configuredDraftsFolderName;
+      
+      if (projectFolder && projectFolder instanceof TFolder) {
+        for (const child of projectFolder.children) {
+          if (child instanceof TFolder && child.name.toLowerCase() === configuredDraftsFolderName.toLowerCase()) {
+            actualDraftsFolderName = child.name;
+            break;
+          }
+        }
+      }
 
-    // Get all files in the draft folder
-    const draftFolderObj = manager.app.vault.getAbstractFileByPath(draftFolder);
-    if (!draftFolderObj || !(draftFolderObj instanceof TFolder)) {
-      new Notice("Draft folder not found.");
-      return;
-    }
+      const draftFolder = `${activeProjectPath}/${actualDraftsFolderName}/${activeDraftName}`;
+      const projectName = activeProjectPath.split("/").pop() || activeProjectPath;
 
-    // Get markdown files directly in the draft folder (not in subfolders)
-    const files = draftFolderObj.children
-      .filter((child): child is TFile => child instanceof TFile && child.extension === "md")
-      .filter((file) => !file.path.includes("/Chapters/") && file.name !== "outline.md");
+      debug(`${DEBUG_PREFIX} Initialize draft file: using drafts folder: ${actualDraftsFolderName}`);
 
-    debug(`${DEBUG_PREFIX} Found ${files.length} markdown files in draft folder`);
+      // Get all files in the draft folder
+      const draftFolderObj = manager.app.vault.getAbstractFileByPath(draftFolder);
+      if (!draftFolderObj || !(draftFolderObj instanceof TFolder)) {
+        debug(`${DEBUG_PREFIX} Initialize draft file: draft folder not found at ${draftFolder}`);
+        new Notice("Draft folder not found.");
+        return;
+      }
+
+      // Get markdown files directly in the draft folder (not in subfolders)
+      const files = draftFolderObj.children
+        .filter((child): child is TFile => child instanceof TFile && child.extension === "md")
+        .filter((file) => !file.path.includes("/Chapters/") && file.name !== "outline.md");
+
+      debug(`${DEBUG_PREFIX} Found ${files.length} markdown files in draft folder`);
 
     if (files.length === 0) {
       // Create a new draft file
@@ -206,6 +225,7 @@ export function initializeDraftFileCommand(manager: WriteAidManager) {
       const metadata = extractMetadata(content);
 
       if (isMetadataComplete(metadata)) {
+        debug(`${DEBUG_PREFIX} Initialize draft file: file already has complete metadata`);
         new Notice(`"${file.name}" already has complete draft metadata.`);
         return;
       }
@@ -216,6 +236,7 @@ export function initializeDraftFileCommand(manager: WriteAidManager) {
       const updatedContent = updateFileWithMetadata(content, completeMetadata);
 
       await manager.app.vault.modify(file, updatedContent);
+      debug(`${DEBUG_PREFIX} Initialize draft file: successfully updated ${file.name}`);
       new Notice(`Draft metadata added to "${file.name}".`);
       return;
     }
@@ -235,6 +256,7 @@ export function initializeDraftFileCommand(manager: WriteAidManager) {
 
       // Check if already complete
       if (isMetadataComplete(metadata)) {
+        debug(`${DEBUG_PREFIX} Initialize draft file: selected file already has complete metadata`);
         new Notice(`"${file.name}" already has complete draft metadata.`);
         return;
       }
@@ -245,9 +267,14 @@ export function initializeDraftFileCommand(manager: WriteAidManager) {
       const updatedContent = updateFileWithMetadata(content, completeMetadata);
 
       await manager.app.vault.modify(file, updatedContent);
+      debug(`${DEBUG_PREFIX} Initialize draft file: successfully updated ${file.name} from modal`);
       new Notice(`Draft metadata added to "${file.name}".`);
     });
 
     modal.open();
+    } catch (error) {
+      debug(`${DEBUG_PREFIX} Initialize draft file command error:`, error);
+      new Notice("Failed to initialize draft file metadata.");
+    }
   };
 }

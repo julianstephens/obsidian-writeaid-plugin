@@ -1,3 +1,4 @@
+import { debug, DEBUG_PREFIX } from "@/core/utils";
 import type { SelectProjectModalProps } from "@/types";
 import type { App } from "obsidian";
 import { Modal, Setting } from "obsidian";
@@ -27,6 +28,7 @@ export class SelectProjectModal extends Modal {
         .setButtonText("Select")
         .setCta()
         .onClick(() => {
+          debug(`${DEBUG_PREFIX} SelectProjectModal: selected project "${selected || "(Vault root)"}"`);
           this.close();
           this.props.onSubmit(selected || "");
         }),

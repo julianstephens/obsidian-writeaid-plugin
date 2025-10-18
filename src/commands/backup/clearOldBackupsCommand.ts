@@ -1,6 +1,6 @@
 import { checkActive, debug, DEBUG_PREFIX, getDraftsFolderName } from "@/core/utils";
 import type { WriteAidManager } from "@/manager";
-import { Notice } from "obsidian";
+import { Notice, TFolder } from "obsidian";
 
 export function clearOldBackupsCommand(manager: WriteAidManager) {
   return async () => {
@@ -14,8 +14,26 @@ export function clearOldBackupsCommand(manager: WriteAidManager) {
       return;
     }
 
-    const draftsFolderName = getDraftsFolderName(manager.settings);
-    const draftFolder = `${activeProjectPath}/${draftsFolderName}/${activeDraftName}`;
+    if (!activeProjectPath || !activeDraftName) {
+      new Notice("Active project or draft not found.");
+      return;
+    }
+
+    // Find the actual drafts folder name (case-insensitive)
+    const configuredDraftsFolderName = getDraftsFolderName(manager.settings);
+    const projectFolder = manager.app.vault.getAbstractFileByPath(activeProjectPath);
+    let actualDraftsFolderName = configuredDraftsFolderName;
+
+    if (projectFolder && projectFolder instanceof TFolder) {
+      for (const child of projectFolder.children) {
+        if (child instanceof TFolder && child.name.toLowerCase() === configuredDraftsFolderName.toLowerCase()) {
+          actualDraftsFolderName = child.name;
+          break;
+        }
+      }
+    }
+
+    const draftFolder = `${activeProjectPath}/${actualDraftsFolderName}/${activeDraftName}`;
 
     // Get the draft ID
     const draftId = await manager.projectFileService.drafts.getDraftId(draftFolder);

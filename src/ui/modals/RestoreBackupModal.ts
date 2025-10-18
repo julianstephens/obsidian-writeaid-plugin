@@ -1,15 +1,16 @@
 import {
-  BYTES_PER_KILOBYTE,
-  debug,
-  DEBUG_PREFIX,
-  FILE_SIZE_UNITS,
-  getBackupsFolderName,
-  getDraftsFolderName,
+    BYTES_PER_KILOBYTE,
+    debug,
+    DEBUG_PREFIX,
+    FILE_SIZE_UNITS,
+    getBackupsFolderName,
+    getDraftsFolderName,
 } from "@/core/utils";
 import type { WriteAidManager } from "@/manager";
 import { WriteAidError } from "@/types";
 import { App, Notice, SuggestModal, TFolder } from "obsidian";
 import { ConfirmOverwriteModal } from "./ConfirmOverwriteModal";
+import { RenameRestoredDraftModal } from "./RenameRestoredDraftModal";
 
 interface BackupItem {
   timestamp: string;
@@ -24,12 +25,15 @@ export class RestoreBackupModal extends SuggestModal<BackupItem> {
   private backups: BackupItem[] = [];
   private draftFolder: string = "";
   private draftName: string = "";
+  private onRestoreComplete?: () => void;
 
   constructor(
     app: App,
     private manager: WriteAidManager,
+    onRestoreComplete?: () => void,
   ) {
     super(app);
+    this.onRestoreComplete = onRestoreComplete;
     this.setPlaceholder("Select a backup to restore...");
     this.setInstructions([
       { command: "↑↓", purpose: "to navigate" },
@@ -40,6 +44,8 @@ export class RestoreBackupModal extends SuggestModal<BackupItem> {
 
   async onOpen() {
     const activeProjectPath = this.manager.activeProject;
+
+    debug(`${DEBUG_PREFIX} RestoreBackupModal opened for project: ${activeProjectPath}`);
 
     if (!activeProjectPath) {
       new Notice("No active project found.");
@@ -53,6 +59,10 @@ export class RestoreBackupModal extends SuggestModal<BackupItem> {
 
     // Get backup details for all drafts in the project
     this.backups = await this.getBackupDetails();
+
+    debug(
+      `${DEBUG_PREFIX} Found ${this.backups.length} backups for project: ${activeProjectPath}`,
+    );
 
     if (this.backups.length === 0) {
       new Notice(WriteAidError.BACKUPS_NOT_FOUND_PROJECT);
@@ -75,8 +85,26 @@ export class RestoreBackupModal extends SuggestModal<BackupItem> {
       const backupDetails: BackupItem[] = [];
       const draftsFolderName = getDraftsFolderName(this.manager.settings);
 
+      // Find the actual drafts folder name in backups (case-insensitive)
+      let actualBackupDraftsFolderName = draftsFolderName;
+      try {
+        const backupProjectContents = await this.app.vault.adapter.list(backupProjectDir);
+        for (const folder of backupProjectContents.folders) {
+          const folderName = folder.split("/").pop() || folder;
+          if (folderName.toLowerCase() === draftsFolderName.toLowerCase()) {
+            actualBackupDraftsFolderName = folderName;
+            break;
+          }
+        }
+      } catch {
+        debug(
+          `${DEBUG_PREFIX} Could not read backup project directory: ${backupProjectDir}`,
+        );
+      }
+
       // Look for the drafts folder in backups
-      const draftsBackupDir = `${backupProjectDir}/${draftsFolderName}`;
+      const draftsBackupDir = `${backupProjectDir}/${actualBackupDraftsFolderName}`;
+      debug(`${DEBUG_PREFIX} Looking for backups in: ${draftsBackupDir}`);
       const draftsItems = await this.app.vault.adapter.list(draftsBackupDir);
 
       // For each draft ID folder in backups
@@ -103,8 +131,20 @@ export class RestoreBackupModal extends SuggestModal<BackupItem> {
         const draftBackupDir = `${draftsBackupDir}/${draftId}`;
         const draftItems = await this.app.vault.adapter.list(draftBackupDir);
 
-        // Get the actual draft folder path for restoration
-        const draftFolderPath = `${projectName}/${draftsFolderName}/${draftName}`;
+        // Get the actual draft folder path for restoration - need to find the real folder in the vault
+        const projectFolder = this.app.vault.getAbstractFileByPath(projectName);
+        let actualDraftsFolderName = draftsFolderName;
+        
+        if (projectFolder && projectFolder instanceof TFolder) {
+          for (const child of projectFolder.children) {
+            if (child instanceof TFolder && child.name.toLowerCase() === draftsFolderName.toLowerCase()) {
+              actualDraftsFolderName = child.name;
+              break;
+            }
+          }
+        }
+        
+        const draftFolderPath = `${projectName}/${actualDraftsFolderName}/${draftName}`;
 
         for (const fileName of draftItems.files) {
           // adapter.list() returns full paths, extract just the filename
@@ -168,22 +208,53 @@ export class RestoreBackupModal extends SuggestModal<BackupItem> {
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async onChooseSuggestion(backup: BackupItem, _evt: MouseEvent | KeyboardEvent) {
+    const previousActiveDraft = this.manager.activeDraft;
+    debug(`${DEBUG_PREFIX} Restoring backup: ${backup.draftName} (${backup.timestamp}), current active draft: ${previousActiveDraft}`);
+
     // Check if the draft folder already exists
     const draftFolderExists = this.app.vault.getAbstractFileByPath(backup.draftFolder);
 
+    let finalDraftFolder = backup.draftFolder;
+    let finalDraftName = backup.draftName;
+
     if (draftFolderExists && draftFolderExists instanceof TFolder) {
-      // Show confirmation modal
+      // Show confirmation modal for overwrite
       const confirmModal = new ConfirmOverwriteModal(this.app, backup.draftFolder, true);
       const confirmed = await confirmModal.open();
 
       if (!confirmed) {
+        debug(`${DEBUG_PREFIX} Backup restore cancelled by user`);
         return; // User cancelled
       }
+    } else {
+      // Draft folder doesn't exist - prompt for a new draft name
+      const renameModal = new RenameRestoredDraftModal(this.app, backup.draftName, (newName) => {
+        finalDraftName = newName;
+      });
+      
+      await new Promise<void>((resolve) => {
+        const onClose = renameModal.onClose;
+        renameModal.onClose = () => {
+          if (onClose) onClose.call(renameModal);
+          resolve();
+        };
+        renameModal.open();
+      });
+
+      if (finalDraftName === backup.draftName && !draftFolderExists) {
+        // User cancelled the rename modal
+        debug(`${DEBUG_PREFIX} Backup restore cancelled by user (rename modal)`);
+        return;
+      }
+
+      // Update the draft folder path with the new name
+      const projectPath = backup.draftFolder.split("/").slice(0, -1).join("/");
+      finalDraftFolder = `${projectPath}/${finalDraftName}`;
     }
 
     // Restore the backup
     const success = await this.manager.projectFileService.backups.restoreBackup(
-      backup.draftFolder,
+      finalDraftFolder,
       backup.draftId,
       backup.timestamp,
       this.manager.settings,
@@ -191,10 +262,19 @@ export class RestoreBackupModal extends SuggestModal<BackupItem> {
 
     if (success) {
       new Notice(
-        `Backup restored successfully for "${backup.draftName}" from ${backup.displayText.split(": ")[1].split(" (")[0]}.`,
+        `Backup restored successfully for "${finalDraftName}" from ${backup.displayText.split(": ")[1].split(" (")[0]}.`,
       );
+      debug(
+        `${DEBUG_PREFIX} Backup restore successful for: ${finalDraftName}, active draft preserved: ${previousActiveDraft} -> ${this.manager.activeDraft}`,
+      );
+      // Trigger refresh of the drafts section in the project panel
+      // This does NOT change the active draft
+      if (this.onRestoreComplete) {
+        this.onRestoreComplete();
+      }
     } else {
       new Notice("Failed to restore backup.");
+      debug(`${DEBUG_PREFIX} Backup restore failed for: ${finalDraftName}`);
     }
   }
 }

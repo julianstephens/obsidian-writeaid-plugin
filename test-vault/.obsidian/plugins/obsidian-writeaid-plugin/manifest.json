@@ -44,6 +44,10 @@
       "hotkeys": [{ "modifiers": ["Mod", "Shift"], "key": "M" }]
     },
     {
+      "id": "initialize-draft-file",
+      "name": "Initialize Draft File Metadata"
+    },
+    {
       "id": "navigate-to-next-chapter",
       "name": "Navigate to Next Chapter",
       "hotkeys": [{ "modifiers": ["Mod", "Alt"], "key": "N" }]

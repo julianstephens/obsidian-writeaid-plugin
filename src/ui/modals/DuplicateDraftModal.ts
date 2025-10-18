@@ -1,3 +1,4 @@
+import { debug, DEBUG_PREFIX } from "@/core/utils";
 import { Modal, Setting } from "obsidian";
 
 export interface DuplicateDraftModalProps {
@@ -32,9 +33,10 @@ export class DuplicateDraftModal extends Modal {
         .setButtonText("Duplicate")
         .setCta()
         .onClick(() => {
-          this.close();
           const finalName =
             draftName && draftName.trim() ? draftName.trim() : this.props.suggestedName;
+          debug(`${DEBUG_PREFIX} DuplicateDraftModal: duplicating draft from "${this.props.sourceDraftName}" to "${finalName}"`);
+          this.close();
           this.props.onSubmit(finalName);
         }),
     );
