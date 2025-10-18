@@ -10,6 +10,8 @@ jobs:
   release:
     name: Create Release
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
@@ -33,3 +35,5 @@ jobs:
           tag: ${{ github.ref_name }}
           draft: false
           prerelease: false
+          makeLatest: true
+          generateReleaseNotes: true
