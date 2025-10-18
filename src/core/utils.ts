@@ -195,6 +195,9 @@ export function checkActive(project: string | null, draft: string | null): boole
  */
 export function countWords(text: string): number {
   if (!text) return 0;
-  const words = text.trim().split(/\s+/).filter((word) => word.length > 0);
+  const words = text
+    .trim()
+    .split(/\s+/)
+    .filter((word) => word.length > 0);
   return words.length;
 }

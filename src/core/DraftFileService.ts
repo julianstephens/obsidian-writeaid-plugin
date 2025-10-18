@@ -189,33 +189,33 @@ export class DraftFileService {
           await this.app.vault.create(draftMainPath, fm + projectContent);
         }
       } else {
-        // Multi-file project: ensure at least one chapter exists
+        // Multi-file project: ensure at least one valid chapter exists
         const folder = this.app.vault.getAbstractFileByPath(newDraftFolder);
-        let hasChapter = false;
+        let hasValidChapter = false;
         if (folder && folder instanceof TFolder) {
           for (const file of folder.children) {
             if (file instanceof TFile && file.extension === MARKDOWN_FILE_EXTENSION.slice(1)) {
               await suppressAsync(async () => {
                 const content = await this.app.vault.read(file);
-                const fmMatch = content.match(FRONTMATTER_REGEX);
-                if (fmMatch) {
-                  const lines = fmMatch[1].split(/\r?\n/);
-                  for (const line of lines) {
-                    const m = line.match(/^order:\s*(\d+)/i);
-                    if (m && !isNaN(parseInt(m[1], 10))) {
-                      hasChapter = true;
-                      break;
-                    }
-                  }
+                // Check if this is a valid chapter (has all required fields: id, order, chapter_name)
+                if (this.chapters.isValidChapter(content)) {
+                  hasValidChapter = true;
                 }
               });
-              if (hasChapter) break;
+              if (hasValidChapter) break;
             }
           }
         }
-        if (!hasChapter) {
-          // Create Chapter 1
-          await this.chapters.createChapter(projectPathResolved, draftName, "Chapter 1", settings);
+        if (!hasValidChapter) {
+          // Create Chapter 1 with a draft ID
+          const draftId = generateDraftId();
+          await this.chapters.createChapter(
+            projectPathResolved,
+            draftName,
+            "Chapter 1",
+            settings,
+            draftId,
+          );
         }
       }
     }
@@ -291,6 +291,50 @@ export class DraftFileService {
   }
 
   /**
+   * Ensure all chapters in a draft have the draft ID in their frontmatter.
+   * This is useful for multi-file projects where chapters may not have been created with a draft ID.
+   */
+  async ensureChaptersDraftId(projectPath: string, draftName: string): Promise<void> {
+    const project = this.resolveProjectPath(projectPath);
+    if (!project) return;
+    const draftsFolderName = this.getDraftsFolderName(project);
+    if (!draftsFolderName) return;
+
+    const draftFolder = `${project}/${draftsFolderName}/${draftName}`;
+    const draftId = await this.getDraftId(draftFolder);
+    if (!draftId) {
+      debug(`${DEBUG_PREFIX} ensureChaptersDraftId: no draft ID found for draft ${draftName}`);
+      return;
+    }
+
+    try {
+      const files = this.app.vault.getFiles().filter((f) => f.path.startsWith(draftFolder));
+      for (const file of files) {
+        if (file.extension === MARKDOWN_FILE_EXTENSION.slice(1)) {
+          const content = await this.app.vault.read(file);
+          const fmMatch = content.match(FRONTMATTER_REGEX);
+          if (fmMatch) {
+            const frontmatter = fmMatch[1];
+            // Check if the chapter already has an id
+            if (!frontmatter.match(/^id:\s*/m)) {
+              // Add the draft ID to the frontmatter
+              const body = content.substring(fmMatch[0].length);
+              const lines = frontmatter.split("\n");
+              lines.push(`id: ${draftId}`);
+              const updatedFrontmatter = lines.join("\n");
+              const updatedContent = `${FRONTMATTER_DELIMITER}\n${updatedFrontmatter}\n${FRONTMATTER_DELIMITER}${body}`;
+              await this.app.vault.modify(file, updatedContent);
+              debug(`${DEBUG_PREFIX} ensureChaptersDraftId: added draft ID to ${file.path}`);
+            }
+          }
+        }
+      }
+    } catch (error) {
+      debug(`${DEBUG_PREFIX} ensureChaptersDraftId error:`, error);
+    }
+  }
+
+  /**
    * Open a draft in the workspace. Tries outline.md first, then falls back to the first file in the draft folder.
    * Returns true if a file was opened.
    */
@@ -299,26 +343,49 @@ export class DraftFileService {
     if (!project) return false;
     const draftsFolderName = this.getDraftsFolderName(project);
     if (!draftsFolderName) return false;
-    const outlinePath = `${project}/${draftsFolderName}/${draftName}/${getOutlineFileName(this.manager?.settings)}`;
-    const outlineFile = this.app.vault.getAbstractFileByPath(outlinePath);
-    const outlineOpened = await suppressAsync(async () => {
-      if (outlineFile && outlineFile instanceof TFile) {
+
+    // Check project type to determine what file to open
+    const metaPath = `${project}/${getMetaFileName(this.manager?.settings)}`;
+    const metadata = await readMetaFile(this.app, metaPath);
+    const projectType = metadata?.project_type || PROJECT_TYPE.MULTI;
+
+    if (projectType === PROJECT_TYPE.SINGLE) {
+      // Single-file project: open the main draft file
+      const slug = slugifyDraftName(draftName, this.manager?.settings?.slugStyle);
+      const draftFilePath = `${project}/${draftsFolderName}/${draftName}/${slug}${MARKDOWN_FILE_EXTENSION}`;
+      const draftFile = this.app.vault.getAbstractFileByPath(draftFilePath);
+
+      if (draftFile && draftFile instanceof TFile) {
         const leaf = this.app.workspace.getLeaf();
-        await leaf.openFile(outlineFile);
+        await leaf.openFile(draftFile);
         return true;
       }
-      return false;
-    });
-    if (outlineOpened) return true;
+    } else {
+      // Multi-file project: open the most recent chapter
+      const chapters = await this.chapters.listChapters(project, draftName);
+      if (chapters.length > 0) {
+        // The last chapter in the sorted list is the most recent
+        const mostRecentChapter = chapters[chapters.length - 1];
+        const chapterFilePath = `${project}/${draftsFolderName}/${draftName}/${mostRecentChapter.name}${MARKDOWN_FILE_EXTENSION}`;
+        const chapterFile = this.app.vault.getAbstractFileByPath(chapterFilePath);
 
-    // fallback: open first file inside the draft folder
-    const folderPath = `${project}/${draftsFolderName}/${draftName}`;
-    const files = this.app.vault.getFiles().filter((f) => f.path.startsWith(folderPath));
-    if (files.length > 0) {
+        if (chapterFile && chapterFile instanceof TFile) {
+          const leaf = this.app.workspace.getLeaf();
+          await leaf.openFile(chapterFile);
+          return true;
+        }
+      }
+    }
+
+    // Fallback: try to open outline file if it exists
+    const outlinePath = `${project}/${draftsFolderName}/${draftName}/${getOutlineFileName(this.manager?.settings)}`;
+    const outlineFile = this.app.vault.getAbstractFileByPath(outlinePath);
+    if (outlineFile && outlineFile instanceof TFile) {
       const leaf = this.app.workspace.getLeaf();
-      await leaf.openFile(files[0]);
+      await leaf.openFile(outlineFile);
       return true;
     }
+
     return false;
   }
 
@@ -621,7 +688,9 @@ export class DraftFileService {
       const metaPath = `${project}/${getMetaFileName(this.manager?.settings)}`;
       const metadata = await readMetaFile(this.app, metaPath);
       const projectType = metadata?.project_type || PROJECT_TYPE.MULTI;
-      debug(`${DEBUG_PREFIX} Calculating word count for ${projectType} project, draft: ${draftName}`);
+      debug(
+        `${DEBUG_PREFIX} Calculating word count for ${projectType} project, draft: ${draftName}`,
+      );
 
       if (projectType === PROJECT_TYPE.SINGLE) {
         // Single-file project: count words in the main draft file
@@ -648,17 +717,15 @@ export class DraftFileService {
 
         let totalWords = 0;
         for (const file of draftFolderObj.children) {
-          if (
-            file instanceof TFile &&
-            file.extension === "md" &&
-            !file.name.includes("outline") &&
-            file.name !== getMetaFileName(this.manager?.settings)
-          ) {
+          if (file instanceof TFile && file.extension === "md") {
             const content = await this.app.vault.read(file);
-            const bodyContent = stripFrontmatter(content);
-            const wordCount = countWords(bodyContent);
-            debug(`${DEBUG_PREFIX} Chapter "${file.name}" word count: ${wordCount}`);
-            totalWords += wordCount;
+            // Only count valid chapters (have all required fields: id, order, chapter_name)
+            if (this.chapters.isValidChapter(content)) {
+              const bodyContent = stripFrontmatter(content);
+              const wordCount = countWords(bodyContent);
+              debug(`${DEBUG_PREFIX} Chapter "${file.name}" word count: ${wordCount}`);
+              totalWords += wordCount;
+            }
           }
         }
         debug(`${DEBUG_PREFIX} Multi-file draft total word count: ${totalWords}`);

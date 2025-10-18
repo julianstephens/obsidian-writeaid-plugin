@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Test/drafts/Draft 1/outline.md",
+                "file": "Novel/drafts/Draft 1/chapter1.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "outline"
+              "title": "chapter1"
             }
           }
         ]
@@ -84,7 +84,8 @@
               "title": "WriteAid Projects"
             }
           }
-        ]
+        ],
+        "currentTab": 3
       }
     ],
     "direction": "horizontal",
@@ -180,11 +181,24 @@
   },
   "active": "5280a970130968c9",
   "lastOpenFiles": [
-    "Story/meta.md",
+    "Novel/drafts/Draft 1/chapter2.md",
+    "Novel/drafts/Draft 1/chapter3.md",
+    "Novel/drafts/Draft 1/chapter1.md",
+    "Novel/meta.md",
+    "Novel/drafts/Draft 1",
+    "Novel/drafts",
+    "Novel",
+    "novel/Drafts/Draft 2/chapter1.md",
+    "novel/Drafts/Draft 2/Chapter 3.md",
+    "novel/meta.md",
     "Story/Drafts/Draft 8/draft8.md",
+    "Story/Drafts/Draft 5/draft5.md",
+    "Story/Drafts/Draft 6/draft6.md",
+    "Story/Drafts/Draft 7/draft7.md",
+    "Test/drafts/Draft 1/outline.md",
+    "Story/meta.md",
     "Story/Drafts/Draft 8/outline.md",
     "Test 2/meta.md",
-    "Test/drafts/Draft 1/outline.md",
     "Test 2/drafts/Draft 1/draft1.md",
     "Test/meta.md",
     "Test 2/drafts/Draft 1",
@@ -196,25 +210,12 @@
     "Test",
     "Story/Drafts/Draft 8",
     "Story/Drafts/Draft 2/draft2.md",
-    "Story/Drafts/Draft 7/draft7.md",
-    "Story/Drafts/Draft 7",
-    "Story/Drafts/Draft 6/draft6.md",
-    "Story/Drafts/Draft 6",
-    "Story/Drafts/Draft 5/draft5.md",
-    "Story/Drafts/Draft 5",
     "Story/Drafts/Draft 4/draft4.md",
     "Story/Drafts/Draft 3/draft3.md",
     "Story/Drafts/c1444281-337a-48c9-8e56-13f910865a88/draft2.md",
     "Story/Drafts/Draft 4/draft2.md",
     "Story/Manuscripts/Draft 3.md",
-    "novel/Drafts/Draft 2/chapter1.md",
     "Story/Drafts/Draft 1/draft2.md",
-    "novel/Drafts/Draft 2/Chapter 3.md",
-    "novel/Drafts/Draft 2/chapter2.md",
-    "novel/Drafts/Draft 1/Chapter 2.md",
-    "novel/Drafts/Draft 1/Chapter 1.md",
-    "Story/Manuscripts/2025-10-15_Draft 3.md",
-    "Story/Manuscripts/2025-10-Draft 3.md",
-    "Story/Manuscripts/3rpmftADpm323.md"
+    "novel/Drafts/Draft 2/chapter2.md"
   ]
 }

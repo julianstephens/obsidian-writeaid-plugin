@@ -1,7 +1,15 @@
 import { updateMetaStats } from "@/core/meta";
 import { ProjectFileService } from "@/core/ProjectFileService";
 import { ProjectService } from "@/core/ProjectService";
-import { APP_NAME, asyncFilter, debug, DEBUG_PREFIX, suppress, suppressAsync } from "@/core/utils";
+import {
+  APP_NAME,
+  asyncFilter,
+  debug,
+  DEBUG_PREFIX,
+  getDraftsFolderName,
+  suppress,
+  suppressAsync,
+} from "@/core/utils";
 import type { PluginLike, WriteAidSettings } from "@/types";
 import { App, Notice } from "obsidian";
 
@@ -60,11 +68,16 @@ export class WriteAidManager {
     return await this.projectFileService.chapters.listChapters(projectPath, draftName);
   }
   async createChapter(projectPath: string, draftName: string, chapterName: string) {
+    // Get the draft ID from the existing draft to ensure all chapters have the same ID
+    const draftsFolderName = getDraftsFolderName(this.settings);
+    const draftFolderPath = `${projectPath}/${draftsFolderName}/${draftName}`;
+    const draftId = await this.projectFileService.drafts.getDraftId(draftFolderPath);
     return await this.projectFileService.chapters.createChapter(
       projectPath,
       draftName,
       chapterName,
       this.settings,
+      draftId || undefined,
     );
   }
   async deleteChapter(projectPath: string, draftName: string, chapterName: string) {
@@ -396,10 +409,19 @@ export class WriteAidManager {
     await suppressAsync(async () => {
       // Calculate word count for the active draft
       debug(`${DEBUG_PREFIX} Calculating word count for draft: ${draftName}`);
-      const wordCount = await this.projectFileService.drafts.calculateDraftWordCount(project, draftName);
+      const wordCount = await this.projectFileService.drafts.calculateDraftWordCount(
+        project,
+        draftName,
+      );
       debug(`${DEBUG_PREFIX} Word count calculated: ${wordCount}`);
       // Update meta stats with the word count
-      await updateMetaStats(this.app, project, draftName, { current_draft_word_count: wordCount }, this.settings);
+      await updateMetaStats(
+        this.app,
+        project,
+        draftName,
+        { current_draft_word_count: wordCount },
+        this.settings,
+      );
     });
     // notify listeners about the active draft change
     this.notifyActiveDraftListeners(this.activeDraft);

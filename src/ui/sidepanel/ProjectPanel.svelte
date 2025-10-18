@@ -197,6 +197,8 @@
     loadingProjects = false;
     // Optionally, refresh drafts for the selected project
     if (selectedValue) await refreshDrafts();
+    // Also refresh chapters if we have a selected project and active draft
+    if (selectedValue && manager?.activeDraft) await refreshChapters();
     return newProjects;
   }
 

@@ -207,7 +207,9 @@ function formatMetaContent(metadata: ProjectMetadata): string {
     lines.push(`**Active Draft:** ${metadata.current_active_draft}`);
   }
   if (metadata.current_draft_word_count !== undefined) {
-    lines.push(`**Current Draft Word Count:** ${metadata.current_draft_word_count.toLocaleString()}`);
+    lines.push(
+      `**Current Draft Word Count:** ${metadata.current_draft_word_count.toLocaleString()}`,
+    );
   }
   lines.push(`**Total Drafts:** ${metadata.total_drafts}`);
   if (metadata.target_word_count) {
