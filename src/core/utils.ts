@@ -189,3 +189,12 @@ export function checkActive(project: string | null, draft: string | null): boole
   }
   return true;
 }
+
+/**
+ * Count the words in a text string by splitting on whitespace and filtering out empty strings
+ */
+export function countWords(text: string): number {
+  if (!text) return 0;
+  const words = text.trim().split(/\s+/).filter((word) => word.length > 0);
+  return words.length;
+}

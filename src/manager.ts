@@ -392,9 +392,14 @@ export class WriteAidManager {
       return false;
     }
     this.activeDraft = draftName;
-    // Update meta.md with the new active draft
+    // Update meta.md with the new active draft and calculate word count
     await suppressAsync(async () => {
-      await updateMetaStats(this.app, project, draftName, undefined, this.settings);
+      // Calculate word count for the active draft
+      debug(`${DEBUG_PREFIX} Calculating word count for draft: ${draftName}`);
+      const wordCount = await this.projectFileService.drafts.calculateDraftWordCount(project, draftName);
+      debug(`${DEBUG_PREFIX} Word count calculated: ${wordCount}`);
+      // Update meta stats with the word count
+      await updateMetaStats(this.app, project, draftName, { current_draft_word_count: wordCount }, this.settings);
     });
     // notify listeners about the active draft change
     this.notifyActiveDraftListeners(this.activeDraft);

@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Test 2/meta.md",
+                "file": "Test/drafts/Draft 1/outline.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "meta"
+              "title": "outline"
             }
           }
         ]
@@ -84,8 +84,7 @@
               "title": "WriteAid Projects"
             }
           }
-        ],
-        "currentTab": 3
+        ]
       }
     ],
     "direction": "horizontal",
@@ -181,17 +180,20 @@
   },
   "active": "5280a970130968c9",
   "lastOpenFiles": [
-    "Test/meta.md",
-    "Test 2/drafts/Draft 1/draft1.md",
-    "Test 2/drafts/Draft 1",
+    "Story/meta.md",
+    "Story/Drafts/Draft 8/draft8.md",
+    "Story/Drafts/Draft 8/outline.md",
     "Test 2/meta.md",
+    "Test/drafts/Draft 1/outline.md",
+    "Test 2/drafts/Draft 1/draft1.md",
+    "Test/meta.md",
+    "Test 2/drafts/Draft 1",
     "Test 2/drafts",
     "Test 2",
     "Test/drafts/Draft 1/draft1.md",
     "Test/drafts/Draft 1",
     "Test/drafts",
     "Test",
-    "Story/Drafts/Draft 8/draft8.md",
     "Story/Drafts/Draft 8",
     "Story/Drafts/Draft 2/draft2.md",
     "Story/Drafts/Draft 7/draft7.md",
@@ -213,8 +215,6 @@
     "novel/Drafts/Draft 1/Chapter 1.md",
     "Story/Manuscripts/2025-10-15_Draft 3.md",
     "Story/Manuscripts/2025-10-Draft 3.md",
-    "Story/Manuscripts/3rpmftADpm323.md",
-    "Story/Manuscripts/3rpmftADpm263.md",
-    "Story/Manuscripts/3rpmftADpm223.md"
+    "Story/Manuscripts/3rpmftADpm323.md"
   ]
 }

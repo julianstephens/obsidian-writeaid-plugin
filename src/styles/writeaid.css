@@ -232,6 +232,7 @@ button:hover {
 .wa-button-group {
   display: flex;
   gap: 8px;
+  align-items: center;
 }
 
 .wa-draft-list {

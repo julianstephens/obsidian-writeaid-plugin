@@ -16,6 +16,7 @@ import {
 export interface ProjectMetadata {
   version?: string; // WriteAid project version for compatibility
   current_active_draft?: string;
+  current_draft_word_count?: number; // Word count of the currently activated draft
   total_drafts: number;
   target_word_count?: number;
   active_draft_last_modified?: string; // ISO 8601 timestamp
@@ -176,6 +177,9 @@ function formatMetaContent(metadata: ProjectMetadata): string {
   if (metadata.current_active_draft !== undefined) {
     lines.push(`current_active_draft: "${metadata.current_active_draft}"`);
   }
+  if (metadata.current_draft_word_count !== undefined) {
+    lines.push(`current_draft_word_count: ${metadata.current_draft_word_count}`);
+  }
   lines.push(`total_drafts: ${metadata.total_drafts}`);
   if (metadata.target_word_count !== undefined) {
     lines.push(`target_word_count: ${metadata.target_word_count}`);
@@ -201,6 +205,9 @@ function formatMetaContent(metadata: ProjectMetadata): string {
   lines.push("");
   if (metadata.current_active_draft) {
     lines.push(`**Active Draft:** ${metadata.current_active_draft}`);
+  }
+  if (metadata.current_draft_word_count !== undefined) {
+    lines.push(`**Current Draft Word Count:** ${metadata.current_draft_word_count.toLocaleString()}`);
   }
   lines.push(`**Total Drafts:** ${metadata.total_drafts}`);
   if (metadata.target_word_count) {

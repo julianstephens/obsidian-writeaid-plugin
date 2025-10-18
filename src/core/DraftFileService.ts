@@ -1,6 +1,7 @@
 import { TemplateService } from "@/core/TemplateService";
 import { readMetaFile, updateMetaStats } from "@/core/meta";
 import {
+  countWords,
   debug,
   DEBUG_PREFIX,
   FRONTMATTER_DELIMITER,
@@ -588,6 +589,86 @@ export class DraftFileService {
 
     // Create the outline file
     await this.app.vault.create(outlinePath, outlineContent);
+  }
+
+  /**
+   * Calculate the total word count for a draft.
+   * For multi-file projects: sums word counts from all valid chapter files
+   * For single-file projects: counts words in the draft file
+   */
+  async calculateDraftWordCount(projectPath: string, draftName: string): Promise<number> {
+    const project = this.resolveProjectPath(projectPath);
+    if (!project) {
+      debug(`${DEBUG_PREFIX} No project path found for word count calculation`);
+      return 0;
+    }
+
+    try {
+      const draftsFolderName = this.getDraftsFolderName(project);
+      if (!draftsFolderName) {
+        debug(`${DEBUG_PREFIX} No drafts folder found in project`);
+        return 0;
+      }
+
+      const draftFolder = `${project}/${draftsFolderName}/${draftName}`;
+      const projectFolder = this.app.vault.getAbstractFileByPath(project);
+      if (!projectFolder || !(projectFolder instanceof TFolder)) {
+        debug(`${DEBUG_PREFIX} Project folder not found at: ${project}`);
+        return 0;
+      }
+
+      // Check project type
+      const metaPath = `${project}/${getMetaFileName(this.manager?.settings)}`;
+      const metadata = await readMetaFile(this.app, metaPath);
+      const projectType = metadata?.project_type || PROJECT_TYPE.MULTI;
+      debug(`${DEBUG_PREFIX} Calculating word count for ${projectType} project, draft: ${draftName}`);
+
+      if (projectType === PROJECT_TYPE.SINGLE) {
+        // Single-file project: count words in the main draft file
+        const slug = slugifyDraftName(draftName, this.manager?.settings?.slugStyle);
+        const draftFilePath = `${draftFolder}/${slug}${MARKDOWN_FILE_EXTENSION}`;
+        const draftFile = this.app.vault.getAbstractFileByPath(draftFilePath);
+        debug(`${DEBUG_PREFIX} Looking for single-file draft at: ${draftFilePath}`);
+
+        if (draftFile && draftFile instanceof TFile) {
+          const content = await this.app.vault.read(draftFile);
+          const bodyContent = stripFrontmatter(content);
+          const wordCount = countWords(bodyContent);
+          debug(`${DEBUG_PREFIX} Single-file draft word count: ${wordCount}`);
+          return wordCount;
+        }
+        debug(`${DEBUG_PREFIX} Draft file not found for single-file project`);
+      } else {
+        // Multi-file project: sum word counts from all valid chapter files
+        const draftFolderObj = this.app.vault.getAbstractFileByPath(draftFolder);
+        if (!draftFolderObj || !(draftFolderObj instanceof TFolder)) {
+          debug(`${DEBUG_PREFIX} Draft folder not found at: ${draftFolder}`);
+          return 0;
+        }
+
+        let totalWords = 0;
+        for (const file of draftFolderObj.children) {
+          if (
+            file instanceof TFile &&
+            file.extension === "md" &&
+            !file.name.includes("outline") &&
+            file.name !== getMetaFileName(this.manager?.settings)
+          ) {
+            const content = await this.app.vault.read(file);
+            const bodyContent = stripFrontmatter(content);
+            const wordCount = countWords(bodyContent);
+            debug(`${DEBUG_PREFIX} Chapter "${file.name}" word count: ${wordCount}`);
+            totalWords += wordCount;
+          }
+        }
+        debug(`${DEBUG_PREFIX} Multi-file draft total word count: ${totalWords}`);
+        return totalWords;
+      }
+    } catch (error) {
+      debug(`${DEBUG_PREFIX} Error calculating draft word count:`, error);
+    }
+
+    return 0;
   }
 }
 
