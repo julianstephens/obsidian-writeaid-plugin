@@ -36,7 +36,7 @@
 }
 
 /* Icon button */
-.wa-icon-btn {
+button.wa-icon-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -44,9 +44,18 @@
   cursor: pointer;
   background: none;
   border: none;
+  transition: opacity 0.2s, color 0.2s, transform 0.2s;
+  color: var(--wa-text);
 }
-.wa-icon-btn:focus {
+button.wa-icon-btn:hover:not(:disabled) {
+  opacity: 0.85;
+  transform: scale(1.05);
+}
+button.wa-icon-btn:focus {
   outline: 2px solid color-mix(in srgb, var(--wa-accent) 40%, transparent);
+}
+button.wa-icon-btn:disabled {
+  color: var(--wa-muted);
 }
 
 /* Badge */

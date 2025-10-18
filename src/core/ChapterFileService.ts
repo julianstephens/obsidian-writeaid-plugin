@@ -1,13 +1,13 @@
 import {
-  debug,
-  DEBUG_PREFIX,
-  FRONTMATTER_DELIMITER,
-  FRONTMATTER_REGEX,
-  generateDraftId,
-  getDraftsFolderName,
-  MARKDOWN_FILE_EXTENSION,
-  slugifyDraftName,
-  suppressAsync,
+    debug,
+    DEBUG_PREFIX,
+    FRONTMATTER_DELIMITER,
+    FRONTMATTER_REGEX,
+    generateDraftId,
+    getDraftsFolderName,
+    MARKDOWN_FILE_EXTENSION,
+    slugifyDraftName,
+    suppressAsync,
 } from "@/core/utils";
 import type { WriteAidManager } from "@/manager";
 import type { WriteAidSettings } from "@/types";
@@ -34,30 +34,46 @@ export class ChapterFileService {
   async reorderChapters(
     projectPath: string,
     draftName: string,
-    newOrder: Array<{ chapterName: string; order: number }>,
+    newOrder: Array<{ name: string; chapterName: string; order: number }>,
   ) {
+    debug(`${DEBUG_PREFIX} ChapterFileService.reorderChapters: starting reorder for ${projectPath}/${draftName}`);
+    debug(`${DEBUG_PREFIX} ChapterFileService.reorderChapters: newOrder:`, newOrder);
     const project = this.resolveProjectPath(projectPath);
-    if (!project) return false;
+    if (!project) {
+      debug(`${DEBUG_PREFIX} ChapterFileService.reorderChapters: no project resolved`);
+      return false;
+    }
     const draftsFolderName = this.getDraftsFolderName(project);
-    if (!draftsFolderName) return false;
+    if (!draftsFolderName) {
+      debug(`${DEBUG_PREFIX} ChapterFileService.reorderChapters: no drafts folder found`);
+      return false;
+    }
     const draftFolder = `${project}/${draftsFolderName}/${draftName}`;
+    debug(`${DEBUG_PREFIX} ChapterFileService.reorderChapters: draftFolder=${draftFolder}`);
     for (let i = 0; i < newOrder.length; i++) {
-      const { chapterName } = newOrder[i];
-      const filePath = `${draftFolder}/${chapterName}${MARKDOWN_FILE_EXTENSION}`;
+      const { name } = newOrder[i];
+      const filePath = `${draftFolder}/${name}${MARKDOWN_FILE_EXTENSION}`;
+      debug(`${DEBUG_PREFIX} ChapterFileService.reorderChapters: processing file ${filePath}`);
       const file = this.app.vault.getAbstractFileByPath(filePath);
+      debug(`${DEBUG_PREFIX} ChapterFileService.reorderChapters: file found:`, !!file);
       if (file && file instanceof TFile) {
         let content = await this.app.vault.read(file);
+        debug(`${DEBUG_PREFIX} ChapterFileService.reorderChapters: read content, length=${content.length}`);
         if (content.match(FRONTMATTER_REGEX)) {
+          debug(`${DEBUG_PREFIX} ChapterFileService.reorderChapters: updating order from current to ${i + 1}`);
           content = content.replace(FRONTMATTER_REGEX, (match, fm) => {
             let cleanedFm = fm.replace(/^order:.*\n?/gm, "");
             if (!cleanedFm.endsWith("\n")) cleanedFm += "\n";
             cleanedFm += `order: ${i + 1}\n`;
             return `${FRONTMATTER_DELIMITER}\n${cleanedFm}${FRONTMATTER_DELIMITER}`;
           });
+          debug(`${DEBUG_PREFIX} ChapterFileService.reorderChapters: modifying file`);
           await this.app.vault.modify(file, content);
+          debug(`${DEBUG_PREFIX} ChapterFileService.reorderChapters: file modified`);
         }
       }
     }
+    debug(`${DEBUG_PREFIX} ChapterFileService.reorderChapters: reorder complete`);
     return true;
   }
 

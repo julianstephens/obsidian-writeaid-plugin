@@ -7,6 +7,11 @@ button:hover {
 
 button:disabled {
   cursor: not-allowed;
+  opacity: 0.4;
+}
+
+button:disabled:hover {
+  opacity: 0.4;
 }
 
 .writeaid-ribbon {

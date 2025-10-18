@@ -474,24 +474,30 @@
   // Helper to reorder chapters
   async function reorderChaptersUp(i: number) {
     if (i === 0 || !manager || !selectedValue || !manager.activeDraft) return;
+    debug(`${DEBUG_PREFIX} reorderChaptersUp: moving chapter at index ${i} up`);
     const newOrder = chapters.slice();
     [newOrder[i - 1], newOrder[i]] = [newOrder[i], newOrder[i - 1]];
     const ordered = newOrder.map((ch, idx) => ({
+      name: ch.name,
       chapterName: ch.chapterName || "",
       order: idx + 1,
     }));
+    debug(`${DEBUG_PREFIX} reorderChaptersUp: new order:`, ordered);
     await manager.reorderChapters(selectedValue, manager.activeDraft, ordered as any);
     await refreshChapters();
   }
 
   async function reorderChaptersDown(i: number) {
     if (i === chapters.length - 1 || !manager || !selectedValue || !manager.activeDraft) return;
+    debug(`${DEBUG_PREFIX} reorderChaptersDown: moving chapter at index ${i} down`);
     const newOrder = chapters.slice();
     [newOrder[i], newOrder[i + 1]] = [newOrder[i + 1], newOrder[i]];
     const ordered = newOrder.map((ch, idx) => ({
+      name: ch.name,
       chapterName: ch.chapterName || "",
       order: idx + 1,
     }));
+    debug(`${DEBUG_PREFIX} reorderChaptersDown: new order:`, ordered);
     await manager.reorderChapters(selectedValue, manager.activeDraft, ordered as any);
     await refreshChapters();
   }
@@ -852,16 +858,18 @@
                 {ch.chapterName}
               </div>
               <div class="wa-draft-actions">
-                <BaseButton
+                <IconButton
+                  ariaLabel="Move chapter up"
                   title="Move chapter up"
                   clickHandler={() => reorderChaptersUp(i)}
-                  disabled={chapters.length <= 1 || i === 0}><ArrowUp /></BaseButton
+                  disabled={chapters.length <= 1 || i === 0}><ArrowUp /></IconButton
                 >
-                <BaseButton
+                <IconButton
+                  ariaLabel="Move chapter down"
                   title="Move chapter down"
                   clickHandler={() => reorderChaptersDown(i)}
                   disabled={chapters.length <= 1 || i === chapters.length - 1}
-                  ><ArrowDown /></BaseButton
+                  ><ArrowDown /></IconButton
                 >
                 <IconButton
                   ariaLabel="Open chapter"
