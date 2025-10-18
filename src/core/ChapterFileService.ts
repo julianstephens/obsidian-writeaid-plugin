@@ -13,9 +13,25 @@ import type { WriteAidManager } from "@/manager";
 import type { WriteAidSettings } from "@/types";
 import { App, TFile, TFolder } from "obsidian";
 
+/**
+ * ChapterFileService handles chapter file operations including listing, creating,
+ * deleting, renaming, and reordering chapters within drafts.
+ * 
+ * To prevent infinite refresh loops in the UI, listChapters implements a conservative
+ * 500ms cache that returns the same result for repeated calls with identical parameters.
+ * The cache is automatically invalidated when chapters are modified.
+ */
 export class ChapterFileService {
   app: App;
   manager: WriteAidManager | null;
+  
+  // Cache for listChapters to prevent infinite refresh loops
+  // Key format: "projectPath|draftName"
+  private listChaptersCache: Map<
+    string,
+    { result: Array<{ name: string; chapterName?: string }>; timestamp: number }
+  > = new Map();
+  private readonly CACHE_TTL_MS = 500; // Cache time-to-live in milliseconds
 
   constructor(app: App) {
     this.app = app;
@@ -25,6 +41,16 @@ export class ChapterFileService {
           plugins: { getPlugin?: (id: string) => { manager?: WriteAidManager } };
         }
       ).plugins.getPlugin?.("obsidian-writeaid-plugin")?.manager ?? null;
+  }
+  
+  /**
+   * Clear the cache entry for a specific project and draft.
+   * Called by write operations to ensure fresh data is returned after modifications.
+   */
+  private clearListChaptersCache(projectPath: string, draftName: string): void {
+    const cacheKey = `${projectPath}|${draftName}`;
+    this.listChaptersCache.delete(cacheKey);
+    console.debug(`${DEBUG_PREFIX} ChapterFileService: cleared cache for ${cacheKey}`);
   }
 
   /**
@@ -58,11 +84,18 @@ export class ChapterFileService {
         }
       }
     }
+    
+    // Clear cache to ensure fresh data on next listChapters call
+    this.clearListChaptersCache(project, draftName);
+    
     return true;
   }
 
   /**
    * List chapters for a draft in a multi-file project. Returns array of { name, chapterName? }
+   * 
+   * Implements a 500ms cache to prevent infinite refresh loops. If the same listing is requested
+   * within 500ms, the cached result is returned. Cache is invalidated by write operations.
    */
   async listChapters(
     projectPath: string,
@@ -75,6 +108,18 @@ export class ChapterFileService {
     if (!project) {
       debug(`${DEBUG_PREFIX} ChapterFileService.listChapters: no project resolved`);
       return [];
+    }
+    
+    // Check cache to prevent infinite refresh loops
+    const cacheKey = `${project}|${draftName}`;
+    const cached = this.listChaptersCache.get(cacheKey);
+    const now = Date.now();
+    
+    if (cached && (now - cached.timestamp) < this.CACHE_TTL_MS) {
+      console.debug(
+        `${DEBUG_PREFIX} ChapterFileService.listChapters: returning cached result for ${cacheKey} (age: ${now - cached.timestamp}ms)`,
+      );
+      return cached.result;
     }
     // Find the drafts folder, case-insensitively
     const draftsFolderName = this.getDraftsFolderName(project);
@@ -159,7 +204,12 @@ export class ChapterFileService {
     }
     chapters.sort((a, b) => a.order - b.order);
     debug(`${DEBUG_PREFIX} ChapterFileService.listChapters: returning ${chapters.length} chapters`);
-    return chapters.map(({ name, chapterName }) => ({ name, chapterName }));
+    
+    // Cache the result to prevent infinite refresh loops
+    const result = chapters.map(({ name, chapterName }) => ({ name, chapterName }));
+    this.listChaptersCache.set(cacheKey, { result, timestamp: now });
+    
+    return result;
   }
 
   /** Create a new chapter file in a draft folder. */
@@ -239,6 +289,10 @@ export class ChapterFileService {
     debug(
       `${DEBUG_PREFIX} createChapter: created ${filePath} with order ${order}, chapter_name "${chapterName}", and draft id ${finalDraftId}`,
     );
+    
+    // Clear cache to ensure fresh data on next listChapters call
+    this.clearListChaptersCache(project, draftName);
+    
     return true;
   }
 
@@ -281,6 +335,10 @@ export class ChapterFileService {
           }
         }
       }
+      
+      // Clear cache to ensure fresh data on next listChapters call
+      this.clearListChaptersCache(project, draftName);
+      
       return true;
     }
     return false;
@@ -326,6 +384,10 @@ export class ChapterFileService {
     } else {
       await this.app.vault.modify(file, content);
     }
+    
+    // Clear cache to ensure fresh data on next listChapters call
+    this.clearListChaptersCache(project, draftName);
+    
     return true;
   }
 
