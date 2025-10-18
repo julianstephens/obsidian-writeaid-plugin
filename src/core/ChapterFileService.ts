@@ -263,7 +263,13 @@ export class ChapterFileService {
     }
     const order = maxOrder + 1;
     let title = `# ${chapterName}`;
-    // Create frontmatter with all 6 documented fields
+    // Create frontmatter with all 6 documented fields:
+    //   chapter_id: Unique identifier for this chapter
+    //   order: The chapter's order within the draft
+    //   chapter_name: The name/title of the chapter
+    //   draft_id: Identifier for the draft this chapter belongs to
+    //   word_count: Number of words in the chapter (initialized to 0)
+    //   last_updated: ISO timestamp of when the chapter was created/updated
     // If draftId is not provided, try to use existing draft ID from other chapters
     // Otherwise, generate a new one
     const finalDraftId = draftId || existingDraftId || generateDraftId();
