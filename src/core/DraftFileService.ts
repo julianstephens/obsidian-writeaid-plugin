@@ -90,8 +90,12 @@ export class DraftFileService {
     projectPath?: string,
     settings?: WriteAidSettings,
   ) {
+    debug(
+      `${DEBUG_PREFIX} createDraft called with draftName: ${draftName}, copyFromDraft: ${copyFromDraft}`,
+    );
     const projectPathResolved = this.resolveProjectPath(projectPath);
     if (!projectPathResolved) {
+      debug(`${DEBUG_PREFIX} createDraft: no project path resolved`);
       new Notice("No project folder detected. Please open a folder named after your project.");
       return;
     }
@@ -114,6 +118,7 @@ export class DraftFileService {
 
     // Optionally copy from an existing draft
     if (copyFromDraft) {
+      debug(`${DEBUG_PREFIX} createDraft: copying from draft ${copyFromDraft}`);
       const sourceFolder = `${draftsFolder}/${copyFromDraft}`;
       const files = this.app.vault.getFiles().filter((file) => file.path.startsWith(sourceFolder));
 
@@ -258,6 +263,7 @@ export class DraftFileService {
    * Returns null if the draft ID cannot be found.
    */
   async getDraftId(draftFolderPath: string): Promise<string | null> {
+    debug(`${DEBUG_PREFIX} getDraftId called for draftFolder: ${draftFolderPath}`);
     try {
       const files = this.app.vault.getFiles().filter((f) => f.path.startsWith(draftFolderPath));
       for (const file of files) {
@@ -268,13 +274,17 @@ export class DraftFileService {
             const frontmatter = fmMatch[1];
             const idMatch = frontmatter.match(/^id:\s*(.+?)$/m);
             if (idMatch) {
-              return idMatch[1].trim();
+              const draftId = idMatch[1].trim();
+              debug(`${DEBUG_PREFIX} getDraftId found: ${draftId}`);
+              return draftId;
             }
           }
         }
       }
+      debug(`${DEBUG_PREFIX} getDraftId: no draft ID found in ${draftFolderPath}`);
       return null;
-    } catch {
+    } catch (error) {
+      debug(`${DEBUG_PREFIX} getDraftId error:`, error);
       return null;
     }
   }
@@ -322,10 +332,19 @@ export class DraftFileService {
     renameFile: boolean = false,
     settings?: WriteAidSettings,
   ): Promise<boolean> {
+    debug(
+      `${DEBUG_PREFIX} renameDraft called: ${oldName} -> ${newName}, renameFile: ${renameFile}`,
+    );
     const project = this.resolveProjectPath(projectPath);
-    if (!project) return false;
+    if (!project) {
+      debug(`${DEBUG_PREFIX} renameDraft: no project resolved`);
+      return false;
+    }
     const draftsFolderName = this.getDraftsFolderName(project);
-    if (!draftsFolderName) return false;
+    if (!draftsFolderName) {
+      debug(`${DEBUG_PREFIX} renameDraft: no drafts folder found`);
+      return false;
+    }
     const oldFolder = `${project}/${draftsFolderName}/${oldName}`;
     const newFolder = `${project}/${draftsFolderName}/${newName}`;
     try {

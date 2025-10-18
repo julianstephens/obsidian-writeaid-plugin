@@ -95,6 +95,9 @@ export class BackupService {
     draftId: string,
     settings?: WriteAidSettings,
   ): Promise<string[]> {
+    debug(
+      `${DEBUG_PREFIX} listBackups called for draftFolder: ${draftFolder}, draftId: ${draftId}`,
+    );
     try {
       const projectName = draftFolder.split("/")[0] || "unknown";
       const draftsFolderName = draftFolder.split("/")[1] || "drafts";
@@ -118,7 +121,9 @@ export class BackupService {
       }
 
       // Sort by timestamp (newest first)
-      return backups.sort().reverse();
+      const sortedBackups = backups.sort().reverse();
+      debug(`${DEBUG_PREFIX} listBackups found ${sortedBackups.length} backups for ${draftId}`);
+      return sortedBackups;
     } catch (error) {
       debug(`${DEBUG_PREFIX} Failed to list backups:`, error);
       return [];
@@ -131,6 +136,9 @@ export class BackupService {
     timestamp: string,
     settings?: WriteAidSettings,
   ): Promise<boolean> {
+    debug(
+      `${DEBUG_PREFIX} restoreBackup called for draftFolder: ${draftFolder}, draftId: ${draftId}, timestamp: ${timestamp}`,
+    );
     try {
       const projectName = draftFolder.split("/")[0] || "unknown";
       const draftsFolderName = draftFolder.split("/")[1] || "drafts";
@@ -200,6 +208,9 @@ export class BackupService {
     timestamp: string,
     settings?: WriteAidSettings,
   ): Promise<boolean> {
+    debug(
+      `${DEBUG_PREFIX} deleteBackup called for draftFolder: ${draftFolder}, draftId: ${draftId}, timestamp: ${timestamp}`,
+    );
     try {
       const projectName = draftFolder.split("/")[0] || "unknown";
       const draftsFolderName = draftFolder.split("/")[1] || "drafts";
@@ -229,17 +240,23 @@ export class BackupService {
     draftId: string,
     settings?: WriteAidSettings,
   ): Promise<void> {
+    debug(
+      `${DEBUG_PREFIX} clearOldBackups called for draftFolder: ${draftFolder}, draftId: ${draftId}`,
+    );
     try {
       const backups = await this.listBackups(draftFolder, draftId, settings);
       const cutoffDate = new Date();
       cutoffDate.setDate(cutoffDate.getDate() - this.maxBackupAgeDays);
 
+      let deletedCount = 0;
       for (const timestamp of backups) {
         const backupDate = new Date(timestamp.replace(/-/g, ":"));
         if (backupDate < cutoffDate) {
           await this.deleteBackup(draftFolder, draftId, timestamp, settings);
+          deletedCount++;
         }
       }
+      debug(`${DEBUG_PREFIX} clearOldBackups removed ${deletedCount} old backups for ${draftId}`);
     } catch (error) {
       debug(`${DEBUG_PREFIX} Failed to clear old backups:`, error);
     }

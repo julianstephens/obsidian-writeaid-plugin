@@ -4,8 +4,10 @@ import { Notice } from "obsidian";
 
 export function navigateToPreviousChapterCommand(manager: WriteAidManager) {
   return async () => {
+    debug(`${DEBUG_PREFIX} Navigate to previous chapter command called`);
     const activeFile = manager.app.workspace.getActiveFile();
     if (!activeFile) {
+      debug(`${DEBUG_PREFIX} navigateToPreviousChapter: no active file`);
       new Notice("No file is currently open.");
       return;
     }
@@ -16,6 +18,7 @@ export function navigateToPreviousChapterCommand(manager: WriteAidManager) {
       new RegExp(`^(.+)/${draftsFolderName}/(.+)/(.+)\\${MARKDOWN_FILE_EXTENSION}$`),
     );
     if (!match) {
+      debug(`${DEBUG_PREFIX} navigateToPreviousChapter: file is not a chapter`);
       new Notice("The current file is not a chapter.");
       return;
     }
@@ -25,17 +28,22 @@ export function navigateToPreviousChapterCommand(manager: WriteAidManager) {
     const chapterFileName = match[3];
 
     try {
+      debug(
+        `${DEBUG_PREFIX} navigateToPreviousChapter: looking for previous chapter before ${chapterFileName}`,
+      );
       const chapters = await manager.projectFileService.chapters.listChapters(
         projectPath,
         draftName,
       );
       const currentIndex = chapters.findIndex((ch) => ch.name === chapterFileName);
       if (currentIndex === -1) {
+        debug(`${DEBUG_PREFIX} navigateToPreviousChapter: current chapter not found`);
         new Notice("Unable to find the current chapter in the draft.");
         return;
       }
 
       if (currentIndex <= 0) {
+        debug(`${DEBUG_PREFIX} navigateToPreviousChapter: already at first chapter`);
         return;
       }
 

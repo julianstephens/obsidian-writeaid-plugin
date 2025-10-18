@@ -159,11 +159,18 @@ export class ChapterFileService {
     chapterName: string,
     settings?: WriteAidSettings,
   ) {
+    debug(`${DEBUG_PREFIX} createChapter called: chapterName=${chapterName}, draft=${draftName}`);
     const project = this.resolveProjectPath(projectPath);
-    if (!project) return false;
+    if (!project) {
+      debug(`${DEBUG_PREFIX} createChapter: no project resolved`);
+      return false;
+    }
     // Find the drafts folder, case-insensitively
     const draftsFolderName = this.getDraftsFolderName(project);
-    if (!draftsFolderName) return false;
+    if (!draftsFolderName) {
+      debug(`${DEBUG_PREFIX} createChapter: no drafts folder found`);
+      return false;
+    }
     const draftFolder = `${project}/${draftsFolderName}/${draftName}`;
     const slug = slugifyDraftName(
       chapterName,
@@ -171,7 +178,10 @@ export class ChapterFileService {
     );
     const fileName = `${slug}${MARKDOWN_FILE_EXTENSION}`;
     const filePath = `${draftFolder}/${fileName}`;
-    if (this.app.vault.getAbstractFileByPath(filePath)) return false;
+    if (this.app.vault.getAbstractFileByPath(filePath)) {
+      debug(`${DEBUG_PREFIX} createChapter: file already exists at ${filePath}`);
+      return false;
+    }
     let maxOrder = 0;
     const folder = this.app.vault.getAbstractFileByPath(draftFolder);
     if (folder && folder instanceof TFolder) {
@@ -198,16 +208,24 @@ export class ChapterFileService {
     let title = `# ${chapterName}`;
     const frontmatter = `${FRONTMATTER_DELIMITER}\norder: ${order}\nchapter_name: ${JSON.stringify(chapterName)}\n${FRONTMATTER_DELIMITER}\n`;
     await this.app.vault.create(filePath, `${frontmatter}\n${title}\n\n`);
+    debug(`${DEBUG_PREFIX} createChapter: created ${filePath} with order ${order}`);
     return true;
   }
 
   /** Delete a chapter file from a draft folder. */
   async deleteChapter(projectPath: string, draftName: string, chapterName: string) {
+    debug(`${DEBUG_PREFIX} deleteChapter called: chapterName=${chapterName}, draft=${draftName}`);
     const project = this.resolveProjectPath(projectPath);
-    if (!project) return false;
+    if (!project) {
+      debug(`${DEBUG_PREFIX} deleteChapter: no project resolved`);
+      return false;
+    }
     // Find the drafts folder, case-insensitively
     const draftsFolderName = this.getDraftsFolderName(project);
-    if (!draftsFolderName) return false;
+    if (!draftsFolderName) {
+      debug(`${DEBUG_PREFIX} deleteChapter: no drafts folder found`);
+      return false;
+    }
     const draftFolder = `${project}/${draftsFolderName}/${draftName}`;
     const fileName = `${chapterName}${MARKDOWN_FILE_EXTENSION}`;
     const filePath = `${draftFolder}/${fileName}`;
@@ -240,16 +258,26 @@ export class ChapterFileService {
 
   /** Rename a chapter file and/or update its short name. */
   async renameChapter(projectPath: string, draftName: string, oldName: string, newName: string) {
+    debug(`${DEBUG_PREFIX} renameChapter called: ${oldName} -> ${newName}`);
     const project = this.resolveProjectPath(projectPath);
-    if (!project) return false;
+    if (!project) {
+      debug(`${DEBUG_PREFIX} renameChapter: no project resolved`);
+      return false;
+    }
     // Find the drafts folder, case-insensitively
     const draftsFolderName = this.getDraftsFolderName(project);
-    if (!draftsFolderName) return false;
+    if (!draftsFolderName) {
+      debug(`${DEBUG_PREFIX} renameChapter: no drafts folder found`);
+      return false;
+    }
     const draftFolder = `${project}/${draftsFolderName}/${draftName}`;
     const oldFile = `${draftFolder}/${oldName}${MARKDOWN_FILE_EXTENSION}`;
     const newFile = `${draftFolder}/${newName}${MARKDOWN_FILE_EXTENSION}`;
     const file = this.app.vault.getAbstractFileByPath(oldFile);
-    if (!file || !(file instanceof TFile)) return false;
+    if (!file || !(file instanceof TFile)) {
+      debug(`${DEBUG_PREFIX} renameChapter: file not found at ${oldFile}`);
+      return false;
+    }
     let content = await this.app.vault.read(file);
     let title = `# ${newName}`;
 

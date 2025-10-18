@@ -44,7 +44,11 @@ export class ProjectService {
     parentFolder?: string,
     settings?: WriteAidSettings,
   ) {
+    debug(
+      `${DEBUG_PREFIX} createProject called: projectName=${projectName}, singleFile=${singleFile}`,
+    );
     if (!projectName) {
+      debug(`${DEBUG_PREFIX} createProject: project name is empty`);
       new Notice("Project name is required.");
       return null;
     }
@@ -183,7 +187,11 @@ export class ProjectService {
   // Simple heuristic to determine whether a folder looks like a project managed by WriteAid
   // We consider a folder a project if it contains a meta.md file or a Drafts/ subfolder.
   async isProjectFolder(path: string): Promise<boolean> {
-    if (!path || typeof path !== "string") return false;
+    debug(`${DEBUG_PREFIX} isProjectFolder called with path: ${path}`);
+    if (!path || typeof path !== "string") {
+      debug(`${DEBUG_PREFIX} isProjectFolder: invalid path`);
+      return false;
+    }
     const base = path.trim().replace(/\\/g, "/").replace(/\/+$/, "");
     try {
       const metaPath = normalizePath(`${base}/${getMetaFileName()}`);
@@ -200,7 +208,10 @@ export class ProjectService {
       }
 
       // Accept folder as project if it has meta.md OR drafts folder
-      if (!hasMeta && !hasDrafts) return false;
+      if (!hasMeta && !hasDrafts) {
+        debug(`${DEBUG_PREFIX} isProjectFolder ${path}: no meta.md or drafts folder found`);
+        return false;
+      }
 
       // If it has meta.md, validate its content
       if (hasMeta) {

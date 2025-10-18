@@ -139,7 +139,7 @@ class SelectDraftFileModal extends SuggestModal<FileItem> {
     this.setTitle("Select File for Draft Metadata");
   }
 
-  getSuggestions(_query: string): FileItem[] {
+  getSuggestions(): FileItem[] {
     return this.files;
   }
 
@@ -147,7 +147,7 @@ class SelectDraftFileModal extends SuggestModal<FileItem> {
     el.createEl("div", { text: file.name });
   }
 
-  async onChooseSuggestion(file: FileItem, _evt: MouseEvent | KeyboardEvent) {
+  async onChooseSuggestion(file: FileItem) {
     await this.onSelect(file);
   }
 }

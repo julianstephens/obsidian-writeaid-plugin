@@ -9,7 +9,7 @@
   "autoSelectProjectOnStartup": true,
   "activeProject": "Story",
   "panelRefreshDebounceMs": 250,
-  "debug": false,
+  "debug": true,
   "includeDraftOutline": false,
   "draftsFolderName": "drafts",
   "manuscriptsFolderName": "manuscripts",

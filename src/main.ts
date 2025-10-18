@@ -196,10 +196,14 @@ export default class WriteAidPlugin extends Plugin {
         for (const draftFolder of draftsFolder.children) {
           if (draftFolder instanceof TFolder) {
             const draftPath = `${draftsFolderPath}/${draftFolder.name}`;
-            await this.manager.projectFileService.backups.clearOldBackups(
-              draftPath,
-              this.manager.settings,
-            );
+            const draftId = await this.manager.projectFileService.drafts.getDraftId(draftPath);
+            if (draftId) {
+              await this.manager.projectFileService.backups.clearOldBackups(
+                draftPath,
+                draftId,
+                this.manager.settings,
+              );
+            }
           }
         }
       }
