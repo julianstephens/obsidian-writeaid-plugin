@@ -616,6 +616,42 @@ export class DraftFileService {
         new Notice(`Main draft file ${draftMainPath} not found.`);
         return false;
       }
+    } else if (projectType === PROJECT_TYPE.MULTI) {
+      // For multi-file projects, concatenate all valid chapters in order
+      const chapters = await this.chapters.listChapters(project, draftName);
+      if (chapters.length === 0) {
+        new Notice("No chapters found in draft.");
+        return false;
+      }
+
+      // Sort chapters by order and concatenate their content
+      for (const chapter of chapters) {
+        const chapterFilePath = `${draftFolder}/${chapter.name}${MARKDOWN_FILE_EXTENSION}`;
+        const chapterFile = this.app.vault.getAbstractFileByPath(chapterFilePath);
+        if (chapterFile && chapterFile instanceof TFile) {
+          const content = await this.app.vault.read(chapterFile);
+          // Add chapter heading and content (without frontmatter and top-level heading)
+          const chapterTitle = chapter.chapterName || chapter.name;
+          manuscriptContent += `## ${chapterTitle}\n\n`;
+          manuscriptContent += stripHeadings(stripFrontmatter(content));
+          manuscriptContent += "\n\n";
+        }
+      }
+
+      // Create or overwrite the manuscript file
+      const existingFile = this.app.vault.getAbstractFileByPath(manuscriptPath);
+      if (existingFile && existingFile instanceof TFile) {
+        const modal = new ConfirmOverwriteModal(this.app, manuscriptPath);
+        const shouldOverwrite = await modal.open();
+        if (!shouldOverwrite) {
+          return false; // User cancelled
+        }
+        debug(`${DEBUG_PREFIX} Overwriting existing manuscript: ${manuscriptPath}`);
+        await this.app.vault.modify(existingFile, manuscriptContent);
+      } else {
+        debug(`${DEBUG_PREFIX} Creating new manuscript: ${manuscriptPath}`);
+        await this.app.vault.create(manuscriptPath, manuscriptContent);
+      }
     }
 
     return true;

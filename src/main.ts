@@ -233,35 +233,39 @@ export default class WriteAidPlugin extends Plugin {
     const projectService = new ProjectService(this.app);
 
     this.app.workspace.onLayoutReady(async () => {
-      // Ensure an active project is always selected on startup if projects exist
-      const projects = await projectService.listProjects();
+      // Ensure an active project is always selected on startup if projects exist and setting is enabled
       let toActivate: string | null = null;
-      if (projects.length === 1) {
-        toActivate = projects[0];
-      } else if (projects.length > 1) {
-        // Use last active if it exists in the list, else first
-        const lastActiveRaw = this.settings.activeProject;
-        const lastActive = lastActiveRaw?.trim().replace(/^\/+/, "").replace(/\/+$/, "");
-        debug(
-          `${DEBUG_PREFIX} lastActiveRaw='${lastActiveRaw}', normalized='${lastActive}', includes=${lastActive && projects.includes(lastActive)}`,
-        );
-        if (lastActive && projects.includes(lastActive)) {
-          toActivate = lastActive;
-        } else {
+
+      if (this.settings.autoSelectProjectOnStartup !== false) {
+        const projects = await projectService.listProjects();
+        if (projects.length === 1) {
           toActivate = projects[0];
-        }
-      } else if (projects.length === 0) {
-        // No valid projects found, but check if saved active project exists and has meta.md
-        const lastActiveRaw = this.settings.activeProject;
-        const lastActive = lastActiveRaw?.trim().replace(/^\/+/, "").replace(/\/+$/, "");
-        const isValidProject = await projectService.isProjectFolder(lastActiveRaw || "");
-        if (isValidProject) {
+        } else if (projects.length > 1) {
+          // Use last active if it exists in the list, else first
+          const lastActiveRaw = this.settings.activeProject;
+          const lastActive = lastActiveRaw?.trim().replace(/^\/+/, "").replace(/\/+$/, "");
           debug(
-            `${DEBUG_PREFIX} activating saved project '${lastActive}' as it exists and has valid meta file`,
+            `${DEBUG_PREFIX} lastActiveRaw='${lastActiveRaw}', normalized='${lastActive}', includes=${lastActive && projects.includes(lastActive)}`,
           );
-          toActivate = lastActive ?? null;
+          if (lastActive && projects.includes(lastActive)) {
+            toActivate = lastActive;
+          } else {
+            toActivate = projects[0];
+          }
+        } else if (projects.length === 0) {
+          // No valid projects found, but check if saved active project exists and has meta.md
+          const lastActiveRaw = this.settings.activeProject;
+          const lastActive = lastActiveRaw?.trim().replace(/^\/+/, "").replace(/\/+$/, "");
+          const isValidProject = await projectService.isProjectFolder(lastActiveRaw || "");
+          if (isValidProject) {
+            debug(
+              `${DEBUG_PREFIX} activating saved project '${lastActive}' as it exists and has valid meta file`,
+            );
+            toActivate = lastActive ?? null;
+          }
         }
       }
+
       debug(`${DEBUG_PREFIX} toActivate='${toActivate}'`);
       if (toActivate) {
         await this.manager.setActiveProject(toActivate);

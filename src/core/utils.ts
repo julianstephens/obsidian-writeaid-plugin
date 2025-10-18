@@ -38,7 +38,7 @@ export const PANEL_DEBOUNCE_MAX = 5000;
 export const PANEL_DEBOUNCE_DEFAULT = 250;
 
 export const BACKUP_FILE_EXTENSION = ".zip";
-export const BACKUP_TIMESTAMP_REGEX = /_(\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2})\.zip$/;
+export const BACKUP_TIMESTAMP_REGEX = /^(\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2})\.zip$/;
 
 export const FRONTMATTER_DELIMITER = "---";
 export const FRONTMATTER_REGEX = new RegExp(

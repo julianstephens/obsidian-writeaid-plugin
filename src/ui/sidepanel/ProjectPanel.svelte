@@ -152,11 +152,19 @@
       activeProject = null;
       selected = undefined;
       selectedValue = null;
+      // Notify manager to clear active project (triggers status bar update)
+      if (manager?.setActiveProject) {
+        await manager.setActiveProject(null);
+      }
     } else if (newProjects.length === 1) {
       // If only one project exists, always set it as active
       activeProject = newProjects[0];
       selected = projectOptions[0];
       selectedValue = newProjects[0];
+      // Notify manager of the new active project (triggers status bar update)
+      if (manager?.setActiveProject) {
+        await manager.setActiveProject(newProjects[0]);
+      }
       // Debug: log project selection
       try {
         debug(`${DEBUG_PREFIX} panel refresh selected single project '${selectedValue}'`);
@@ -168,13 +176,17 @@
       activeProject = newProjects[0];
       selected = projectOptions[0];
       selectedValue = newProjects[0];
+      // Notify manager of the new active project (triggers status bar update)
+      if (manager?.setActiveProject) {
+        await manager.setActiveProject(newProjects[0]);
+      }
       // Debug: log fallback selection
       try {
         debug(`${DEBUG_PREFIX} panel refresh selected fallback project '${selectedValue}'`);
       } catch (e) {
         // ignore
       }
-    } else {
+    } else if (prevActive) {
       // Otherwise, keep the current selection ONLY if it still exists
       const found = projectOptions.find((o) => o.value === prevActive);
       if (found) {
@@ -190,7 +202,17 @@
         activeProject = null;
         selected = undefined;
         selectedValue = null;
+        // Notify manager to clear active project (triggers status bar update)
+        if (manager?.setActiveProject) {
+          await manager.setActiveProject(null);
+        }
       }
+    } else {
+      // prevActive is null/undefined - don't notify manager, let startup logic set it
+      // Just initialize UI without clearing any active project that may be set externally
+      activeProject = null;
+      selected = undefined;
+      selectedValue = null;
     }
 
     await minSpin;

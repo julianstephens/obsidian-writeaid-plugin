@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Novel/drafts/Draft 1/chapter1.md",
+                "file": "Novel/drafts/Draft 1/chapter2.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "chapter1"
+              "title": "chapter2"
             }
           }
         ]
@@ -181,10 +181,12 @@
   },
   "active": "5280a970130968c9",
   "lastOpenFiles": [
-    "Novel/drafts/Draft 1/chapter2.md",
-    "Novel/drafts/Draft 1/chapter3.md",
     "Novel/drafts/Draft 1/chapter1.md",
+    "Novel/drafts/Draft 1/chapter2.md",
     "Novel/meta.md",
+    "Novel/manuscripts/Draft 1.md",
+    "Novel/manuscripts",
+    "Novel/drafts/Draft 1/chapter3.md",
     "Novel/drafts/Draft 1",
     "Novel/drafts",
     "Novel",
@@ -208,14 +210,12 @@
     "Test/drafts/Draft 1",
     "Test/drafts",
     "Test",
-    "Story/Drafts/Draft 8",
     "Story/Drafts/Draft 2/draft2.md",
     "Story/Drafts/Draft 4/draft4.md",
     "Story/Drafts/Draft 3/draft3.md",
     "Story/Drafts/c1444281-337a-48c9-8e56-13f910865a88/draft2.md",
     "Story/Drafts/Draft 4/draft2.md",
     "Story/Manuscripts/Draft 3.md",
-    "Story/Drafts/Draft 1/draft2.md",
-    "novel/Drafts/Draft 2/chapter2.md"
+    "Story/Drafts/Draft 1/draft2.md"
   ]
 }

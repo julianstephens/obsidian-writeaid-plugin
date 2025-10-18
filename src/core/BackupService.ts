@@ -23,6 +23,63 @@ export class BackupService {
     return this.settings?.maxBackupAgeDays ?? 30;
   }
 
+  /**
+   * Check if creating a new backup will exceed the max backups limit.
+   * Returns the number of backups that will be deleted to make room, or 0 if no cleanup needed.
+   */
+  async willExceedMaxBackups(
+    draftFolder: string,
+    draftId: string,
+    settings?: WriteAidSettings,
+  ): Promise<number> {
+    const backups = await this.listBackups(draftFolder, draftId, settings);
+    const currentCount = backups.length;
+    const maxBackups = settings?.maxBackups ?? 5;
+
+    // After creating a new backup, we'll have currentCount + 1 backups
+    const countAfterCreate = currentCount + 1;
+
+    // If the new total will exceed the max, calculate how many to delete
+    if (countAfterCreate > maxBackups) {
+      // We need to delete (countAfterCreate - maxBackups) backups
+      return countAfterCreate - maxBackups;
+    }
+
+    return 0;
+  }
+
+  /**
+   * Clean up excess backups by count (keeps the most recent ones).
+   * This respects the maxBackups setting and deletes oldest backups first.
+   */
+  async cleanupExcessBackups(
+    draftFolder: string,
+    draftId: string,
+    settings?: WriteAidSettings,
+  ): Promise<number> {
+    const backups = await this.listBackups(draftFolder, draftId, settings);
+    const maxBackups = settings?.maxBackups ?? 5;
+
+    debug(
+      `${DEBUG_PREFIX} cleanupExcessBackups: found ${backups.length} backups, max allowed: ${maxBackups}`,
+    );
+
+    let deletedCount = 0;
+    if (backups.length > maxBackups) {
+      // Delete oldest backups (they're sorted newest first)
+      for (let i = maxBackups; i < backups.length; i++) {
+        debug(`${DEBUG_PREFIX} cleanupExcessBackups: deleting backup ${i + 1}/${backups.length}`);
+        const deleted = await this.deleteBackup(draftFolder, draftId, backups[i], settings);
+        if (deleted) {
+          deletedCount++;
+        }
+      }
+    }
+
+    debug(`${DEBUG_PREFIX} cleanupExcessBackups: deleted ${deletedCount} backups`);
+    return deletedCount;
+  }
+
   async createBackup(
     draftFolder: string,
     draftId: string,
@@ -103,26 +160,51 @@ export class BackupService {
       const draftsFolderName = draftFolder.split("/")[1] || "drafts";
       const backupDir = `${getBackupsFolderName(settings)}/${projectName}/${draftsFolderName}/${draftId}`;
 
-      const folder = this.app.vault.getAbstractFileByPath(backupDir);
-      if (!folder || !(folder instanceof TFolder)) {
+      debug(`${DEBUG_PREFIX} listBackups checking backupDir: ${backupDir}`);
+
+      // Check if directory exists using adapter
+      const exists = await this.app.vault.adapter.exists(backupDir);
+      if (!exists) {
+        debug(`${DEBUG_PREFIX} listBackups backupDir does not exist on disk`);
         return [];
       }
 
       const backups: string[] = [];
 
-      for (const child of folder.children) {
-        if (child instanceof TFile && child.name.endsWith(BACKUP_FILE_EXTENSION)) {
-          // Extract timestamp from filename (format: YYYY-MM-DDTHH-MM-SS.zip)
-          const timestampMatch = child.name.match(BACKUP_TIMESTAMP_REGEX);
-          if (timestampMatch) {
-            backups.push(timestampMatch[1]);
+      // Use adapter to list files directly instead of relying on vault cache
+      try {
+        const files = await this.app.vault.adapter.list(backupDir);
+        debug(
+          `${DEBUG_PREFIX} listBackups adapter found ${files.files.length} files, ${files.folders.length} folders`,
+        );
+
+        for (const filepath of files.files) {
+          // adapter.list returns full paths, extract just the filename
+          const filename = filepath.split("/").pop() || "";
+          debug(
+            `${DEBUG_PREFIX} listBackups examining file: ${filename}, endsWith .zip: ${filename.endsWith(BACKUP_FILE_EXTENSION)}`,
+          );
+          if (filename.endsWith(BACKUP_FILE_EXTENSION)) {
+            // Extract timestamp from filename (format: YYYY-MM-DDTHH-MM-SS.zip)
+            const timestampMatch = filename.match(BACKUP_TIMESTAMP_REGEX);
+            debug(
+              `${DEBUG_PREFIX} listBackups match for ${filename}: ${timestampMatch?.[1] ?? "no match"}`,
+            );
+            if (timestampMatch) {
+              backups.push(timestampMatch[1]);
+            }
           }
         }
+      } catch (e) {
+        debug(`${DEBUG_PREFIX} listBackups error reading backup directory: ${e}`);
+        return [];
       }
 
       // Sort by timestamp (newest first)
       const sortedBackups = backups.sort().reverse();
-      debug(`${DEBUG_PREFIX} listBackups found ${sortedBackups.length} backups for ${draftId}`);
+      debug(
+        `${DEBUG_PREFIX} listBackups found ${sortedBackups.length} backups for ${draftId}: [${sortedBackups.join(", ")}]`,
+      );
       return sortedBackups;
     } catch (error) {
       debug(`${DEBUG_PREFIX} Failed to list backups:`, error);
