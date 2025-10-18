@@ -10,7 +10,8 @@
     "dev:copy": "node ./scripts/dev-watch.js --once",
     "format": "prettier --write . --ignore-path .prettierignore",
     "lint": "pnpm exec eslint . --ext .ts,.svelte",
-    "test": "pnpm build && node ./scripts/verify-manifest-commands.js"
+    "test": "pnpm build && node ./scripts/verify-manifest-commands.js",
+    "bump-version": "node ./scripts/bump-version.js"
   },
   "keywords": [
     "obsidian-plugin",

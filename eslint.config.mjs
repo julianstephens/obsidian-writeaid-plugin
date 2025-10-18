@@ -22,7 +22,7 @@ export default defineConfig([
     ],
   },
   {
-    files: ["**/*.ts", "**/*.js"],
+    files: ["**/*.ts"],
     languageOptions: {
       parser: tsParser,
       parserOptions: {
