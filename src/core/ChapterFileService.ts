@@ -4,6 +4,7 @@ import {
   DEBUG_PREFIX,
   extractFrontmatterFields,
   FRONTMATTER_REGEX,
+  generateChapterId,
   generateDraftId,
   getDraftsFolderName,
   MARKDOWN_FILE_EXTENSION,
@@ -252,18 +253,23 @@ export class ChapterFileService {
     }
     const order = maxOrder + 1;
     let title = `# ${chapterName}`;
-    // Create frontmatter with all three required fields: id, order, chapter_name
+    // Create frontmatter with all 6 documented fields
     // If draftId is not provided, try to use existing draft ID from other chapters
     // Otherwise, generate a new one
     const finalDraftId = draftId || existingDraftId || generateDraftId();
+    const now = new Date().toISOString();
+    const chapterId = generateChapterId();
     const frontmatter = buildFrontmatter({
-      id: finalDraftId,
+      id: chapterId,
       order: order,
       chapter_name: chapterName,
+      draft_id: finalDraftId,
+      word_count: 0,
+      last_updated: now,
     });
     await this.app.vault.create(filePath, `${frontmatter}${title}\n\n`);
     debug(
-      `${DEBUG_PREFIX} createChapter: created ${filePath} with order ${order}, chapter_name "${chapterName}", and draft id ${finalDraftId}`,
+      `${DEBUG_PREFIX} createChapter: created ${filePath} with order ${order}, chapter_name "${chapterName}", chapter_id "${chapterId}", draft_id "${finalDraftId}", word_count 0, and last_updated "${now}"`,
     );
     return true;
   }
@@ -404,9 +410,13 @@ export class ChapterFileService {
    * @returns true if the chapter has all required fields
    */
   private hasRequiredChapterFields(frontmatter: string): boolean {
+    // Check for the 3 minimum required fields (backward compatibility)
+    // Newer fields (draft_id, word_count, last_updated) are optional
     const hasId = /^id:\s*\S+/im.test(frontmatter);
     const hasOrder = /^order:\s*\d+/im.test(frontmatter);
     const hasChapterName = /^chapter_name:\s*\S+/im.test(frontmatter);
+
+    // Require the 3 basic fields; newer fields are optional for backward compatibility
     return hasId && hasOrder && hasChapterName;
   }
 
@@ -457,5 +467,120 @@ export class ChapterFileService {
     const fmMatch = content.match(FRONTMATTER_REGEX);
     if (!fmMatch) return false;
     return this.hasRequiredChapterFields(fmMatch[1]);
+  }
+
+  /**
+   * Update the last_updated timestamp on a chapter file
+   * @param projectPath - Project root path
+   * @param draftName - Draft folder name
+   * @param chapterName - Chapter file name (without extension)
+   * @param wordCount - Optional word count to update
+   */
+  async updateChapterLastUpdated(
+    projectPath: string,
+    draftName: string,
+    chapterName: string,
+    wordCount?: number,
+  ): Promise<boolean> {
+    debug(`${DEBUG_PREFIX} updateChapterLastUpdated called for ${chapterName} in ${draftName}`);
+    const project = this.resolveProjectPath(projectPath);
+    if (!project) {
+      debug(`${DEBUG_PREFIX} updateChapterLastUpdated: no project resolved`);
+      return false;
+    }
+
+    const draftsFolderName = this.getDraftsFolderName(project);
+    if (!draftsFolderName) {
+      debug(`${DEBUG_PREFIX} updateChapterLastUpdated: no drafts folder found`);
+      return false;
+    }
+
+    const draftFolder = `${project}/${draftsFolderName}/${draftName}`;
+    const filePath = `${draftFolder}/${chapterName}${MARKDOWN_FILE_EXTENSION}`;
+    const file = this.app.vault.getAbstractFileByPath(filePath);
+
+    if (!file || !(file instanceof TFile)) {
+      debug(`${DEBUG_PREFIX} updateChapterLastUpdated: file not found at ${filePath}`);
+      return false;
+    }
+
+    try {
+      const content = await this.app.vault.read(file);
+      const fmMatch = content.match(FRONTMATTER_REGEX);
+
+      if (!fmMatch) {
+        debug(`${DEBUG_PREFIX} updateChapterLastUpdated: no frontmatter found`);
+        return false;
+      }
+
+      const fields = extractFrontmatterFields(fmMatch[1]);
+      const now = new Date().toISOString();
+
+      // Update the fields
+      fields.last_updated = now;
+      if (wordCount !== undefined) {
+        fields.word_count = wordCount;
+      }
+
+      const body = content.substring(fmMatch[0].length);
+      const updatedContent = `${buildFrontmatter(fields)}${body}`;
+
+      await this.app.vault.modify(file, updatedContent);
+      debug(`${DEBUG_PREFIX} updateChapterLastUpdated: updated ${filePath} with timestamp ${now}`);
+      return true;
+    } catch (error) {
+      debug(`${DEBUG_PREFIX} updateChapterLastUpdated error:`, error);
+      return false;
+    }
+  }
+
+  /**
+   * Update chapter metadata (word count and last_updated) for a chapter file
+   * @param filePath - Full file path to the chapter
+   * @param wordCount - Optional new word count
+   */
+  async updateChapterMetadata(filePath: string, wordCount?: number): Promise<boolean> {
+    debug(`${DEBUG_PREFIX} updateChapterMetadata called for ${filePath}`);
+
+    const file = this.app.vault.getAbstractFileByPath(filePath);
+    if (!file || !(file instanceof TFile)) {
+      debug(`${DEBUG_PREFIX} updateChapterMetadata: file not found at ${filePath}`);
+      return false;
+    }
+
+    try {
+      const content = await this.app.vault.read(file);
+      const fmMatch = content.match(FRONTMATTER_REGEX);
+
+      if (!fmMatch) {
+        debug(`${DEBUG_PREFIX} updateChapterMetadata: no frontmatter found`);
+        return false;
+      }
+
+      const fields = extractFrontmatterFields(fmMatch[1]);
+      const now = new Date().toISOString();
+
+      // Always update last_updated
+      fields.last_updated = now;
+
+      // Update word count if provided
+      if (wordCount !== undefined) {
+        fields.word_count = wordCount;
+      }
+
+      const body = content.substring(fmMatch[0].length);
+      const updatedContent = `${buildFrontmatter(fields)}${body}`;
+
+      await this.app.vault.modify(file, updatedContent);
+      debug(
+        `${DEBUG_PREFIX} updateChapterMetadata: updated ${filePath} with last_updated ${now}${
+          wordCount !== undefined ? ` and word_count ${wordCount}` : ""
+        }`,
+      );
+      return true;
+    } catch (error) {
+      debug(`${DEBUG_PREFIX} updateChapterMetadata error:`, error);
+      return false;
+    }
   }
 }

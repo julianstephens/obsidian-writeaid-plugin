@@ -167,6 +167,14 @@ export function generateDraftId(): string {
 }
 
 /**
+ * Generate a unique chapter identifier with ch- prefix
+ * @returns Chapter ID in format: ch-[uuid-style-string]
+ */
+export function generateChapterId(): string {
+  return `ch-${generateDraftId()}`;
+}
+
+/**
  * Helper function for conditional debug logging.
  * Only logs when the global __WRITEAID_DEBUG__ flag is set to true.
  */

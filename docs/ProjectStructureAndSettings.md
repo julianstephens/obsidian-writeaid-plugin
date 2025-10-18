@@ -139,17 +139,61 @@ Once upon a time...
 Each chapter is a separate file with frontmatter:
 
 ```yaml
+#### Multi-File Project Chapters
+
+Each chapter is a separate file with frontmatter containing comprehensive metadata:
+
+```yaml
 ---
-id: "ch001-uuid"
+id: "ch-[uuid]"
 order: 1
 chapter_name: "Chapter 1: The Beginning"
-draft_id: "draft-uuid"
-word_count: 4567
+draft_id: "draft-[uuid]"
+word_count: 0
 last_updated: 2025-01-15T14:30:45Z
 ---
 # Chapter 1: The Beginning
 
 Your chapter content...
+```
+
+**Frontmatter Fields:**
+
+- `id` (UUID): Unique chapter identifier with `ch-` prefix (e.g., `ch-a1b2c3d4...`)
+  - **Purpose**: Distinguishes chapter files from other file types
+  - **Generated**: Automatically on chapter creation
+  - **Format**: `ch-` followed by UUID-style string
+
+- `order` (number): Chapter sequence number for navigation and manuscript generation
+  - **Purpose**: Controls chapter ordering in navigation and manuscript output
+  - **Generated**: Automatically calculated from existing chapters (starts at 1)
+  - **Used By**: Navigation commands, manuscript generation
+
+- `chapter_name` (string): Display name shown in UI and navigation
+  - **Purpose**: Human-readable chapter title
+  - **Generated**: From user input during chapter creation
+  - **Format**: Can contain spaces and special characters
+
+- `draft_id` (UUID): Links chapter to parent draft
+  - **Purpose**: Establishes chapter-to-draft relationship for programmatic access
+  - **Generated**: Inherited from parent draft automatically
+  - **Used By**: Multi-chapter draft organization, manuscript assembly
+
+- `word_count` (number): Current word count of the chapter content
+  - **Purpose**: Tracks chapter length for statistics
+  - **Initial Value**: 0 when chapter created
+  - **Updated**: When chapter content is modified
+
+- `last_updated` (ISO 8601 timestamp): Creation and modification timestamp
+  - **Purpose**: Tracks when chapter was created or last modified
+  - **Generated**: ISO 8601 format (e.g., `2025-01-15T14:30:45Z`)
+  - **Updated**: Automatically when chapter is modified
+
+**Ordering:** Chapters are sorted by `order` value for navigation and manuscript generation. When creating a new chapter, the order is automatically set to one more than the highest existing chapter order.
+
+**Metadata Maintenance:** The `last_updated` and `word_count` fields are automatically maintained by WriteAid as chapters are created and edited.
+
+````
 ```
 
 **Frontmatter Fields:**
