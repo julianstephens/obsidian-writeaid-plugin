@@ -28,10 +28,11 @@ jobs:
         run: |
           pnpm vite build
           cp ./manifest.json ./dist/manifest.json
+          zip -j ./dist/obsidian-writeaid-plugin-${{ github.ref_name }}.zip ./dist/**
       - name: Create Release
         uses: ncipollo/release-action@v1
         with:
-          artifacts: "dist/**"
+          artifacts: "obsidian-writeaid-plugin-${{ github.ref_name }}.zip"
           tag: ${{ github.ref_name }}
           draft: false
           prerelease: false
