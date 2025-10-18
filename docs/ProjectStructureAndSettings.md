@@ -138,7 +138,6 @@ Once upon a time...
 
 Each chapter is a separate file with frontmatter:
 
-````yaml
 #### Multi-File Project Chapters
 
 Each chapter is a separate file with frontmatter containing comprehensive metadata:
