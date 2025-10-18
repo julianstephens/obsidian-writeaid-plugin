@@ -7,7 +7,7 @@
   "ribbonAlwaysShow": false,
   "autoOpenPanelOnStartup": true,
   "autoSelectProjectOnStartup": true,
-  "activeProject": "Story",
+  "activeProject": "Test",
   "panelRefreshDebounceMs": 250,
   "debug": false,
   "includeDraftOutline": false,

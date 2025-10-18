@@ -8,6 +8,10 @@ import type { SvelteComponent } from "svelte";
 
 export const VIEW_TYPE_PROJECT_PANEL = "writeaid-project-panel";
 
+interface ProjectPanelComponent extends SvelteComponent {
+  refreshDrafts?: () => void;
+}
+
 export class ProjectPanelView extends ItemView {
   app: App;
   manager: WriteAidManager;
@@ -15,7 +19,7 @@ export class ProjectPanelView extends ItemView {
   projectFileService: ProjectFileService;
   panelEl: HTMLElement | null = null;
   selectedProject: string | null = null;
-  projectPanel: SvelteComponent | undefined;
+  projectPanel: ProjectPanelComponent | undefined;
 
   constructor(leaf: WorkspaceLeaf, app: App, manager: WriteAidManager) {
     super(leaf);
@@ -82,9 +86,9 @@ export class ProjectPanelView extends ItemView {
   }
 
   refreshDraftsSection() {
-    if (this.projectPanel && typeof (this.projectPanel as any).refreshDrafts === "function") {
+    if (this.projectPanel && typeof this.projectPanel.refreshDrafts === "function") {
       debug(`${DEBUG_PREFIX} Refreshing drafts section in project panel`);
-      (this.projectPanel as any).refreshDrafts();
+      this.projectPanel.refreshDrafts();
     }
   }
 }

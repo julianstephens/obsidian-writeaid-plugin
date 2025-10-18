@@ -13,7 +13,7 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Test/meta.md",
+                "file": "Test 2/meta.md",
                 "mode": "source",
                 "source": false
               },
@@ -84,7 +84,8 @@
               "title": "WriteAid Projects"
             }
           }
-        ]
+        ],
+        "currentTab": 3
       }
     ],
     "direction": "horizontal",
@@ -180,16 +181,16 @@
   },
   "active": "5280a970130968c9",
   "lastOpenFiles": [
-    "Test/drafts/Draft 1/draft1.md",
-    "Test/drafts/Draft 1",
     "Test/meta.md",
-    "Test/drafts",
-    "Test",
     "Test 2/drafts/Draft 1/draft1.md",
     "Test 2/drafts/Draft 1",
     "Test 2/meta.md",
     "Test 2/drafts",
     "Test 2",
+    "Test/drafts/Draft 1/draft1.md",
+    "Test/drafts/Draft 1",
+    "Test/drafts",
+    "Test",
     "Story/Drafts/Draft 8/draft8.md",
     "Story/Drafts/Draft 8",
     "Story/Drafts/Draft 2/draft2.md",

@@ -513,6 +513,10 @@
         }
         await refreshDrafts();
         await refreshChapters();
+        // Open the project's meta.md file after creation
+        if (manager.openProject) {
+          await manager.openProject(newProject);
+        }
       }
     });
     modal.open();

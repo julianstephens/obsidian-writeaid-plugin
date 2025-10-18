@@ -8,7 +8,6 @@ import { App, Notice } from "obsidian";
 import { ConfirmExistingProjectModal } from "@/ui/modals/ConfirmExistingProjectModal";
 import { CreateDraftModal } from "@/ui/modals/CreateDraftModal";
 import { CreateProjectModal } from "@/ui/modals/CreateProjectModal";
-import { PostCreateModal } from "@/ui/modals/PostCreateModal";
 import { SelectProjectModal } from "@/ui/modals/SelectProjectModal";
 import { SwitchDraftModal } from "@/ui/modals/SwitchDraftModal";
 
@@ -218,11 +217,8 @@ export class WriteAidManager {
                   initialDraftName,
                   parentFolder,
                 );
-                new PostCreateModal(
-                  this.app,
-                  fullPath,
-                  async () => await this.openProject(fullPath),
-                ).open();
+                // Automatically open the project's meta.md file after creation
+                await this.openProject(fullPath);
               }
             },
             async () => {
@@ -232,11 +228,8 @@ export class WriteAidManager {
           ).open();
         } else {
           await this.createNewProject(projectName, singleFile, initialDraftName, parentFolder);
-          new PostCreateModal(
-            this.app,
-            fullPath,
-            async () => await this.openProject(fullPath),
-          ).open();
+          // Automatically open the project's meta.md file after creation
+          await this.openProject(fullPath);
         }
       },
     ).open();
