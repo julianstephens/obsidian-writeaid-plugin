@@ -497,41 +497,9 @@ export class ChapterFileService {
 
     const draftFolder = `${project}/${draftsFolderName}/${draftName}`;
     const filePath = `${draftFolder}/${chapterName}${MARKDOWN_FILE_EXTENSION}`;
-    const file = this.app.vault.getAbstractFileByPath(filePath);
 
-    if (!file || !(file instanceof TFile)) {
-      debug(`${DEBUG_PREFIX} updateChapterLastUpdated: file not found at ${filePath}`);
-      return false;
-    }
-
-    try {
-      const content = await this.app.vault.read(file);
-      const fmMatch = content.match(FRONTMATTER_REGEX);
-
-      if (!fmMatch) {
-        debug(`${DEBUG_PREFIX} updateChapterLastUpdated: no frontmatter found`);
-        return false;
-      }
-
-      const fields = extractFrontmatterFields(fmMatch[1]);
-      const now = new Date().toISOString();
-
-      // Update the fields
-      fields.last_updated = now;
-      if (wordCount !== undefined) {
-        fields.word_count = wordCount;
-      }
-
-      const body = content.substring(fmMatch[0].length);
-      const updatedContent = `${buildFrontmatter(fields)}${body}`;
-
-      await this.app.vault.modify(file, updatedContent);
-      debug(`${DEBUG_PREFIX} updateChapterLastUpdated: updated ${filePath} with timestamp ${now}`);
-      return true;
-    } catch (error) {
-      debug(`${DEBUG_PREFIX} updateChapterLastUpdated error:`, error);
-      return false;
-    }
+    // Delegate to updateChapterMetadata to avoid code duplication
+    return this.updateChapterMetadata(filePath, wordCount);
   }
 
   /**

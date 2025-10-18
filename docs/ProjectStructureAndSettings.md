@@ -142,7 +142,7 @@ Each chapter is a separate file with frontmatter:
 
 Each chapter is a separate file with frontmatter containing comprehensive metadata:
 
-```yaml
+````yaml
 ---
 id: "ch-[uuid]"
 order: 1
@@ -256,7 +256,7 @@ The hero must save the kingdom from darkness.
 - Consider adding romance subplot
 - Flesh out antagonist motivations
 - Plan pacing for Act 2
-```
+````
 
 ---
 
@@ -509,4 +509,7 @@ Backups are stored as ZIP archives with this naming:
 - For novels with 50+ chapters, consider pagination
 - Refresh panel debounce: increase if experiencing lag
 - Consider archiving completed projects to separate folders
-````
+
+```
+
+```
