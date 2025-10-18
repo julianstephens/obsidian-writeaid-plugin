@@ -75,13 +75,23 @@
     activeDraft = manager.activeDraft ?? null;
     activeProject = manager.activeProject ?? null;
 
-    const activeDraftListener = (draft: string | null) => {
+    // Remove old listener if it exists to prevent duplicates
+    if (activeDraftListener && typeof manager.removeActiveDraftListener === "function") {
+      manager.removeActiveDraftListener(activeDraftListener);
+    }
+
+    activeDraftListener = (draft: string | null) => {
       activeDraft = draft;
       debug(`${DEBUG_PREFIX} active draft updated -> ${draft}`);
       // Refresh chapters when active draft changes
       refreshChapters();
     };
     manager.addActiveDraftListener(activeDraftListener);
+
+    // Remove old listener if it exists to prevent duplicates
+    if (activeProjectListener && typeof manager.removeActiveProjectListener === "function") {
+      manager.removeActiveProjectListener(activeProjectListener);
+    }
 
     activeProjectListener = (project: string | null) => {
       activeProject = project;
