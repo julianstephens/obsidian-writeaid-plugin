@@ -20,7 +20,7 @@ export interface WriteAidSettings {
   panelRefreshDebounceMs?: number;
   // Developer runtime debug toggle. When true the plugin will enable verbose runtime
   // logging via window.__WRITEAID_DEBUG__ so the sidepanel view and mount helper
-  // can emit diagnostics useful during development thi.
+  // can emit diagnostics useful during development this.
   debug?: boolean;
 
   // If true, create an outline.md file when creating a new draft
