@@ -136,7 +136,7 @@ export class ChapterFileService {
               `${DEBUG_PREFIX} ChapterFileService.listChapters: content length ${content.length}`,
             );
 
-            // Check if this is a valid chapter (has all required fields)
+            // Check if this is a valid chapter (has all required fields as specified in REQUIRED_CHAPTER_FIELDS)
             if (!this.isValidChapter(content)) {
               debug(
                 `${DEBUG_PREFIX} ChapterFileService.listChapters: ${file.path} is not a valid chapter (missing required fields)`,
