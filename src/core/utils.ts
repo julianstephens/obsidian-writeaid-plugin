@@ -201,3 +201,21 @@ export function countWords(text: string): number {
     .filter((word) => word.length > 0);
   return words.length;
 }
+
+/**
+ * Build frontmatter content with the provided fields
+ * @param fields - Object containing key-value pairs for frontmatter fields
+ * @returns The complete frontmatter string with delimiters
+ */
+export function buildFrontmatter(fields: Record<string, string | number>): string {
+  const lines: string[] = [];
+  for (const [key, value] of Object.entries(fields)) {
+    if (typeof value === "string" && (value.includes(":") || value.includes("\n"))) {
+      // Quote strings that contain special characters
+      lines.push(`${key}: ${JSON.stringify(value)}`);
+    } else {
+      lines.push(`${key}: ${value}`);
+    }
+  }
+  return `${FRONTMATTER_DELIMITER}\n${lines.join("\n")}\n${FRONTMATTER_DELIMITER}\n`;
+}

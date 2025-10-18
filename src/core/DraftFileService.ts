@@ -1,6 +1,7 @@
 import { TemplateService } from "@/core/TemplateService";
 import { readMetaFile, updateMetaStats } from "@/core/meta";
 import {
+  buildFrontmatter,
   countWords,
   debug,
   DEBUG_PREFIX,
@@ -182,11 +183,16 @@ export class DraftFileService {
         const draftMainPath = `${newDraftFolder}/${draftFileName}`;
         if (!this.app.vault.getAbstractFileByPath(draftMainPath)) {
           const draftId = generateDraftId();
-          const fm = `${FRONTMATTER_DELIMITER}\ndraft: ${draftName}\nid: ${draftId}\nproject: ${projectName}\ncreated: ${new Date().toISOString()}\n${FRONTMATTER_DELIMITER}\n\n`;
+          const fm = buildFrontmatter({
+            draft: draftName,
+            id: draftId,
+            project: projectName,
+            created: new Date().toISOString(),
+          });
           const projectContent = await this.tpl.render("# {{draftName}}", {
             draftName,
           });
-          await this.app.vault.create(draftMainPath, fm + projectContent);
+          await this.app.vault.create(draftMainPath, fm + "\n" + projectContent);
         }
       } else {
         // Multi-file project: ensure at least one valid chapter exists

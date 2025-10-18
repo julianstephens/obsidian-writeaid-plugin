@@ -1,4 +1,5 @@
 import {
+  buildFrontmatter,
   debug,
   DEBUG_PREFIX,
   FRONTMATTER_DELIMITER,
@@ -256,7 +257,11 @@ export class ChapterFileService {
     // If draftId is not provided, try to use existing draft ID from other chapters
     // Otherwise, generate a new one
     const finalDraftId = draftId || existingDraftId || generateDraftId();
-    let frontmatter = `${FRONTMATTER_DELIMITER}\nid: ${finalDraftId}\norder: ${order}\nchapter_name: ${JSON.stringify(chapterName)}\n${FRONTMATTER_DELIMITER}\n`;
+    const frontmatter = buildFrontmatter({
+      id: finalDraftId,
+      order: order,
+      chapter_name: chapterName,
+    });
     await this.app.vault.create(filePath, `${frontmatter}${title}\n\n`);
     debug(
       `${DEBUG_PREFIX} createChapter: created ${filePath} with order ${order}, chapter_name "${chapterName}", and draft id ${finalDraftId}`,
