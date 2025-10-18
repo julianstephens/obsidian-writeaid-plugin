@@ -1,7 +1,7 @@
 {
   "id": "obsidian-writeaid-plugin",
   "name": "WriteAid",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "minAppVersion": "0.15.0",
   "description": "A novel writing plugin for Obsidian supporting multiple drafts per project.",
   "author": "julianstephens",
@@ -11,37 +11,93 @@
     {
       "id": "create-new-draft",
       "name": "Create New Draft",
-      "hotkeys": [{ "modifiers": ["Mod", "Alt"], "key": "D" }]
+      "hotkeys": [
+        {
+          "modifiers": [
+            "Mod",
+            "Alt"
+          ],
+          "key": "D"
+        }
+      ]
     },
     {
       "id": "create-outline",
       "name": "Create Outline",
-      "hotkeys": [{ "modifiers": ["Mod", "Alt"], "key": "O" }]
+      "hotkeys": [
+        {
+          "modifiers": [
+            "Mod",
+            "Alt"
+          ],
+          "key": "O"
+        }
+      ]
     },
     {
       "id": "create-new-project",
       "name": "Create New Project",
-      "hotkeys": [{ "modifiers": ["Mod", "Shift"], "key": "P" }]
+      "hotkeys": [
+        {
+          "modifiers": [
+            "Mod",
+            "Shift"
+          ],
+          "key": "P"
+        }
+      ]
     },
     {
       "id": "switch-draft",
       "name": "Switch Active Draft",
-      "hotkeys": [{ "modifiers": ["Mod", "Alt"], "key": "S" }]
+      "hotkeys": [
+        {
+          "modifiers": [
+            "Mod",
+            "Alt"
+          ],
+          "key": "S"
+        }
+      ]
     },
     {
       "id": "update-project-metadata",
       "name": "Update Project Metadata",
-      "hotkeys": [{ "modifiers": ["Mod", "Alt"], "key": "M" }]
+      "hotkeys": [
+        {
+          "modifiers": [
+            "Mod",
+            "Alt"
+          ],
+          "key": "M"
+        }
+      ]
     },
     {
       "id": "select-active-project",
       "name": "Select Active Project",
-      "hotkeys": [{ "modifiers": ["Mod", "Alt"], "key": "A" }]
+      "hotkeys": [
+        {
+          "modifiers": [
+            "Mod",
+            "Alt"
+          ],
+          "key": "A"
+        }
+      ]
     },
     {
       "id": "generate-manuscript",
       "name": "Generate Manuscript",
-      "hotkeys": [{ "modifiers": ["Mod", "Shift"], "key": "M" }]
+      "hotkeys": [
+        {
+          "modifiers": [
+            "Mod",
+            "Shift"
+          ],
+          "key": "M"
+        }
+      ]
     },
     {
       "id": "initialize-draft-file",
@@ -50,12 +106,28 @@
     {
       "id": "navigate-to-next-chapter",
       "name": "Navigate to Next Chapter",
-      "hotkeys": [{ "modifiers": ["Mod", "Alt"], "key": "N" }]
+      "hotkeys": [
+        {
+          "modifiers": [
+            "Mod",
+            "Alt"
+          ],
+          "key": "N"
+        }
+      ]
     },
     {
       "id": "navigate-to-previous-chapter",
       "name": "Navigate to Previous Chapter",
-      "hotkeys": [{ "modifiers": ["Mod", "Alt"], "key": "P" }]
+      "hotkeys": [
+        {
+          "modifiers": [
+            "Mod",
+            "Alt"
+          ],
+          "key": "P"
+        }
+      ]
     },
     {
       "id": "convert-single-to-multi-file-project",

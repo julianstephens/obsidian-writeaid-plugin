@@ -1,6 +1,6 @@
 {
   "name": "obsidian-writeaid-plugin",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "A novel writing plugin for Obsidian supporting multiple drafts per project.",
   "main": "main.js",
   "scripts": {
