@@ -73,6 +73,39 @@ export class WriteAidSettingTab extends PluginSettingTab {
       );
 
     new Setting(containerEl)
+      .setName("Include metadata in outline files")
+      .setDesc(
+        "If enabled, outline files will include frontmatter metadata (draft_id, type, created).",
+      )
+      .addToggle((toggle) =>
+        toggle.setValue(plugin.settings.includeOutlineMetadata ?? true).onChange((v) => {
+          debug(`${DEBUG_PREFIX} Include outline metadata changed: ${v}`);
+          plugin.settings.includeOutlineMetadata = v;
+          plugin.saveSettings();
+        }),
+      );
+
+    new Setting(containerEl)
+      .setName("Outline metadata fields")
+      .setDesc("Which metadata fields to include in outline frontmatter (comma-separated).")
+      .addText((t) =>
+        t
+          .setValue(
+            (plugin.settings.outlineMetadataFields ?? ["draft_id", "type", "created"]).join(", "),
+          )
+          .setPlaceholder("draft_id, type, created")
+          .onChange((v) => {
+            const fields = v
+              .split(",")
+              .map((s) => s.trim())
+              .filter((s) => s.length > 0);
+            debug(`${DEBUG_PREFIX} Outline metadata fields changed: ${fields.join(", ")}`);
+            plugin.settings.outlineMetadataFields = fields;
+            plugin.saveSettings();
+          }),
+      );
+
+    new Setting(containerEl)
       .setName("Outline template")
       .setDesc("Template for outline files. Use {{draftName}}")
       .addTextArea((ta) => {

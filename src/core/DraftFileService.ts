@@ -693,11 +693,42 @@ export class DraftFileService {
       throw new Error("Outline file already exists");
     }
 
+    // Validate that the parent draft folder exists
+    const draftFolderObj = this.app.vault.getAbstractFileByPath(draftFolder);
+    if (!draftFolderObj || !(draftFolderObj instanceof TFolder)) {
+      throw new Error(`Draft folder ${draftFolder} does not exist`);
+    }
+
+    // Generate frontmatter with metadata if enabled
+    let frontmatter = "";
+    if (this.manager?.settings?.includeOutlineMetadata ?? true) {
+      const defaultFields = ["draft_id", "type", "created"];
+      const enabledFields = this.manager?.settings?.outlineMetadataFields ?? defaultFields;
+
+      const metadata: Record<string, string> = {};
+      if (enabledFields.includes("draft_id")) {
+        metadata.draft_id = generateDraftId();
+      }
+      if (enabledFields.includes("type")) {
+        metadata.type = "outline";
+      }
+      if (enabledFields.includes("created")) {
+        metadata.created = new Date().toISOString();
+      }
+
+      frontmatter = buildFrontmatter(metadata);
+    }
+
     // Render the template
     const outlineContent = await this.tpl.render(template, { draftName });
 
-    // Create the outline file
-    await this.app.vault.create(outlinePath, outlineContent);
+    // Create the outline file with optional frontmatter
+    await this.app.vault.create(outlinePath, frontmatter + outlineContent);
+
+    debug(
+      `${DEBUG_PREFIX} Created outline file at ${outlinePath}` +
+        (frontmatter ? " with metadata" : " without metadata"),
+    );
   }
 
   /**

@@ -1,5 +1,5 @@
 {
-  "outlineTemplate": "# {{draftName}} Outline\n\n## Overview\nBrief description of the story goes here.\n\n## Characters\n- Character 1: Description\n- Character 2: Description\n\n## Plot Points\n- Opening: \n- Middle: \n- Climax: \n- Resolution: \n\n## Chapters\n- Chapter 1: Title\n- Chapter 2: Title\n- Chapter 3: Title",
+  "outlineTemplate": "# {{draftName}} Outline\n\n## Story Premise\n\nBrief description of the central story premise goes here.\n\n## Main Plot Points\n\n1. Setup: Introduce the world and protagonist\n2. Inciting Incident: The event that starts the story\n3. Rising Action: Complications and obstacles\n4. Climax: The turning point\n5. Resolution: How things are resolved\n\n## Character Arcs\n\n### Protagonist\n- Starting State: How they begin\n- Motivation: What drives them\n- Transformation: How they change\n- Ending State: Who they become\n\n### Supporting Characters\n- Character Name: Key traits and role\n\n## Key Scenes\n\n- [ ] Scene Title (Chapter X)\n- [ ] Scene Title (Chapter X)\n\n## Thematic Elements\n\n- Central theme: [Description]\n- Supporting themes: [List]\n\n## Notes\n\n- Pacing considerations\n- Structural notes\n- Research needed\n- TODO items",
   "chapterTemplate": "# {{chapterName}}\n\n## Summary\nChapter summary goes here.\n\n## Scene 1\nScene content goes here.\n\n## Scene 2\nScene content goes here.",
   "manuscriptNameTemplate": "{{draftName}}",
   "slugStyle": "compact",
@@ -11,6 +11,12 @@
   "panelRefreshDebounceMs": 250,
   "debug": false,
   "includeDraftOutline": false,
+  "includeOutlineMetadata": true,
+  "outlineMetadataFields": [
+    "draft_id",
+    "type",
+    "created"
+  ],
   "draftsFolderName": "drafts",
   "manuscriptsFolderName": "manuscripts",
   "backupsFolderName": ".writeaid-backups",
