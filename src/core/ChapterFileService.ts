@@ -285,7 +285,16 @@ export class ChapterFileService {
     });
     await this.app.vault.create(filePath, `${frontmatter}${title}\n\n`);
     debug(
-      `${DEBUG_PREFIX} createChapter: created ${filePath} with order ${order}, chapter_name "${chapterName}", chapter_id "${chapterId}", draft_id "${finalDraftId}", word_count 0, and last_updated "${now}"`,
+      `${DEBUG_PREFIX} createChapter: created chapter file`,
+      {
+        filePath,
+        order,
+        chapter_name: chapterName,
+        chapter_id: chapterId,
+        draft_id: finalDraftId,
+        word_count: 0,
+        last_updated: now,
+      }
     );
     return true;
   }
