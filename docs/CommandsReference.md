@@ -272,6 +272,7 @@ drafts:
   5. Refreshes Project Panel
 
 **Generated Frontmatter:**
+
 ```yaml
 ---
 id: "ch-[auto-generated-uuid]"

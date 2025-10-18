@@ -138,7 +138,7 @@ Once upon a time...
 
 Each chapter is a separate file with frontmatter:
 
-```yaml
+````yaml
 #### Multi-File Project Chapters
 
 Each chapter is a separate file with frontmatter containing comprehensive metadata:
@@ -155,7 +155,7 @@ last_updated: 2025-01-15T14:30:45Z
 # Chapter 1: The Beginning
 
 Your chapter content...
-```
+````
 
 **Frontmatter Fields:**
 
@@ -511,3 +511,4 @@ Backups are stored as ZIP archives with this naming:
 - For novels with 50+ chapters, consider pagination
 - Refresh panel debounce: increase if experiencing lag
 - Consider archiving completed projects to separate folders
+````

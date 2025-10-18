@@ -11,10 +11,14 @@
             "id": "5280a970130968c9",
             "type": "leaf",
             "state": {
-              "type": "empty",
-              "state": {},
+              "type": "markdown",
+              "state": {
+                "file": "Move/drafts/Draft 1/chapter2.md",
+                "mode": "source",
+                "source": false
+              },
               "icon": "lucide-file",
-              "title": "New tab"
+              "title": "chapter2"
             }
           }
         ]
@@ -177,6 +181,7 @@
   },
   "active": "36a4b021559a3158",
   "lastOpenFiles": [
+    "Move/drafts/Draft 1/chapter2.md",
     "Move/drafts/Draft 1/chapter1.md",
     "Move/drafts/Draft 1",
     "Move/meta.md",
