@@ -4,7 +4,9 @@ import {
   buildFrontmatter,
   debug,
   DEBUG_PREFIX,
+  extractFrontmatterFields,
   FRONTMATTER_DELIMITER,
+  FRONTMATTER_REGEX,
   getDraftsFolderName,
   getMetaFileName,
   type ProjectType,
@@ -111,59 +113,17 @@ export async function updateMetaStats(
           if (file instanceof TFile && file.extension === "md") {
             try {
               const content = await app.vault.read(file);
-              const fmMatch = content.match(
-                new RegExp(
-                  `${FRONTMATTER_DELIMITER}\\s*\\n([\\s\\S]*?)\\n${FRONTMATTER_DELIMITER}`,
-                ),
-              );
+              const fmMatch = content.match(FRONTMATTER_REGEX);
               if (fmMatch) {
-                // Parse the frontmatter fields
+                // Extract existing frontmatter fields using utility function
                 const frontmatterContent = fmMatch[1];
-                const fields: Record<string, string | number> = {};
-                const lines = frontmatterContent.split("\n");
-
-                for (const line of lines) {
-                  if (!line.trim()) continue;
-                  const match = line.match(/^([a-zA-Z_][a-zA-Z0-9_-]*):\s*(.*)$/);
-                  if (match) {
-                    const key = match[1];
-                    let value: string | number = match[2].trim();
-
-                    // Parse numbers
-                    if (/^-?\d+(\.\d+)?$/.test(value)) {
-                      value = Number(value);
-                    }
-                    // Handle quoted strings
-                    else if (
-                      (value.startsWith('"') && value.endsWith('"')) ||
-                      (value.startsWith("'") && value.endsWith("'"))
-                    ) {
-                      try {
-                        value = JSON.parse(value);
-                      } catch {
-                        // If JSON.parse fails, just remove the quotes
-                        value = (value as string).slice(1, -1);
-                      }
-                    }
-
-                    fields[key] = value;
-                  }
-                }
+                const fields = extractFrontmatterFields(frontmatterContent);
 
                 // Update the last_updated field
                 fields.last_updated = now;
 
-                // Rebuild frontmatter with updated timestamp
-                const updatedFrontmatterLines: string[] = [];
-                for (const [key, value] of Object.entries(fields)) {
-                  if (typeof value === "string" && (value.includes(":") || value.includes("\n"))) {
-                    updatedFrontmatterLines.push(`${key}: ${JSON.stringify(value)}`);
-                  } else {
-                    updatedFrontmatterLines.push(`${key}: ${value}`);
-                  }
-                }
-
-                const updatedFrontmatter = `${FRONTMATTER_DELIMITER}\n${updatedFrontmatterLines.join("\n")}\n${FRONTMATTER_DELIMITER}\n`;
+                // Rebuild frontmatter with updated timestamp using utility function
+                const updatedFrontmatter = buildFrontmatter(fields);
                 const body = content.substring(fmMatch[0].length);
                 const updatedContent = `${updatedFrontmatter}${body}`;
 
