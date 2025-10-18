@@ -299,13 +299,23 @@ if (testMode) {
     const tagMessage = `Release v${newVersion}\n\n${changelogDescription}`;
     if (!testMode) {
       try {
-        // Check if tag already exists
+        // Check if tag or branch already exists with this name
         try {
           execSync(`git rev-parse v${newVersion}`, { stdio: "ignore" });
-          info(`Tag v${newVersion} already exists locally, deleting and recreating...`);
-          execSync(`git tag -d v${newVersion}`, { stdio: "inherit" });
+          info(`Reference v${newVersion} already exists locally, deleting and recreating...`);
+          // Try to delete as tag first
+          try {
+            execSync(`git tag -d v${newVersion}`, { stdio: "ignore" });
+          } catch (e) {
+            // If tag delete fails, try as branch
+            try {
+              execSync(`git branch -d v${newVersion}`, { stdio: "ignore" });
+            } catch (e2) {
+              // Neither worked, continue anyway
+            }
+          }
         } catch (e) {
-          // Tag doesn't exist, continue
+          // Reference doesn't exist, continue
         }
         execSync(
           `git tag -a v${newVersion} -m "${tagMessage.replace(/"/g, '\\"').replace(/\n/g, "\\n")}"`,
