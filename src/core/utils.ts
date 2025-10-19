@@ -48,23 +48,58 @@ export const FRONTMATTER_REGEX = new RegExp(
 export const BYTES_PER_KILOBYTE = 1024;
 export const FILE_SIZE_UNITS = ["B", "KB", "MB", "GB"];
 
+// Required chapter frontmatter fields
+export const REQUIRED_CHAPTER_FIELDS = [
+  "chapter_id",
+  "order",
+  "chapter_name",
+  "draft_id",
+  "word_count",
+  "last_updated",
+] as const;
+
 // Utility functions to get configured names with fallbacks
+/**
+ * Get the configured drafts folder name with fallback to default
+ * @param settings - Optional settings object containing custom folder names
+ * @returns The configured drafts folder name or default "drafts"
+ */
 export function getDraftsFolderName(settings?: { draftsFolderName?: string }): string {
   return settings?.draftsFolderName || FOLDERS.DRAFTS;
 }
 
+/**
+ * Get the configured manuscripts folder name with fallback to default
+ * @param settings - Optional settings object containing custom folder names
+ * @returns The configured manuscripts folder name or default "manuscripts"
+ */
 export function getManuscriptsFolderName(settings?: { manuscriptsFolderName?: string }): string {
   return settings?.manuscriptsFolderName || FOLDERS.MANUSCRIPTS;
 }
 
+/**
+ * Get the configured backups folder name with fallback to default
+ * @param settings - Optional settings object containing custom folder names
+ * @returns The configured backups folder name or default ".writeaid-backups"
+ */
 export function getBackupsFolderName(settings?: { backupsFolderName?: string }): string {
   return settings?.backupsFolderName || FOLDERS.BACKUPS;
 }
 
+/**
+ * Get the configured meta file name with fallback to default
+ * @param settings - Optional settings object containing custom file names
+ * @returns The configured meta file name or default "meta.md"
+ */
 export function getMetaFileName(settings?: { metaFileName?: string }): string {
   return settings?.metaFileName || FILES.META;
 }
 
+/**
+ * Get the configured outline file name with fallback to default
+ * @param settings - Optional settings object containing custom file names
+ * @returns The configured outline file name or default "outline.md"
+ */
 export function getOutlineFileName(settings?: { outlineFileName?: string }): string {
   return settings?.outlineFileName || FILES.OUTLINE;
 }
@@ -186,6 +221,12 @@ export function debug(...args: unknown[]) {
   });
 }
 
+/**
+ * Check if both project and draft are active, showing error notices if not
+ * @param project - The current active project name or null
+ * @param draft - The current active draft name or null
+ * @returns true if both project and draft are active, false otherwise
+ */
 export function checkActive(project: string | null, draft: string | null): boolean {
   if (!project) {
     new Notice(WriteAidError.ACTIVE_PROJECT_NOT_FOUND);
@@ -268,4 +309,19 @@ export function extractFrontmatterFields(
   }
 
   return fields;
+}
+
+/**
+ * Check if a frontmatter string contains all required chapter fields for validation
+ * Minimum required fields: chapter_id, order, chapter_name
+ * @param frontmatterContent - The frontmatter content string (without --- delimiters)
+ * @returns true if all required chapter fields are present
+ */
+export function isValidChapterFrontmatter(frontmatterContent: string): boolean {
+  // Check for minimum required chapter fields (chapter_id, order, chapter_name)
+  // These are the fields that distinguish a valid chapter from other markdown files
+  const hasChapterId = /^chapter_id:\s/m.test(frontmatterContent);
+  const hasOrder = /^order:\s/m.test(frontmatterContent);
+  const hasChapterName = /^chapter_name:\s/m.test(frontmatterContent);
+  return hasChapterId && hasOrder && hasChapterName;
 }

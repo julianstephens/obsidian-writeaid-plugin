@@ -42,9 +42,10 @@ export class ProjectService {
     initialDraftName?: string,
     parentFolder?: string,
     settings?: WriteAidSettings,
+    description?: string,
   ) {
     debug(
-      `${DEBUG_PREFIX} createProject called: projectName=${projectName}, singleFile=${singleFile}`,
+      `${DEBUG_PREFIX} createProject called: projectName=${projectName}, singleFile=${singleFile}, description=${description}`,
     );
     if (!projectName) {
       debug(`${DEBUG_PREFIX} createProject: project name is empty`);
@@ -76,8 +77,13 @@ export class ProjectService {
         projectPath,
         undefined,
         {
+          project_name: projectName,
+          description: description || "",
+          date_created: new Date().toISOString(),
+          date_updated: new Date().toISOString(),
           project_type: projectType,
           target_word_count: targetWordCount,
+          total_chapters: 0,
         },
         settings,
       );
@@ -85,6 +91,9 @@ export class ProjectService {
 
     const draftName = initialDraftName || "Draft 1";
     await this.projectFileService.drafts.createDraft(draftName, undefined, projectPath, settings);
+
+    // Update metadata after creating the draft to properly count chapters
+    await updateMetaStats(this.app, projectPath, draftName, undefined, settings);
 
     return projectPath;
   }

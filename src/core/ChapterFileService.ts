@@ -7,6 +7,7 @@ import {
   generateChapterId,
   generateDraftId,
   getDraftsFolderName,
+  isValidChapterFrontmatter,
   MARKDOWN_FILE_EXTENSION,
   slugifyDraftName,
   suppressAsync,
@@ -14,20 +15,11 @@ import {
 import type { WriteAidManager } from "@/manager";
 import type { WriteAidSettings } from "@/types";
 import { App, TFile, TFolder } from "obsidian";
+import { updateMetaStats } from "./meta";
 
 export class ChapterFileService {
   app: App;
   manager: WriteAidManager | null;
-
-  // Required chapter frontmatter fields
-  private static readonly REQUIRED_CHAPTER_FIELDS = [
-    "chapter_id",
-    "order",
-    "chapter_name",
-    "draft_id",
-    "word_count",
-    "last_updated",
-  ] as const;
 
   constructor(app: App) {
     this.app = app;
@@ -284,23 +276,31 @@ export class ChapterFileService {
       last_updated: now,
     });
     await this.app.vault.create(filePath, `${frontmatter}${title}\n\n`);
-    debug(
-      `${DEBUG_PREFIX} createChapter: created chapter file`,
-      {
-        filePath,
-        order,
-        chapter_name: chapterName,
-        chapter_id: chapterId,
-        draft_id: finalDraftId,
-        word_count: 0,
-        last_updated: now,
-      }
-    );
+    debug(`${DEBUG_PREFIX} createChapter: created chapter file`, {
+      filePath,
+      order,
+      chapter_name: chapterName,
+      chapter_id: chapterId,
+      draft_id: finalDraftId,
+      word_count: 0,
+      last_updated: now,
+    });
+
+    // Update metadata to recalculate total_chapters
+    await suppressAsync(async () => {
+      await updateMetaStats(this.app, project, draftName, undefined, settings);
+    });
+
     return true;
   }
 
   /** Delete a chapter file from a draft folder. */
-  async deleteChapter(projectPath: string, draftName: string, chapterName: string) {
+  async deleteChapter(
+    projectPath: string,
+    draftName: string,
+    chapterName: string,
+    settings?: WriteAidSettings,
+  ) {
     debug(`${DEBUG_PREFIX} deleteChapter called: chapterName=${chapterName}, draft=${draftName}`);
     const project = this.resolveProjectPath(projectPath);
     if (!project) {
@@ -337,6 +337,12 @@ export class ChapterFileService {
           }
         }
       }
+
+      // Update metadata to recalculate total_chapters
+      await suppressAsync(async () => {
+        await updateMetaStats(this.app, project, draftName, undefined, settings);
+      });
+
       return true;
     }
     return false;
@@ -435,18 +441,7 @@ export class ChapterFileService {
    * @returns true if the chapter has all required fields
    */
   private hasRequiredChapterFields(frontmatter: string): boolean {
-    // Check for all required fields defined in REQUIRED_CHAPTER_FIELDS
-    const hasChapterId = /^chapter_id:\s*\S+/im.test(frontmatter);
-    const hasOrder = /^order:\s*\d+/im.test(frontmatter);
-    const hasChapterName = /^chapter_name:\s*\S+/im.test(frontmatter);
-    const hasDraftId = /^draft_id:\s*\S+/im.test(frontmatter);
-    const hasWordCount = /^word_count:\s*\d+/im.test(frontmatter);
-    const hasLastUpdated = /^last_updated:\s*\S+/im.test(frontmatter);
-
-    // Require all fields as defined in REQUIRED_CHAPTER_FIELDS constant
-    return (
-      hasChapterId && hasOrder && hasChapterName && hasDraftId && hasWordCount && hasLastUpdated
-    );
+    return isValidChapterFrontmatter(frontmatter);
   }
 
   /**
@@ -508,7 +503,7 @@ export class ChapterFileService {
 
   /**
    * Check if a file is a valid chapter (has all required frontmatter fields)
-   * See REQUIRED_CHAPTER_FIELDS constant for the full list of required fields
+   * Uses isValidChapterFrontmatter for validation of required fields.
    */
   isValidChapter(content: string): boolean {
     const fmMatch = content.match(FRONTMATTER_REGEX);

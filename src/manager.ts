@@ -11,13 +11,12 @@ import {
   suppressAsync,
 } from "@/core/utils";
 import type { PluginLike, WriteAidSettings } from "@/types";
-import { App, Notice } from "obsidian";
-
 import { ConfirmExistingProjectModal } from "@/ui/modals/ConfirmExistingProjectModal";
 import { CreateDraftModal } from "@/ui/modals/CreateDraftModal";
 import { CreateProjectModal } from "@/ui/modals/CreateProjectModal";
 import { SelectProjectModal } from "@/ui/modals/SelectProjectModal";
 import { SwitchDraftModal } from "@/ui/modals/SwitchDraftModal";
+import { App, Notice } from "obsidian";
 
 export class WriteAidManager {
   app: App;
@@ -54,12 +53,16 @@ export class WriteAidManager {
    * Reorder chapters in a draft.
    * @param projectPath Project folder path
    * @param draftName Draft name
-   * @param newOrder Array of chapter objects in new order
+   * @param newOrder Array of chapter objects in new order. Each object should have:
+   *   - name: The internal identifier or filename for the chapter (used for referencing the chapter in code or storage).
+   *   - chapterName: The display name or title of the chapter (shown to users in the UI).
+   *   - order: The new order index for the chapter.
+   *   Use 'name' for programmatic operations and 'chapterName' for user-facing display.
    */
   async reorderChapters(
     projectPath: string,
     draftName: string,
-    newOrder: Array<{ chapterName: string; order: number }>,
+    newOrder: Array<{ name: string; chapterName: string; order: number }>,
   ) {
     return await this.projectFileService.chapters.reorderChapters(projectPath, draftName, newOrder);
   }
@@ -85,6 +88,7 @@ export class WriteAidManager {
       projectPath,
       draftName,
       chapterName,
+      this.settings,
     );
   }
   async renameChapter(projectPath: string, draftName: string, oldName: string, newName: string) {
@@ -194,6 +198,7 @@ export class WriteAidManager {
         projectName: string,
         singleFile: boolean,
         initialDraftName?: string,
+        description?: string,
         parentFolder?: string,
       ) => {
         if (!projectName) {
@@ -229,6 +234,7 @@ export class WriteAidManager {
                   singleFile,
                   initialDraftName,
                   parentFolder,
+                  description,
                 );
                 // Automatically open the project's meta.md file after creation
                 await this.openProject(fullPath);
@@ -240,7 +246,13 @@ export class WriteAidManager {
             },
           ).open();
         } else {
-          await this.createNewProject(projectName, singleFile, initialDraftName, parentFolder);
+          await this.createNewProject(
+            projectName,
+            singleFile,
+            initialDraftName,
+            parentFolder,
+            description,
+          );
           // Automatically open the project's meta.md file after creation
           await this.openProject(fullPath);
         }
@@ -257,6 +269,7 @@ export class WriteAidManager {
     singleFile: boolean,
     initialDraftName?: string,
     parentFolder?: string,
+    description?: string,
   ) {
     const path = await this.projectService.createProject(
       projectName,
@@ -264,6 +277,7 @@ export class WriteAidManager {
       initialDraftName,
       parentFolder,
       this.settings,
+      description,
     );
     // set as active project by default after successful creation
     if (path) {
