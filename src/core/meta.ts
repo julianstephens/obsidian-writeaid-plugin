@@ -38,7 +38,6 @@ export interface ProjectMetadata {
 
 /**
  * Read and parse metadata from meta.md file
- * Applies legacy project defaults for missing fields to ensure backward compatibility
  * @param app Obsidian App instance
  * @param filePath Path to the meta.md file
  * @returns Parsed metadata or null if file doesn't exist or parsing fails
@@ -55,44 +54,6 @@ export async function readMetaFile(app: App, filePath: string): Promise<ProjectM
 
     if (!metadata) {
       return null;
-    }
-
-    // Apply legacy project defaults for missing fields
-    if (!metadata.date_created) {
-      // For legacy projects, use file creation time or current time as fallback
-      if (file.stat && typeof file.stat.ctime === "number") {
-        metadata.date_created = new Date(file.stat.ctime).toISOString();
-        debug(
-          `${DEBUG_PREFIX} Applied file creation time as date_created for legacy project: ${metadata.date_created}`,
-        );
-      } else {
-        metadata.date_created = new Date().toISOString();
-        debug(
-          `${DEBUG_PREFIX} Applied current time as date_created for legacy project: ${metadata.date_created}`,
-        );
-      }
-    }
-
-    if (!metadata.date_updated) {
-      // For legacy projects, set to current time
-      metadata.date_updated = new Date().toISOString();
-      debug(
-        `${DEBUG_PREFIX} Applied default date_updated for legacy project: ${metadata.date_updated}`,
-      );
-    }
-
-    // Initialize project_name from project folder name if not set
-    if (!metadata.project_name) {
-      const projectFolderName = filePath.split("/").slice(0, -1).pop() || "Project";
-      metadata.project_name = projectFolderName;
-      debug(
-        `${DEBUG_PREFIX} Applied default project_name for legacy project: ${metadata.project_name}`,
-      );
-    }
-
-    // Initialize total_chapters if not set (will be calculated by updateMetaStats)
-    if (metadata.total_chapters === undefined) {
-      metadata.total_chapters = 0;
     }
 
     return metadata;

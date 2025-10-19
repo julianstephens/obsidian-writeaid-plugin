@@ -1,6 +1,6 @@
 import { debug, DEBUG_PREFIX } from "@/core/utils";
 import type { App } from "obsidian";
-import { Modal, Setting } from "obsidian";
+import { Modal, Setting, TextAreaComponent } from "obsidian";
 
 export class CreateProjectModal extends Modal {
   onSubmit: (
@@ -32,7 +32,7 @@ export class CreateProjectModal extends Modal {
     let projectName = "";
     let singleFile = true;
     let initialDraftName = "Draft 1";
-    let descriptionTextArea: any;
+    let descriptionTextArea: TextAreaComponent;
 
     new Setting(contentEl)
       .setName("Project folder name")

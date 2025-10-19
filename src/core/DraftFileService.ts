@@ -13,9 +13,7 @@ import {
   getManuscriptsFolderName,
   getMetaFileName,
   getOutlineFileName,
-  getProjectIdFromMetadata,
   MARKDOWN_FILE_EXTENSION,
-  migrateOldDraftMetadata,
   PROJECT_TYPE,
   slugifyDraftName,
   suppressAsync,
@@ -59,19 +57,6 @@ export class DraftFileService {
     return projectPath || this.manager?.activeProject || null;
   }
 
-  private getDraftsFolderName(project: string): string | null {
-    const projectFolder = this.app.vault.getAbstractFileByPath(project);
-    const draftsName = getDraftsFolderName(this.manager?.settings);
-    if (projectFolder && projectFolder instanceof TFolder) {
-      for (const child of projectFolder.children) {
-        if (child instanceof TFolder && child.name.toLowerCase() === draftsName.toLowerCase()) {
-          return child.name;
-        }
-      }
-    }
-    return null;
-  }
-
   /**
    * Suggest the next draft name as 'Draft ${meta.total_drafts+1}' using meta.md.
    */
@@ -105,10 +90,8 @@ export class DraftFileService {
       return;
     }
 
-    // Check for existing drafts folder (handles legacy "Drafts" vs standard "drafts")
-    const existingDraftsFolderName = this.getDraftsFolderName(projectPathResolved);
-    const draftsFolderName =
-      existingDraftsFolderName || getDraftsFolderName(this.manager?.settings);
+    // Get the configured drafts folder name
+    const draftsFolderName = getDraftsFolderName(this.manager?.settings);
     const draftsFolder = `${projectPathResolved}/${draftsFolderName}`;
     const newDraftFolder = `${draftsFolder}/${draftName}`;
 
@@ -190,13 +173,21 @@ export class DraftFileService {
 
           // Get project ID from metadata
           const metaPath = `${projectPathResolved}/${getMetaFileName(settings)}`;
-          let projectId = projectName; // fallback to project name if metadata not available
+          let projectId: string | null = null;
           await suppressAsync(async () => {
             const metadata = await readMetaFile(this.app, metaPath);
-            if (metadata) {
-              projectId = getProjectIdFromMetadata(metadata);
+            if (metadata?.project_id) {
+              projectId = metadata.project_id;
             }
           });
+
+          if (!projectId) {
+            debug(
+              `${DEBUG_PREFIX} createDraft: project_id not found in metadata for ${projectPathResolved}`,
+            );
+            new Notice("Project metadata is missing project_id. Please update project metadata.");
+            return;
+          }
 
           // Create frontmatter with all 5 documented fields
           const frontmatter = buildFrontmatter({
@@ -321,7 +312,7 @@ export class DraftFileService {
   async ensureChaptersDraftId(projectPath: string, draftName: string): Promise<void> {
     const project = this.resolveProjectPath(projectPath);
     if (!project) return;
-    const draftsFolderName = this.getDraftsFolderName(project);
+    const draftsFolderName = getDraftsFolderName(this.manager?.settings);
     if (!draftsFolderName) return;
 
     const draftFolder = `${project}/${draftsFolderName}/${draftName}`;
@@ -376,7 +367,7 @@ export class DraftFileService {
       return false;
     }
 
-    const draftsFolderName = this.getDraftsFolderName(project);
+    const draftsFolderName = getDraftsFolderName(this.manager?.settings);
     if (!draftsFolderName) {
       debug(`${DEBUG_PREFIX} updateDraftMetadata: no drafts folder found`);
       return false;
@@ -442,9 +433,6 @@ export class DraftFileService {
 
       let fields = extractFrontmatterFields(fmMatch[1]);
 
-      // Apply migration to support old field names
-      fields = migrateOldDraftMetadata(fields);
-
       // Always update last_updated
       fields.last_updated = new Date().toISOString();
 
@@ -476,7 +464,7 @@ export class DraftFileService {
   async openDraft(projectPath: string | undefined, draftName: string): Promise<boolean> {
     const project = this.resolveProjectPath(projectPath);
     if (!project) return false;
-    const draftsFolderName = this.getDraftsFolderName(project);
+    const draftsFolderName = getDraftsFolderName(this.manager?.settings);
     if (!draftsFolderName) return false;
 
     // Check project type to determine what file to open
@@ -543,7 +531,7 @@ export class DraftFileService {
       debug(`${DEBUG_PREFIX} renameDraft: no project resolved`);
       return false;
     }
-    const draftsFolderName = this.getDraftsFolderName(project);
+    const draftsFolderName = getDraftsFolderName(this.manager?.settings);
     if (!draftsFolderName) {
       debug(`${DEBUG_PREFIX} renameDraft: no drafts folder found`);
       return false;
@@ -650,7 +638,7 @@ export class DraftFileService {
   ): Promise<boolean> {
     const project = this.resolveProjectPath(projectPath);
     if (!project) return false;
-    const draftsFolderName = this.getDraftsFolderName(project);
+    const draftsFolderName = getDraftsFolderName(this.manager?.settings);
     if (!draftsFolderName) return false;
     const draftFolder = `${project}/${draftsFolderName}/${draftName}`;
     try {
@@ -688,7 +676,7 @@ export class DraftFileService {
   ): Promise<boolean> {
     const project = this.resolveProjectPath(projectPath);
     if (!project) return false;
-    const draftsFolderName = this.getDraftsFolderName(project);
+    const draftsFolderName = getDraftsFolderName(this.manager?.settings);
     if (!draftsFolderName) return false;
     const projectType = await this.projectSvc.getProjectType(project);
     const draftFolder = `${project}/${draftsFolderName}/${draftName}`;
@@ -798,7 +786,7 @@ export class DraftFileService {
   getOutlineFile(projectPath: string, draftName: string): TFile | null {
     const project = this.resolveProjectPath(projectPath);
     if (!project) return null;
-    const draftsFolderName = this.getDraftsFolderName(project);
+    const draftsFolderName = getDraftsFolderName(this.manager?.settings);
     if (!draftsFolderName) return null;
     const outlinePath = `${project}/${draftsFolderName}/${draftName}/${getOutlineFileName(this.manager?.settings)}`;
     const outlineFile = this.app.vault.getAbstractFileByPath(outlinePath);
@@ -811,7 +799,7 @@ export class DraftFileService {
   async createOutline(projectPath: string, draftName: string, template: string): Promise<void> {
     const project = this.resolveProjectPath(projectPath);
     if (!project) throw new Error("Project not found");
-    const draftsFolderName = this.getDraftsFolderName(project);
+    const draftsFolderName = getDraftsFolderName(this.manager?.settings);
     if (!draftsFolderName) throw new Error("Drafts folder not found");
     const draftFolder = `${project}/${draftsFolderName}/${draftName}`;
     const outlinePath = `${draftFolder}/${getOutlineFileName(this.manager?.settings)}`;
@@ -873,7 +861,7 @@ export class DraftFileService {
     }
 
     try {
-      const draftsFolderName = this.getDraftsFolderName(project);
+      const draftsFolderName = getDraftsFolderName(this.manager?.settings);
       if (!draftsFolderName) {
         debug(`${DEBUG_PREFIX} No drafts folder found in project`);
         return 0;
@@ -971,15 +959,12 @@ function updateDuplicatedFileMetadata(
   // Parse frontmatter into fields
   let fields = extractFrontmatterFields(frontmatter);
 
-  // Apply migration to support old field names
-  fields = migrateOldDraftMetadata(fields);
-
   // Update fields for the duplicated draft (using new schema)
   fields.draft_name = draftName;
   fields.id = generateDraftId();
   fields.project_id = projectName;
   fields.last_updated = new Date().toISOString();
-  // word_count should already be present from migration or set by migrateOldDraftMetadata
+  fields.word_count = 0;
 
   // Reconstruct the content
   return `${buildFrontmatter(fields)}${body}`;
