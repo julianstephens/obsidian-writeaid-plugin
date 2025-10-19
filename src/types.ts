@@ -48,6 +48,11 @@ export interface WriteAidSettings {
   // Backup settings
   maxBackups?: number;
   maxBackupAgeDays?: number;
+
+  // Manuscript settings
+  authorName?: string;                          // Author name for manuscript metadata headers
+  manuscriptSectionBreak?: 'horizontal' | 'asterisks' | 'dashes';  // Section break style between chapters
+  manuscriptIncludeChapterList?: boolean;       // Include list of chapters in manuscript
 }
 
 // Minimal plugin-like interface used for typing in services

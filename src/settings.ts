@@ -387,6 +387,52 @@ export class WriteAidSettingTab extends PluginSettingTab {
           }),
       );
 
+    containerEl.createEl("h3", { text: "Manuscript Settings" });
+
+    new Setting(containerEl)
+      .setName("Author name for manuscripts")
+      .setDesc("Name to appear in manuscript metadata headers (default: Unknown Author)")
+      .addText((t) =>
+        t
+          .setValue(plugin.settings.authorName || "Unknown Author")
+          .setPlaceholder("Unknown Author")
+          .onChange((v) => {
+            debug(`${DEBUG_PREFIX} Manuscript author name changed: ${v}`);
+            plugin.settings.authorName = v || "Unknown Author";
+            plugin.saveSettings();
+          }),
+      );
+
+    new Setting(containerEl)
+      .setName("Manuscript section break style")
+      .setDesc("Character style for breaks between chapters")
+      .addDropdown((d) => {
+        d.addOption("horizontal", "Horizontal Rule (---)");
+        d.addOption("asterisks", "Asterisks (***)");
+        d.addOption("dashes", "Dashes (---)");
+        d.setValue(plugin.settings.manuscriptSectionBreak || "horizontal");
+        d.onChange((v) => {
+          debug(`${DEBUG_PREFIX} Manuscript section break style changed: ${v}`);
+          plugin.settings.manuscriptSectionBreak = v as WriteAidSettings["manuscriptSectionBreak"];
+          plugin.saveSettings();
+        });
+      });
+
+    new Setting(containerEl)
+      .setName("Include chapter list in manuscript")
+      .setDesc(
+        "If enabled, manuscripts will include a list of all chapters at the start",
+      )
+      .addToggle((toggle) =>
+        toggle
+          .setValue(plugin.settings.manuscriptIncludeChapterList ?? false)
+          .onChange((v) => {
+            debug(`${DEBUG_PREFIX} Include manuscript chapter list changed: ${v}`);
+            plugin.settings.manuscriptIncludeChapterList = v;
+            plugin.saveSettings();
+          }),
+      );
+
     containerEl.createEl("h3", { text: "UI & Startup" });
 
     containerEl.createEl("p", {

@@ -729,7 +729,31 @@ export class DraftFileService {
     });
     const manuscriptPath = `${manuscriptFolder}/${manuscriptBaseName}${MARKDOWN_FILE_EXTENSION}`;
 
-    let manuscriptContent = `# Manuscript for ${draftName}\n\n`;
+    // Get manuscript settings
+    const authorName = this.manager?.settings?.authorName || "Unknown Author";
+    const sectionBreakStyle = this.manager?.settings?.manuscriptSectionBreak || "horizontal";
+
+    // Format current date and time
+    const now = new Date();
+    const formattedDate = now.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+
+    // Build initial manuscript content with metadata header
+    let manuscriptContent = `# ${projectName}\n\n`;
+    manuscriptContent += `**Draft:** ${draftName}\n`;
+    manuscriptContent += `**Author:** ${authorName}\n`;
+    manuscriptContent += `**Generated:** ${formattedDate}\n`;
+
+    // Get section break string based on style
+    const sectionBreak = this.getSectionBreak(sectionBreakStyle);
+
+    let totalWordCount = 0;
+    let chapterCount = 0;
 
     if (projectType === PROJECT_TYPE.SINGLE) {
       const draftFileName = `${draftSlug}${MARKDOWN_FILE_EXTENSION}`;
@@ -737,7 +761,17 @@ export class DraftFileService {
       const draftFile = this.app.vault.getAbstractFileByPath(draftMainPath);
       if (draftFile && draftFile instanceof TFile) {
         const content = await this.app.vault.read(draftFile);
-        manuscriptContent += stripHeadings(stripFrontmatter(content));
+        const bodyContent = stripFrontmatter(content);
+        totalWordCount = countWords(bodyContent);
+        chapterCount = 1;
+
+        // Add word count and chapter count to header
+        manuscriptContent += `**Word Count:** ${totalWordCount.toLocaleString()}\n`;
+        manuscriptContent += `**Chapters:** ${chapterCount}\n\n`;
+        manuscriptContent += `${sectionBreak}\n\n`;
+
+        // Add manuscript body content
+        manuscriptContent += stripHeadings(bodyContent);
 
         // Create or overwrite the manuscript file
         const existingFile = this.app.vault.getAbstractFileByPath(manuscriptPath);
@@ -765,7 +799,25 @@ export class DraftFileService {
         return false;
       }
 
-      // Sort chapters by order and concatenate their content
+      chapterCount = chapters.length;
+
+      // Calculate total word count from all chapters
+      for (const chapter of chapters) {
+        const chapterFilePath = `${draftFolder}/${chapter.name}${MARKDOWN_FILE_EXTENSION}`;
+        const chapterFile = this.app.vault.getAbstractFileByPath(chapterFilePath);
+        if (chapterFile && chapterFile instanceof TFile) {
+          const content = await this.app.vault.read(chapterFile);
+          const bodyContent = stripFrontmatter(content);
+          totalWordCount += countWords(bodyContent);
+        }
+      }
+
+      // Add word count and chapter count to header
+      manuscriptContent += `**Word Count:** ${totalWordCount.toLocaleString()}\n`;
+      manuscriptContent += `**Chapters:** ${chapterCount}\n\n`;
+      manuscriptContent += `${sectionBreak}\n\n`;
+
+      // Add chapters with section breaks
       for (const chapter of chapters) {
         const chapterFilePath = `${draftFolder}/${chapter.name}${MARKDOWN_FILE_EXTENSION}`;
         const chapterFile = this.app.vault.getAbstractFileByPath(chapterFilePath);
@@ -775,7 +827,7 @@ export class DraftFileService {
           const chapterTitle = chapter.chapterName || chapter.name;
           manuscriptContent += `## ${chapterTitle}\n\n`;
           manuscriptContent += stripHeadings(stripFrontmatter(content));
-          manuscriptContent += "\n\n";
+          manuscriptContent += `\n\n${sectionBreak}\n\n`;
         }
       }
 
@@ -796,6 +848,23 @@ export class DraftFileService {
     }
 
     return true;
+  }
+
+  /**
+   * Get the section break string based on the configured style
+   * @param style - The section break style: 'horizontal', 'asterisks', or 'dashes'
+   * @returns The formatted section break string
+   */
+  private getSectionBreak(style: string): string {
+    switch (style) {
+      case "asterisks":
+        return "***";
+      case "dashes":
+        return "---";
+      case "horizontal":
+      default:
+        return "---";
+    }
   }
 
   /**
