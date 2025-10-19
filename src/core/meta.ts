@@ -9,6 +9,7 @@ import {
   FRONTMATTER_REGEX,
   getDraftsFolderName,
   getMetaFileName,
+  isValidChapterFrontmatter,
   type ProjectType,
   WRITEAID_VERSION,
 } from "./utils";
@@ -203,16 +204,9 @@ export async function updateMetaStats(
           try {
             const content = await app.vault.read(file);
             // Check if this is a valid chapter (has required fields: chapter_id, order, chapter_name)
-            // Import the isValidChapter logic inline to avoid circular dependencies
             const fmMatch = content.match(FRONTMATTER_REGEX);
-            if (fmMatch) {
-              const frontmatterContent = fmMatch[1];
-              const hasChapterId = /^chapter_id:\s/m.test(frontmatterContent);
-              const hasOrder = /^order:\s/m.test(frontmatterContent);
-              const hasChapterName = /^chapter_name:\s/m.test(frontmatterContent);
-              if (hasChapterId && hasOrder && hasChapterName) {
-                chapterCount++;
-              }
+            if (fmMatch && isValidChapterFrontmatter(fmMatch[1])) {
+              chapterCount++;
             }
           } catch (error) {
             debug(`Error checking chapter validity for ${file.path}:`, error);

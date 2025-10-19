@@ -269,3 +269,17 @@ export function extractFrontmatterFields(
 
   return fields;
 }
+
+/**
+ * Check if a frontmatter string contains all required chapter fields
+ * Required fields: chapter_id, order, chapter_name
+ * @param frontmatterContent - The frontmatter content string (without --- delimiters)
+ * @returns true if all required chapter fields are present
+ */
+export function isValidChapterFrontmatter(frontmatterContent: string): boolean {
+  // Check for all required chapter fields
+  const hasChapterId = /^chapter_id:\s/m.test(frontmatterContent);
+  const hasOrder = /^order:\s/m.test(frontmatterContent);
+  const hasChapterName = /^chapter_name:\s/m.test(frontmatterContent);
+  return hasChapterId && hasOrder && hasChapterName;
+}
