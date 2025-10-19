@@ -9,7 +9,7 @@
   "autoSelectProjectOnStartup": true,
   "activeProject": "Novel",
   "panelRefreshDebounceMs": 250,
-  "debug": false,
+  "debug": true,
   "includeDraftOutline": false,
   "includeOutlineMetadata": true,
   "outlineMetadataFields": [

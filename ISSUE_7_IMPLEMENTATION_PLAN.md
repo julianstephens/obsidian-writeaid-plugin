@@ -1,4 +1,5 @@
 # Issue #7 Implementation Plan
+
 ## feat: Add Missing Project Metadata Fields
 
 **Issue:** [Add missing project metadata fields (project_name, description, date_created, date_updated, total_chapters) #7](https://github.com/julianstephens/obsidian-writeaid-plugin/issues/7)
@@ -14,6 +15,7 @@
 This issue addresses the gap between documented and implemented metadata fields in the WriteAid plugin. Currently, the documentation describes fields (`project_name`, `description`, `date_created`, `date_updated`, `total_chapters`) that the implementation does not track.
 
 **Key Goals:**
+
 - Add missing metadata fields to align with documentation
 - Improve user experience with better project context
 - Enable project organization and filtering
@@ -23,13 +25,13 @@ This issue addresses the gap between documented and implemented metadata fields 
 
 ## Currently Missing Fields
 
-| Field | Type | Purpose | When Updated |
-|-------|------|---------|--------------|
-| `project_name` | string | User-friendly project name | On creation |
-| `description` | string (optional) | Project description/notes | On creation, user-editable |
-| `date_created` | ISO 8601 date | Project creation date | On creation |
-| `date_updated` | ISO 8601 date | Last project modification | On any project update |
-| `total_chapters` | number | Count of chapters in active draft | On metadata update |
+| Field            | Type              | Purpose                           | When Updated               |
+| ---------------- | ----------------- | --------------------------------- | -------------------------- |
+| `project_name`   | string            | User-friendly project name        | On creation                |
+| `description`    | string (optional) | Project description/notes         | On creation, user-editable |
+| `date_created`   | ISO 8601 date     | Project creation date             | On creation                |
+| `date_updated`   | ISO 8601 date     | Last project modification         | On any project update      |
+| `total_chapters` | number            | Count of chapters in active draft | On metadata update         |
 
 ---
 
@@ -38,17 +40,19 @@ This issue addresses the gap between documented and implemented metadata fields 
 ### Phase 1: Core Metadata Enhancement (2-3 hours)
 
 #### 1.1 Update `ProjectMetadata` Interface
+
 **File:** `src/core/meta.ts`
 
 Add new fields to the interface:
+
 ```typescript
 export interface ProjectMetadata {
   version?: string;
-  project_name?: string;              // NEW
-  description?: string;               // NEW
-  date_created?: string;              // NEW
-  date_updated?: string;              // NEW
-  total_chapters?: number;            // NEW
+  project_name?: string; // NEW
+  description?: string; // NEW
+  date_created?: string; // NEW
+  date_updated?: string; // NEW
+  total_chapters?: number; // NEW
   current_active_draft?: string;
   current_draft_word_count?: number;
   total_drafts: number;
@@ -62,32 +66,39 @@ export interface ProjectMetadata {
 ```
 
 **Acceptance Criteria:**
+
 - [ ] Interface updated with all 5 new fields
 - [ ] Types are correct (string, number, optional as needed)
 - [ ] No TypeScript compilation errors
 
 #### 1.2 Update `updateMetaStats()` Function
+
 **File:** `src/core/meta.ts`
 
 Modify to:
+
 - Always update `date_updated` with current timestamp
 - Calculate `total_chapters` for the active draft
 - Preserve existing values for `project_name` and `description`
 
 **Acceptance Criteria:**
+
 - [ ] `date_updated` is set on every metadata update
 - [ ] `total_chapters` is calculated correctly for active draft
 - [ ] Existing project_name and description are preserved
 
 #### 1.3 Update `formatMetaContent()` Function
+
 **File:** `src/core/meta.ts`
 
 Modify to:
+
 - Include new fields in YAML frontmatter output
 - Display new fields in human-readable section
 - Handle optional fields gracefully
 
 **Expected Output:**
+
 ```markdown
 ---
 version: "0.1.0"
@@ -99,7 +110,6 @@ total_chapters: 12
 current_active_draft: "Draft 1"
 current_draft_word_count: 58450
 total_drafts: 2
-...
 ---
 
 # Project Statistics
@@ -112,6 +122,7 @@ total_drafts: 2
 ```
 
 **Acceptance Criteria:**
+
 - [ ] All new fields appear in YAML section
 - [ ] Human-readable section displays formatted dates
 - [ ] Optional fields handled gracefully (description not shown if empty)
@@ -121,35 +132,43 @@ total_drafts: 2
 ### Phase 2: Project Creation Flow (1-2 hours)
 
 #### 2.1 Update `CreateProjectModal`
+
 **File:** `src/ui/modals/CreateProjectModal.ts`
 
 Add optional description input field:
+
 - Description input should be optional and multiline
 - Shown below project name field
 - Clear placeholder text
 - Reasonable character limit (e.g., 500 characters)
 
 **Acceptance Criteria:**
+
 - [ ] Modal has description input field
 - [ ] Field is optional (can be left blank)
 - [ ] Description is returned in modal result
 - [ ] UI is clean and follows existing design
 
 #### 2.2 Update Manager Creation Flow
+
 **File:** `src/manager.ts`
 
 Update `createNewProjectPrompt()` and related methods:
+
 - Collect description from modal
 - Pass description through to ProjectService
 
 **Acceptance Criteria:**
+
 - [ ] Description flows from modal to service
 - [ ] No breaking changes to existing API
 
 #### 2.3 Update `ProjectService.createProject()`
+
 **File:** `src/core/ProjectService.ts`
 
 Set initial metadata when creating project:
+
 ```typescript
 const metadata: ProjectMetadata = {
   version: WRITEAID_VERSION,
@@ -158,12 +177,13 @@ const metadata: ProjectMetadata = {
   date_created: new Date().toISOString(),
   date_updated: new Date().toISOString(),
   total_drafts: 1,
-  total_chapters: 0,  // Will be calculated on first draft creation
-  project_type: singleFile ? 'single-file' : 'multi-file',
+  total_chapters: 0, // Will be calculated on first draft creation
+  project_type: singleFile ? "single-file" : "multi-file",
 };
 ```
 
 **Acceptance Criteria:**
+
 - [ ] All new fields are set during project creation
 - [ ] ISO 8601 timestamps are used
 - [ ] `total_chapters` is initialized to 0 (or updated after first draft)
@@ -173,33 +193,40 @@ const metadata: ProjectMetadata = {
 ### Phase 3: Metadata Update Logic (1-2 hours)
 
 #### 3.1 Calculate `total_chapters` on Draft Operations
+
 **File:** `src/core/DraftFileService.ts`
 
 Update when:
+
 - Creating new draft
 - Deleting draft
 - Creating chapters
 
 Calculation logic:
+
 - Get active draft from meta.md
 - Count valid chapters (those with required fields: id, order, chapter_name)
 - Store in metadata
 
 **Acceptance Criteria:**
+
 - [ ] `total_chapters` updated when chapters added/removed
 - [ ] Count is accurate for active draft only
 - [ ] Works for both single-file and multi-file projects
 
 #### 3.2 Update `date_updated` on All Project Changes
+
 **File:** `src/core/meta.ts` (updateMetaStats function)
 
 Ensure `date_updated` is set whenever:
+
 - Draft is created/renamed/deleted
 - Chapter is created/modified/deleted
 - Project metadata is updated
 - Any project-related operation occurs
 
 **Acceptance Criteria:**
+
 - [ ] `date_updated` changes on every relevant operation
 - [ ] Timestamps are accurate
 - [ ] No operations missed
@@ -209,9 +236,11 @@ Ensure `date_updated` is set whenever:
 ### Phase 4: Backward Compatibility & Testing (1-2 hours)
 
 #### 4.1 Handle Legacy Projects
+
 **File:** `src/core/meta.ts`
 
 When reading existing projects without new fields:
+
 - Set `project_name` to project folder name if not present
 - Leave `description` as empty string
 - Set `date_created` to file creation time or current time (with note)
@@ -219,14 +248,17 @@ When reading existing projects without new fields:
 - Calculate `total_chapters` from active draft
 
 **Acceptance Criteria:**
+
 - [ ] Existing projects load without errors
 - [ ] Missing fields are populated with sensible defaults
 - [ ] No data loss
 
 #### 4.2 Comprehensive Testing
+
 **File:** Test scenarios documented below
 
 Test cases to verify:
+
 1. ✓ Create new project with description
 2. ✓ Verify meta.md contains all new fields
 3. ✓ Create new project without description (optional)
@@ -246,6 +278,7 @@ Test cases to verify:
 ## Files to Modify
 
 ### Core Implementation
+
 1. **`src/core/meta.ts`**
    - Update `ProjectMetadata` interface
    - Update `updateMetaStats()` function
@@ -268,6 +301,7 @@ Test cases to verify:
    - Update chapter operations to trigger `total_chapters` calculation
 
 ### Documentation
+
 6. **`docs/ProjectStructureAndSettings.md`**
    - Update project metadata table
    - Add example meta.md with new fields
@@ -322,7 +356,9 @@ Test cases to verify:
    - Verify changes persist
 
 ### Automated Acceptance Test
+
 Create comprehensive test script covering all acceptance criteria:
+
 - Verify all 5 new fields are present in ProjectMetadata interface
 - Test project creation with and without description
 - Verify ISO 8601 date format
@@ -336,24 +372,28 @@ Create comprehensive test script covering all acceptance criteria:
 ## Implementation Checklist
 
 ### Phase 1: Core Enhancement
+
 - [ ] Update ProjectMetadata interface with 5 new fields
 - [ ] Update updateMetaStats() to set date_updated and calculate total_chapters
 - [ ] Update formatMetaContent() to include new fields in output
 - [ ] Test interface updates compile without errors
 
 ### Phase 2: Project Creation
+
 - [ ] Add description input to CreateProjectModal
 - [ ] Update manager.createNewProjectPrompt() to collect description
 - [ ] Update ProjectService.createProject() to set all new fields
 - [ ] Test project creation with and without description
 
 ### Phase 3: Metadata Operations
+
 - [ ] Ensure date_updated updates on all project changes
 - [ ] Implement total_chapters calculation for active draft
 - [ ] Test chapter operations trigger updates
 - [ ] Test metadata consistency across operations
 
 ### Phase 4: Testing & Polish
+
 - [ ] Handle legacy projects gracefully
 - [ ] Test backward compatibility
 - [ ] Run comprehensive acceptance tests
@@ -383,7 +423,7 @@ Create comprehensive test script covering all acceptance criteria:
 ✅ `total_chapters` accurately calculated  
 ✅ Backward compatible with existing projects  
 ✅ Build passes without errors  
-✅ No regressions in existing functionality  
+✅ No regressions in existing functionality
 
 ---
 
@@ -394,4 +434,3 @@ Create comprehensive test script covering all acceptance criteria:
 - For legacy projects, use file system dates as fallback for `date_created`
 - Description is optional and can be empty string
 - Human-readable dates should be formatted for user's locale
-

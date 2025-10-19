@@ -93,13 +93,7 @@ export class ProjectService {
     await this.projectFileService.drafts.createDraft(draftName, undefined, projectPath, settings);
 
     // Update metadata after creating the draft to properly count chapters
-    await updateMetaStats(
-      this.app,
-      projectPath,
-      draftName,
-      undefined,
-      settings,
-    );
+    await updateMetaStats(this.app, projectPath, draftName, undefined, settings);
 
     return projectPath;
   }

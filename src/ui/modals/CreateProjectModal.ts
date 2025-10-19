@@ -67,7 +67,12 @@ export class CreateProjectModal extends Modal {
             `${DEBUG_PREFIX} CreateProjectModal: creating project "${projectName}", singleFile: ${singleFile}, initialDraftName: ${initialDraftName}, description: ${description}`,
           );
           this.close();
-          this.onSubmit(projectName, singleFile, initialDraftName || undefined, description || undefined);
+          this.onSubmit(
+            projectName,
+            singleFile,
+            initialDraftName || undefined,
+            description || undefined,
+          );
         }),
     );
   }

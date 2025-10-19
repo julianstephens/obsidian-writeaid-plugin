@@ -11,13 +11,12 @@ import {
   suppressAsync,
 } from "@/core/utils";
 import type { PluginLike, WriteAidSettings } from "@/types";
-import { App, Notice } from "obsidian";
-
 import { ConfirmExistingProjectModal } from "@/ui/modals/ConfirmExistingProjectModal";
 import { CreateDraftModal } from "@/ui/modals/CreateDraftModal";
 import { CreateProjectModal } from "@/ui/modals/CreateProjectModal";
 import { SelectProjectModal } from "@/ui/modals/SelectProjectModal";
 import { SwitchDraftModal } from "@/ui/modals/SwitchDraftModal";
+import { App, Notice } from "obsidian";
 
 export class WriteAidManager {
   app: App;

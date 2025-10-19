@@ -285,29 +285,31 @@ export class ChapterFileService {
       last_updated: now,
     });
     await this.app.vault.create(filePath, `${frontmatter}${title}\n\n`);
-    debug(
-      `${DEBUG_PREFIX} createChapter: created chapter file`,
-      {
-        filePath,
-        order,
-        chapter_name: chapterName,
-        chapter_id: chapterId,
-        draft_id: finalDraftId,
-        word_count: 0,
-        last_updated: now,
-      }
-    );
-    
+    debug(`${DEBUG_PREFIX} createChapter: created chapter file`, {
+      filePath,
+      order,
+      chapter_name: chapterName,
+      chapter_id: chapterId,
+      draft_id: finalDraftId,
+      word_count: 0,
+      last_updated: now,
+    });
+
     // Update metadata to recalculate total_chapters
     await suppressAsync(async () => {
       await updateMetaStats(this.app, project, draftName, undefined, settings);
     });
-    
+
     return true;
   }
 
   /** Delete a chapter file from a draft folder. */
-  async deleteChapter(projectPath: string, draftName: string, chapterName: string, settings?: WriteAidSettings) {
+  async deleteChapter(
+    projectPath: string,
+    draftName: string,
+    chapterName: string,
+    settings?: WriteAidSettings,
+  ) {
     debug(`${DEBUG_PREFIX} deleteChapter called: chapterName=${chapterName}, draft=${draftName}`);
     const project = this.resolveProjectPath(projectPath);
     if (!project) {
@@ -344,12 +346,12 @@ export class ChapterFileService {
           }
         }
       }
-      
+
       // Update metadata to recalculate total_chapters
       await suppressAsync(async () => {
         await updateMetaStats(this.app, project, draftName, undefined, settings);
       });
-      
+
       return true;
     }
     return false;
