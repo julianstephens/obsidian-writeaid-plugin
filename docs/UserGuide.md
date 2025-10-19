@@ -188,6 +188,7 @@ This makes outlines machine-readable and trackable across your project.
 - **Metadata control** - Toggle frontmatter generation in settings
 
 ---
+
 - **Field selection** - Choose which metadata fields to include
 - **Template editing** - Customize the outline structure in settings
 

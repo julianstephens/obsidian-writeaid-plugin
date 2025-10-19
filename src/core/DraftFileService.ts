@@ -187,7 +187,7 @@ export class DraftFileService {
         if (!this.app.vault.getAbstractFileByPath(draftMainPath)) {
           const draftId = generateDraftId();
           const now = new Date().toISOString();
-          
+
           // Get project ID from metadata
           const metaPath = `${projectPathResolved}/${getMetaFileName(settings)}`;
           let projectId = projectName; // fallback to project name if metadata not available
@@ -197,7 +197,7 @@ export class DraftFileService {
               projectId = getProjectIdFromMetadata(metadata);
             }
           });
-          
+
           // Create frontmatter with all 5 documented fields
           const frontmatter = buildFrontmatter({
             id: draftId,
@@ -206,7 +206,7 @@ export class DraftFileService {
             word_count: 0,
             last_updated: now,
           });
-          
+
           const projectContent = await this.tpl.render("# {{draftName}}", {
             draftName,
           });
@@ -398,7 +398,7 @@ export class DraftFileService {
       // Multi-file project: sum all chapters and update draft metadata if needed
       const draftFolder = `${project}/${draftsFolderName}/${draftName}`;
       const files = this.app.vault.getFiles().filter((f) => f.path.startsWith(draftFolder));
-      
+
       // For multi-file projects, we update all chapters' last_updated
       for (const file of files) {
         if (file instanceof TFile && file.extension === MARKDOWN_FILE_EXTENSION.slice(1)) {
@@ -422,10 +422,7 @@ export class DraftFileService {
    * @param wordCount - Optional new word count
    * @returns true if update was successful
    */
-  async updateDraftLastUpdated(
-    filePath: string,
-    wordCount?: number,
-  ): Promise<boolean> {
+  async updateDraftLastUpdated(filePath: string, wordCount?: number): Promise<boolean> {
     debug(`${DEBUG_PREFIX} updateDraftLastUpdated called for ${filePath}`);
 
     const file = this.app.vault.getAbstractFileByPath(filePath);
@@ -444,7 +441,7 @@ export class DraftFileService {
       }
 
       let fields = extractFrontmatterFields(fmMatch[1]);
-      
+
       // Apply migration to support old field names
       fields = migrateOldDraftMetadata(fields);
 
@@ -973,7 +970,7 @@ function updateDuplicatedFileMetadata(
 
   // Parse frontmatter into fields
   let fields = extractFrontmatterFields(frontmatter);
-  
+
   // Apply migration to support old field names
   fields = migrateOldDraftMetadata(fields);
 

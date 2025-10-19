@@ -7,9 +7,9 @@
   "ribbonAlwaysShow": false,
   "autoOpenPanelOnStartup": false,
   "autoSelectProjectOnStartup": true,
-  "activeProject": "Novel",
+  "activeProject": "Short Story",
   "panelRefreshDebounceMs": 250,
-  "debug": true,
+  "debug": false,
   "includeDraftOutline": false,
   "includeOutlineMetadata": true,
   "outlineMetadataFields": [

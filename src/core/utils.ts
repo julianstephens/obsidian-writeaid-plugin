@@ -337,9 +337,7 @@ export function isValidChapterFrontmatter(frontmatterContent: string): boolean {
  * // Old fields: { draft: "Draft 1", project: "MyProject", created: "2025-01-15T..." }
  * // New fields: { draft_name: "Draft 1", project_id: "MyProject", last_updated: "2025-01-15T...", word_count: 0 }
  */
-export function migrateOldDraftMetadata(
-  fields: Record<string, any>,
-): Record<string, any> {
+export function migrateOldDraftMetadata(fields: Record<string, any>): Record<string, any> {
   const migrated = { ...fields };
 
   // Map old field names to new ones

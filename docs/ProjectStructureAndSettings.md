@@ -130,13 +130,13 @@ Once upon a time...
 
 **Frontmatter Fields (5 fields required):**
 
-| Field | Type | Purpose | Example |
-|-------|------|---------|---------|
-| `id` | UUID | Unique identifier for this draft | `"abc123def456"` |
-| `draft_name` | String | Display name of the draft | `"Draft 1"` |
-| `project_id` | UUID | ID of the parent project | `"proj789"` |
-| `word_count` | Number | Current word count (auto-calculated) | `58450` |
-| `last_updated` | ISO 8601 | Last modification timestamp | `2025-01-15T14:30:45Z` |
+| Field          | Type     | Purpose                              | Example                |
+| -------------- | -------- | ------------------------------------ | ---------------------- |
+| `id`           | UUID     | Unique identifier for this draft     | `"abc123def456"`       |
+| `draft_name`   | String   | Display name of the draft            | `"Draft 1"`            |
+| `project_id`   | UUID     | ID of the parent project             | `"proj789"`            |
+| `word_count`   | Number   | Current word count (auto-calculated) | `58450`                |
+| `last_updated` | ISO 8601 | Last modification timestamp          | `2025-01-15T14:30:45Z` |
 
 **Field Details:**
 
@@ -179,6 +179,7 @@ Once upon a time...
 **Backward Compatibility:**
 
 WriteAid supports reading old field names for existing single-file drafts:
+
 - `draft` (old) → `draft_name` (new)
 - `project` (old) → `project_id` (new)
 - `created` (old) → `last_updated` (new)

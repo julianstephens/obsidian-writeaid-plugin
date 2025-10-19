@@ -1,9 +1,9 @@
 ---
-draft: Draft 1
-id: 6ff4275c-1bb3-48eb-aefb-070bbfb1cd1c
-project: Short Story
-created: "2025-10-19T00:24:04.410Z"
-last_updated: "2025-10-19T00:24:06.171Z"
+id: c80e2726-cf2c-4c2b-96e3-d83fc57006e9
+draft_name: Draft 1
+project_id: 9877f732-c906-4337-b078-c79a47d0dd24
+word_count: 0
+last_updated: "2025-10-19T02:21:53.790Z"
 ---
 
 
