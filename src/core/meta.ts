@@ -59,10 +59,17 @@ export async function readMetaFile(app: App, filePath: string): Promise<ProjectM
     // Apply legacy project defaults for missing fields
     if (!metadata.date_created) {
       // For legacy projects, use file creation time or current time as fallback
-      metadata.date_created = new Date().toISOString();
-      debug(
-        `${DEBUG_PREFIX} Applied default date_created for legacy project: ${metadata.date_created}`,
-      );
+      if (file.stat && typeof file.stat.ctime === "number") {
+        metadata.date_created = new Date(file.stat.ctime).toISOString();
+        debug(
+          `${DEBUG_PREFIX} Applied file creation time as date_created for legacy project: ${metadata.date_created}`,
+        );
+      } else {
+        metadata.date_created = new Date().toISOString();
+        debug(
+          `${DEBUG_PREFIX} Applied current time as date_created for legacy project: ${metadata.date_created}`,
+        );
+      }
     }
 
     if (!metadata.date_updated) {
