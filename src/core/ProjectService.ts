@@ -8,6 +8,7 @@ import {
   asyncFilter,
   debug,
   DEBUG_PREFIX,
+  generateDraftId,
   getDraftsFolderName,
   getManuscriptsFolderName,
   getMetaFileName,
@@ -71,12 +72,15 @@ export class ProjectService {
       const targetWordCount = singleFile
         ? (settings?.defaultSingleTargetWordCount ?? 20000)
         : (settings?.defaultMultiTargetWordCount ?? 50000);
+      // Generate a unique project ID
+      const projectId = generateDraftId();
       // Use updateMetaStats to create meta.md with proper formatting and version
       await updateMetaStats(
         this.app,
         projectPath,
         undefined,
         {
+          project_id: projectId,
           project_name: projectName,
           description: description || "",
           date_created: new Date().toISOString(),

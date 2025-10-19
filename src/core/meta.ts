@@ -19,6 +19,7 @@ import {
  */
 export interface ProjectMetadata {
   version?: string; // WriteAid project version for compatibility
+  project_id?: string; // UUID unique identifier for the project
   project_name?: string; // User-friendly project name
   description?: string; // Optional project description/notes
   date_created?: string; // ISO 8601 creation date
@@ -287,6 +288,9 @@ function formatMetaContent(metadata: ProjectMetadata): string {
 
   if (metadata.version !== undefined) {
     fields.version = metadata.version;
+  }
+  if (metadata.project_id !== undefined) {
+    fields.project_id = metadata.project_id;
   }
   if (metadata.project_name !== undefined) {
     fields.project_name = metadata.project_name;
