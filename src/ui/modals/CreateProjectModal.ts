@@ -8,6 +8,7 @@ export class CreateProjectModal extends Modal {
     singleFile: boolean,
     initialDraftName?: string,
     description?: string,
+    parentFolder?: string,
   ) => void;
 
   constructor(
@@ -17,6 +18,7 @@ export class CreateProjectModal extends Modal {
       singleFile: boolean,
       initialDraftName?: string,
       description?: string,
+      parentFolder?: string,
     ) => void,
   ) {
     super(app);
@@ -73,6 +75,7 @@ export class CreateProjectModal extends Modal {
             singleFile,
             initialDraftName || undefined,
             description || undefined,
+            undefined, // parentFolder - optional, not supported by basic modal
           );
         }),
     );
