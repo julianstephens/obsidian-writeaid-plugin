@@ -450,18 +450,22 @@ export class ChapterFileService {
    * @returns true if the chapter has all required fields
    */
   private hasRequiredChapterFields(frontmatter: string): boolean {
-    // Check for all required fields defined in REQUIRED_CHAPTER_FIELDS
-    const hasChapterId = /^chapter_id:\s*\S+/im.test(frontmatter);
-    const hasOrder = /^order:\s*\d+/im.test(frontmatter);
-    const hasChapterName = /^chapter_name:\s*\S+/im.test(frontmatter);
-    const hasDraftId = /^draft_id:\s*\S+/im.test(frontmatter);
-    const hasWordCount = /^word_count:\s*\d+/im.test(frontmatter);
-    const hasLastUpdated = /^last_updated:\s*\S+/im.test(frontmatter);
-
-    // Require all fields as defined in REQUIRED_CHAPTER_FIELDS constant
-    return (
-      hasChapterId && hasOrder && hasChapterName && hasDraftId && hasWordCount && hasLastUpdated
-    );
+    // Check for all required fields defined in REQUIRED_CHAPTER_FIELDS constant
+    for (const field of ChapterFileService.REQUIRED_CHAPTER_FIELDS) {
+      // Build regex pattern based on field type
+      let pattern: RegExp;
+      if (field === "order" || field === "word_count") {
+        // Numeric fields
+        pattern = new RegExp(`^${field}:\\s*\\d+`, "im");
+      } else {
+        // String fields
+        pattern = new RegExp(`^${field}:\\s*\\S+`, "im");
+      }
+      if (!pattern.test(frontmatter)) {
+        return false;
+      }
+    }
+    return true;
   }
 
   /**
