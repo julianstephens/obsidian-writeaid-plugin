@@ -97,13 +97,13 @@ export class ProjectService {
     await this.projectFileService.drafts.createDraft(draftName, undefined, projectPath, settings);
 
     // Update metadata after creating the draft to properly count chapters
-    // Read existing metadata first to preserve fields like description
+    // Read existing metadata first to preserve all existing fields
     const existingMeta = await readMetaFile(this.app, metaPath);
     await updateMetaStats(
       this.app,
       projectPath,
       draftName,
-      existingMeta ? { description: existingMeta.description } : undefined,
+      existingMeta || undefined,
       settings,
     );
 
