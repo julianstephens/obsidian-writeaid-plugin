@@ -92,6 +92,15 @@ export class ProjectService {
     const draftName = initialDraftName || "Draft 1";
     await this.projectFileService.drafts.createDraft(draftName, undefined, projectPath, settings);
 
+    // Update metadata after creating the draft to properly count chapters
+    await updateMetaStats(
+      this.app,
+      projectPath,
+      draftName,
+      undefined,
+      settings,
+    );
+
     return projectPath;
   }
 
