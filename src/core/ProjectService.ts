@@ -5,17 +5,17 @@ import type { WriteAidSettings } from "@/types";
 import { App, normalizePath, Notice, TFile, TFolder } from "obsidian";
 import { readMetaFile, updateMetaStats } from "./meta";
 import {
-  asyncFilter,
-  debug,
-  DEBUG_PREFIX,
-  generateDraftId,
-  getDraftsFolderName,
-  getManuscriptsFolderName,
-  getMetaFileName,
-  getOutlineFileName,
-  MARKDOWN_FILE_EXTENSION,
-  PROJECT_TYPE,
-  type ProjectType,
+    asyncFilter,
+    debug,
+    DEBUG_PREFIX,
+    generateDraftId,
+    getDraftsFolderName,
+    getManuscriptsFolderName,
+    getMetaFileName,
+    getOutlineFileName,
+    MARKDOWN_FILE_EXTENSION,
+    PROJECT_TYPE,
+    type ProjectType,
 } from "./utils";
 
 export class ProjectService {
@@ -97,7 +97,15 @@ export class ProjectService {
     await this.projectFileService.drafts.createDraft(draftName, undefined, projectPath, settings);
 
     // Update metadata after creating the draft to properly count chapters
-    await updateMetaStats(this.app, projectPath, draftName, undefined, settings);
+    // Read existing metadata first to preserve fields like description
+    const existingMeta = await readMetaFile(this.app, metaPath);
+    await updateMetaStats(
+      this.app,
+      projectPath,
+      draftName,
+      existingMeta ? { description: existingMeta.description } : undefined,
+      settings,
+    );
 
     return projectPath;
   }
