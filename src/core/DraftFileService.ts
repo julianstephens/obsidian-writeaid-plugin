@@ -95,8 +95,6 @@ export class DraftFileService {
     const draftsFolder = `${projectPathResolved}/${draftsFolderName}`;
     const newDraftFolder = `${draftsFolder}/${draftName}`;
 
-    const projectName = projectPathResolved.split("/").pop() || projectPathResolved;
-
     if (!this.app.vault.getAbstractFileByPath(draftsFolder)) {
       await this.app.vault.createFolder(draftsFolder);
     }
@@ -109,6 +107,22 @@ export class DraftFileService {
       debug(`${DEBUG_PREFIX} createDraft: copying from draft ${copyFromDraft}`);
       const sourceFolder = `${draftsFolder}/${copyFromDraft}`;
       const files = this.app.vault.getFiles().filter((file) => file.path.startsWith(sourceFolder));
+
+      // Get the project ID from metadata for duplicated files
+      let projectId: string | null = null;
+      await suppressAsync(async () => {
+        const metaPath = `${projectPathResolved}/${getMetaFileName(settings)}`;
+        const metadata = await readMetaFile(this.app, metaPath);
+        if (metadata?.project_id) {
+          projectId = metadata.project_id;
+        }
+      });
+
+      if (!projectId) {
+        debug(`${DEBUG_PREFIX} createDraft: project_id not found in metadata`);
+        new Notice("Project metadata is missing project_id. Cannot copy draft.");
+        return;
+      }
 
       // Check if this might be a single-file project by looking for the main draft file
       const sourceSlug = slugifyDraftName(
@@ -139,7 +153,7 @@ export class DraftFileService {
 
         let content = await this.app.vault.read(file);
 
-        content = updateDuplicatedFileMetadata(content, draftName, projectName);
+        content = updateDuplicatedFileMetadata(content, draftName, projectId);
 
         await this.app.vault.create(destPath, content);
       }
@@ -945,7 +959,7 @@ function stripHeadings(content: string): string {
 function updateDuplicatedFileMetadata(
   content: string,
   draftName: string,
-  projectName: string,
+  projectId: string,
 ): string {
   // Check if the content has frontmatter
   const fmMatch = content.match(FRONTMATTER_REGEX);
@@ -962,7 +976,7 @@ function updateDuplicatedFileMetadata(
   // Update fields for the duplicated draft (using new schema)
   fields.draft_name = draftName;
   fields.id = generateDraftId();
-  fields.project_id = projectName;
+  fields.project_id = projectId;
   fields.last_updated = new Date().toISOString();
   fields.word_count = 0;
 
