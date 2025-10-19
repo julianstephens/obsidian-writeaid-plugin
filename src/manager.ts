@@ -53,7 +53,11 @@ export class WriteAidManager {
    * Reorder chapters in a draft.
    * @param projectPath Project folder path
    * @param draftName Draft name
-   * @param newOrder Array of chapter objects in new order with name and chapterName
+   * @param newOrder Array of chapter objects in new order. Each object should have:
+   *   - name: The internal identifier or filename for the chapter (used for referencing the chapter in code or storage).
+   *   - chapterName: The display name or title of the chapter (shown to users in the UI).
+   *   - order: The new order index for the chapter.
+   *   Use 'name' for programmatic operations and 'chapterName' for user-facing display.
    */
   async reorderChapters(
     projectPath: string,
