@@ -731,10 +731,13 @@ export class DraftFileService {
 
     // Get manuscript settings
     // Use configured author name if set, otherwise fall back to "Unknown Author"
-    const authorName = this.manager?.settings?.authorName?.trim() 
-      ? this.manager.settings.authorName 
+    const authorName = (settings?.authorName || this.manager?.settings?.authorName)?.trim()
+      ? settings?.authorName || this.manager?.settings?.authorName
       : "Unknown Author";
-    const sectionBreakStyle = this.manager?.settings?.manuscriptSectionBreak || "horizontal";
+    const sectionBreakStyle =
+      settings?.manuscriptSectionBreak ||
+      this.manager?.settings?.manuscriptSectionBreak ||
+      "horizontal";
 
     // Format current date and time
     const now = new Date();

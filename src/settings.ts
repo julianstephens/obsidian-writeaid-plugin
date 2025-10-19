@@ -68,46 +68,33 @@ export class WriteAidSettingTab extends PluginSettingTab {
       .setDesc(
         "If enabled, each new draft will include an outline file using the outline template.",
       )
-      .addToggle((toggle) =>
-        toggle.setValue(!!plugin.settings.includeDraftOutline).onChange((v) => {
-          debug(`${DEBUG_PREFIX} Include draft outline changed: ${v}`);
-          plugin.settings.includeDraftOutline = v;
-          plugin.saveSettings();
-        }),
-      );
+      .addToggle((toggle) => {
+        const checkboxEl = toggle.toggleEl as HTMLElement;
+        if (checkboxEl) checkboxEl.setAttribute("data-setting", "includeDraftOutline");
+        toggle.setValue(!!plugin.settings.includeDraftOutline);
+      });
 
     new Setting(containerEl)
       .setName("Include metadata in outline files")
       .setDesc(
         "If enabled, outline files will include frontmatter metadata (draft_id, type, created).",
       )
-      .addToggle((toggle) =>
-        toggle.setValue(plugin.settings.includeOutlineMetadata ?? true).onChange((v) => {
-          debug(`${DEBUG_PREFIX} Include outline metadata changed: ${v}`);
-          plugin.settings.includeOutlineMetadata = v;
-          plugin.saveSettings();
-        }),
-      );
+      .addToggle((toggle) => {
+        const checkboxEl = toggle.toggleEl as HTMLElement;
+        if (checkboxEl) checkboxEl.setAttribute("data-setting", "includeOutlineMetadata");
+        toggle.setValue(plugin.settings.includeOutlineMetadata ?? true);
+      });
 
     new Setting(containerEl)
       .setName("Outline metadata fields")
       .setDesc("Which metadata fields to include in outline frontmatter (comma-separated).")
-      .addText((t) =>
-        t
-          .setValue(
-            (plugin.settings.outlineMetadataFields ?? ["draft_id", "type", "created"]).join(", "),
-          )
-          .setPlaceholder("draft_id, type, created")
-          .onChange((v) => {
-            const fields = v
-              .split(",")
-              .map((s) => s.trim())
-              .filter((s) => s.length > 0);
-            debug(`${DEBUG_PREFIX} Outline metadata fields changed: ${fields.join(", ")}`);
-            plugin.settings.outlineMetadataFields = fields;
-            plugin.saveSettings();
-          }),
-      );
+      .addText((t) => {
+        t.inputEl.setAttribute("data-setting", "outlineMetadataFields");
+        t.setValue(
+          (plugin.settings.outlineMetadataFields ?? ["draft_id", "type", "created"]).join(", "),
+        );
+        t.setPlaceholder("draft_id, type, created");
+      });
 
     new Setting(containerEl)
       .setName("Outline template")
@@ -163,16 +150,6 @@ export class WriteAidSettingTab extends PluginSettingTab {
         }),
       );
 
-    new Setting(containerEl)
-      .setName("Manuscript name template")
-      .setDesc(
-        "Template for manuscript filenames. Use {{draftName}}, {{projectName}}, and moment.js date qualifiers like {{YYYY-MM-DD}}",
-      )
-      .addText((t) => {
-        t.setValue(plugin.settings.manuscriptNameTemplate || "{{draftName}}");
-        t.inputEl.setAttribute("data-setting", "manuscript");
-      });
-
     // Save Templates button
     new Setting(containerEl).addButton((btn) =>
       btn
@@ -187,21 +164,46 @@ export class WriteAidSettingTab extends PluginSettingTab {
           const chapterInput = containerEl.querySelector(
             'textarea[data-setting="chapter"]',
           ) as HTMLTextAreaElement;
-          const manuscriptInput = containerEl.querySelector(
-            'input[data-setting="manuscript"]',
+          const includeDraftOutlineCheckbox = containerEl.querySelector(
+            'input[data-setting="includeDraftOutline"]',
+          ) as HTMLInputElement;
+          const includeOutlineMetadataCheckbox = containerEl.querySelector(
+            'input[data-setting="includeOutlineMetadata"]',
+          ) as HTMLInputElement;
+          const outlineMetadataFieldsInput = containerEl.querySelector(
+            'input[data-setting="outlineMetadataFields"]',
           ) as HTMLInputElement;
 
           debug(
-            `${DEBUG_PREFIX} Found inputs - outline: ${!!outlineInput}, chapter: ${!!chapterInput}, manuscript: ${!!manuscriptInput}`,
+            `${DEBUG_PREFIX} Found inputs - outline: ${!!outlineInput}, chapter: ${!!chapterInput}`,
           );
-          debug(`${DEBUG_PREFIX} Manuscript input value: "${manuscriptInput?.value}"`);
 
+          // Update settings from checkbox values
+          if (includeDraftOutlineCheckbox) {
+            plugin.settings.includeDraftOutline = includeDraftOutlineCheckbox.checked;
+            debug(`${DEBUG_PREFIX} Include draft outline: ${includeDraftOutlineCheckbox.checked}`);
+          }
+          if (includeOutlineMetadataCheckbox) {
+            plugin.settings.includeOutlineMetadata = includeOutlineMetadataCheckbox.checked;
+            debug(
+              `${DEBUG_PREFIX} Include outline metadata: ${includeOutlineMetadataCheckbox.checked}`,
+            );
+          }
+          if (outlineMetadataFieldsInput) {
+            const fields = outlineMetadataFieldsInput.value
+              .split(",")
+              .map((s) => s.trim())
+              .filter((s) => s.length > 0);
+            plugin.settings.outlineMetadataFields = fields;
+            debug(`${DEBUG_PREFIX} Outline metadata fields: ${fields.join(", ")}`);
+          }
+
+          // Update settings from text input values
           if (outlineInput) plugin.settings.outlineTemplate = outlineInput.value;
           if (chapterInput) plugin.settings.chapterTemplate = chapterInput.value;
-          if (manuscriptInput) plugin.settings.manuscriptNameTemplate = manuscriptInput.value;
 
           debug(
-            `${DEBUG_PREFIX} Saving templates: outline=${plugin.settings.outlineTemplate?.substring(0, 50)}..., chapter=${plugin.settings.chapterTemplate?.substring(0, 50)}..., manuscript=${plugin.settings.manuscriptNameTemplate}`,
+            `${DEBUG_PREFIX} Saving templates: outline=${plugin.settings.outlineTemplate?.substring(0, 50)}..., chapter=${plugin.settings.chapterTemplate?.substring(0, 50)}...`,
           );
 
           await plugin.saveSettings();
@@ -218,36 +220,29 @@ export class WriteAidSettingTab extends PluginSettingTab {
         d.addOption("compact", "compact (draft1)");
         d.addOption("kebab", "kebab (draft-1)");
         d.setValue(plugin.settings.slugStyle || "compact");
-        d.onChange((v) => {
-          debug(`${DEBUG_PREFIX} Slug style changed: ${v}`);
-          plugin.settings.slugStyle = v as WriteAidSettings["slugStyle"];
-          plugin.saveSettings();
-          const prev = containerEl.querySelector(".wat-slug-preview");
-          if (prev)
-            prev.textContent = `Example: Draft 1 → ${slugifyDraftName("Draft 1", v as WriteAidSettings["slugStyle"])}${MARKDOWN_FILE_EXTENSION}`;
-        });
+        d.selectEl.setAttribute("data-setting", "slugStyle");
       });
 
     let sampleName = "Draft 1";
     new Setting(containerEl)
       .setName("Sample draft name")
       .setDesc("Type a sample draft name to preview the generated filename")
-      .addText((t) =>
-        t
-          .setPlaceholder("Draft 1")
-          .setValue(sampleName)
-          .onChange((v) => {
-            sampleName = v || "Draft 1";
-            const prev = containerEl.querySelector(".wat-slug-preview");
-            if (prev) {
-              const s = slugifyDraftName(
-                sampleName,
-                plugin.settings.slugStyle as WriteAidSettings["slugStyle"],
-              );
-              prev.textContent = `Example: ${sampleName} → ${s}${MARKDOWN_FILE_EXTENSION}`;
-            }
-          }),
-      );
+      .addText((t) => {
+        t.inputEl.setAttribute("data-setting", "sampleDraftName");
+        t.setPlaceholder("Draft 1");
+        t.setValue(sampleName);
+        t.onChange((v) => {
+          sampleName = v || "Draft 1";
+          const prev = containerEl.querySelector(".wat-slug-preview");
+          if (prev) {
+            const s = slugifyDraftName(
+              sampleName,
+              plugin.settings.slugStyle as WriteAidSettings["slugStyle"],
+            );
+            prev.textContent = `Example: ${sampleName} → ${s}${MARKDOWN_FILE_EXTENSION}`;
+          }
+        });
+      });
 
     const previewEl = containerEl.createDiv({ cls: "wat-slug-preview" });
     const initialSlug = slugifyDraftName(
@@ -256,152 +251,240 @@ export class WriteAidSettingTab extends PluginSettingTab {
     );
     previewEl.setText(`Example: ${sampleName} → ${initialSlug}${MARKDOWN_FILE_EXTENSION}`);
 
+    // Save Filenames button
+    new Setting(containerEl).addButton((btn) =>
+      btn
+        .setButtonText("Save Filenames")
+        .setCta()
+        .onClick(async () => {
+          debug(`${DEBUG_PREFIX} Save Filenames button clicked`);
+          const slugStyleDropdown = containerEl.querySelector(
+            'select[data-setting="slugStyle"]',
+          ) as HTMLSelectElement;
+
+          if (slugStyleDropdown) {
+            const newStyle = slugStyleDropdown.value as WriteAidSettings["slugStyle"];
+            debug(`${DEBUG_PREFIX} Slug style: ${newStyle}`);
+            plugin.settings.slugStyle = newStyle;
+          }
+
+          await plugin.saveSettings();
+          new Notice("Filename settings saved successfully!");
+        }),
+    );
+
     containerEl.createEl("h3", { text: "Folders & Files" });
 
     new Setting(containerEl)
       .setName("Drafts folder name")
       .setDesc("Name of the folder containing draft subfolders (default: drafts)")
-      .addText((t) =>
-        t.setValue(plugin.settings.draftsFolderName || "drafts").onChange((v) => {
-          debug(`${DEBUG_PREFIX} Drafts folder name changed: ${v}`);
-          plugin.settings.draftsFolderName = v || "drafts";
-          plugin.saveSettings();
-        }),
-      );
+      .addText((t) => {
+        t.inputEl.setAttribute("data-setting", "draftsFolderName");
+        t.setValue(plugin.settings.draftsFolderName || "drafts");
+      });
 
     new Setting(containerEl)
       .setName("Manuscripts folder name")
       .setDesc("Name of the folder containing generated manuscripts (default: manuscripts)")
-      .addText((t) =>
-        t.setValue(plugin.settings.manuscriptsFolderName || "manuscripts").onChange((v) => {
-          debug(`${DEBUG_PREFIX} Manuscripts folder name changed: ${v}`);
-          plugin.settings.manuscriptsFolderName = v || "manuscripts";
-          plugin.saveSettings();
-        }),
-      );
+      .addText((t) => {
+        t.inputEl.setAttribute("data-setting", "manuscriptsFolderName");
+        t.setValue(plugin.settings.manuscriptsFolderName || "manuscripts");
+      });
 
     new Setting(containerEl)
       .setName("Backups folder name")
       .setDesc("Name of the folder containing draft backups (default: .writeaid-backups)")
-      .addText((t) =>
-        t.setValue(plugin.settings.backupsFolderName || ".writeaid-backups").onChange((v) => {
-          debug(`${DEBUG_PREFIX} Backups folder name changed: ${v}`);
-          plugin.settings.backupsFolderName = v || ".writeaid-backups";
-          plugin.saveSettings();
-        }),
-      );
+      .addText((t) => {
+        t.inputEl.setAttribute("data-setting", "backupsFolderName");
+        t.setValue(plugin.settings.backupsFolderName || ".writeaid-backups");
+      });
 
     new Setting(containerEl)
       .setName("Meta file name")
       .setDesc(`Name of the project metadata file (default: ${FILES.META})`)
-      .addText((t) =>
-        t.setValue(plugin.settings.metaFileName || FILES.META).onChange((v) => {
-          debug(`${DEBUG_PREFIX} Meta file name changed: ${v}`);
-          plugin.settings.metaFileName = v || FILES.META;
-          plugin.saveSettings();
-        }),
-      );
+      .addText((t) => {
+        t.inputEl.setAttribute("data-setting", "metaFileName");
+        t.setValue(plugin.settings.metaFileName || FILES.META);
+      });
 
     new Setting(containerEl)
       .setName("Outline file name")
       .setDesc(`Name of the draft outline file (default: ${FILES.OUTLINE})`)
-      .addText((t) =>
-        t.setValue(plugin.settings.outlineFileName || FILES.OUTLINE).onChange((v) => {
-          debug(`${DEBUG_PREFIX} Outline file name changed: ${v}`);
-          plugin.settings.outlineFileName = v || FILES.OUTLINE;
-          plugin.saveSettings();
+      .addText((t) => {
+        t.inputEl.setAttribute("data-setting", "outlineFileName");
+        t.setValue(plugin.settings.outlineFileName || FILES.OUTLINE);
+      });
+
+    // Save Folders & Files button
+    new Setting(containerEl).addButton((btn) =>
+      btn
+        .setButtonText("Save Folders & Files")
+        .setCta()
+        .onClick(async () => {
+          debug(`${DEBUG_PREFIX} Save Folders & Files button clicked`);
+          const draftsFolderInput = containerEl.querySelector(
+            'input[data-setting="draftsFolderName"]',
+          ) as HTMLInputElement;
+          const manuscriptsFolderInput = containerEl.querySelector(
+            'input[data-setting="manuscriptsFolderName"]',
+          ) as HTMLInputElement;
+          const backupsFolderInput = containerEl.querySelector(
+            'input[data-setting="backupsFolderName"]',
+          ) as HTMLInputElement;
+          const metaFileInput = containerEl.querySelector(
+            'input[data-setting="metaFileName"]',
+          ) as HTMLInputElement;
+          const outlineFileInput = containerEl.querySelector(
+            'input[data-setting="outlineFileName"]',
+          ) as HTMLInputElement;
+
+          if (draftsFolderInput)
+            plugin.settings.draftsFolderName = draftsFolderInput.value || "drafts";
+          if (manuscriptsFolderInput)
+            plugin.settings.manuscriptsFolderName = manuscriptsFolderInput.value || "manuscripts";
+          if (backupsFolderInput)
+            plugin.settings.backupsFolderName = backupsFolderInput.value || ".writeaid-backups";
+          if (metaFileInput) plugin.settings.metaFileName = metaFileInput.value || FILES.META;
+          if (outlineFileInput)
+            plugin.settings.outlineFileName = outlineFileInput.value || FILES.OUTLINE;
+
+          debug(
+            `${DEBUG_PREFIX} Saving folder names: drafts=${plugin.settings.draftsFolderName}, manuscripts=${plugin.settings.manuscriptsFolderName}, backups=${plugin.settings.backupsFolderName}`,
+          );
+
+          await plugin.saveSettings();
+          new Notice("Folder and file settings saved successfully!");
         }),
-      );
+    );
 
     containerEl.createEl("h3", { text: "Word Count Targets" });
 
     new Setting(containerEl)
       .setName("Default target word count for multi-file projects")
       .setDesc("Target word count automatically set for new multi-file projects (chapters)")
-      .addText((t) =>
-        t
-          .setValue(String(plugin.settings.defaultMultiTargetWordCount ?? 50000))
-          .setPlaceholder("50000")
-          .onChange((v) => {
-            const num = parseInt(v, 10);
-            if (!isNaN(num) && num > 0) {
-              debug(`${DEBUG_PREFIX} Default multi-file target word count changed: ${num}`);
-              plugin.settings.defaultMultiTargetWordCount = num;
-              plugin.saveSettings();
-            }
-          }),
-      );
+      .addText((t) => {
+        t.inputEl.setAttribute("data-setting", "defaultMultiTargetWordCount");
+        t.setValue(String(plugin.settings.defaultMultiTargetWordCount ?? 50000));
+        t.setPlaceholder("50000");
+      });
 
     new Setting(containerEl)
       .setName(`Default target word count for ${PROJECT_TYPE.SINGLE} projects`)
       .setDesc(`Target word count automatically set for new ${PROJECT_TYPE.SINGLE} projects`)
-      .addText((t) =>
-        t
-          .setValue(String(plugin.settings.defaultSingleTargetWordCount ?? 20000))
-          .setPlaceholder("20000")
-          .onChange((v) => {
-            const num = parseInt(v, 10);
+      .addText((t) => {
+        t.inputEl.setAttribute("data-setting", "defaultSingleTargetWordCount");
+        t.setValue(String(plugin.settings.defaultSingleTargetWordCount ?? 20000));
+        t.setPlaceholder("20000");
+      });
+
+    // Save Word Count Targets button
+    new Setting(containerEl).addButton((btn) =>
+      btn
+        .setButtonText("Save Word Count Targets")
+        .setCta()
+        .onClick(async () => {
+          debug(`${DEBUG_PREFIX} Save Word Count Targets button clicked`);
+          const multiInput = containerEl.querySelector(
+            'input[data-setting="defaultMultiTargetWordCount"]',
+          ) as HTMLInputElement;
+          const singleInput = containerEl.querySelector(
+            'input[data-setting="defaultSingleTargetWordCount"]',
+          ) as HTMLInputElement;
+
+          if (multiInput) {
+            const num = parseInt(multiInput.value, 10);
             if (!isNaN(num) && num > 0) {
-              debug(
-                `${DEBUG_PREFIX} Default ${PROJECT_TYPE.SINGLE} target word count changed: ${num}`,
-              );
-              plugin.settings.defaultSingleTargetWordCount = num;
-              plugin.saveSettings();
+              debug(`${DEBUG_PREFIX} Default multi-file target word count: ${num}`);
+              plugin.settings.defaultMultiTargetWordCount = num;
             }
-          }),
-      );
+          }
+          if (singleInput) {
+            const num = parseInt(singleInput.value, 10);
+            if (!isNaN(num) && num > 0) {
+              debug(`${DEBUG_PREFIX} Default ${PROJECT_TYPE.SINGLE} target word count: ${num}`);
+              plugin.settings.defaultSingleTargetWordCount = num;
+            }
+          }
+
+          await plugin.saveSettings();
+          new Notice("Word count targets saved successfully!");
+        }),
+    );
 
     containerEl.createEl("h3", { text: "Backup Settings" });
 
     new Setting(containerEl)
       .setName("Maximum number of backups per draft")
       .setDesc("Maximum number of backup files to keep per draft (default: 5)")
-      .addText((t) =>
-        t
-          .setValue(String(plugin.settings.maxBackups ?? 5))
-          .setPlaceholder("5")
-          .onChange((v) => {
-            const num = parseInt(v, 10);
-            if (!isNaN(num) && num >= 0) {
-              debug(`${DEBUG_PREFIX} Max backups changed: ${num}`);
-              plugin.settings.maxBackups = num;
-              plugin.saveSettings();
-            }
-          }),
-      );
+      .addText((t) => {
+        t.inputEl.setAttribute("data-setting", "maxBackups");
+        t.setValue(String(plugin.settings.maxBackups ?? 5));
+        t.setPlaceholder("5");
+      });
 
     new Setting(containerEl)
       .setName("Maximum backup age (days)")
       .setDesc("Automatically delete backups older than this many days (default: 30)")
-      .addText((t) =>
-        t
-          .setValue(String(plugin.settings.maxBackupAgeDays ?? 30))
-          .setPlaceholder("30")
-          .onChange((v) => {
-            const num = parseInt(v, 10);
+      .addText((t) => {
+        t.inputEl.setAttribute("data-setting", "maxBackupAgeDays");
+        t.setValue(String(plugin.settings.maxBackupAgeDays ?? 30));
+        t.setPlaceholder("30");
+      });
+
+    // Save Backup Settings button
+    new Setting(containerEl).addButton((btn) =>
+      btn
+        .setButtonText("Save Backup Settings")
+        .setCta()
+        .onClick(async () => {
+          debug(`${DEBUG_PREFIX} Save Backup Settings button clicked`);
+          const maxBackupsInput = containerEl.querySelector(
+            'input[data-setting="maxBackups"]',
+          ) as HTMLInputElement;
+          const maxBackupAgeInput = containerEl.querySelector(
+            'input[data-setting="maxBackupAgeDays"]',
+          ) as HTMLInputElement;
+
+          if (maxBackupsInput) {
+            const num = parseInt(maxBackupsInput.value, 10);
             if (!isNaN(num) && num >= 0) {
-              debug(`${DEBUG_PREFIX} Max backup age changed: ${num}`);
-              plugin.settings.maxBackupAgeDays = num;
-              plugin.saveSettings();
+              debug(`${DEBUG_PREFIX} Max backups: ${num}`);
+              plugin.settings.maxBackups = num;
             }
-          }),
-      );
+          }
+          if (maxBackupAgeInput) {
+            const num = parseInt(maxBackupAgeInput.value, 10);
+            if (!isNaN(num) && num >= 0) {
+              debug(`${DEBUG_PREFIX} Max backup age: ${num} days`);
+              plugin.settings.maxBackupAgeDays = num;
+            }
+          }
+
+          await plugin.saveSettings();
+          new Notice("Backup settings saved successfully!");
+        }),
+    );
 
     containerEl.createEl("h3", { text: "Manuscript Settings" });
 
     new Setting(containerEl)
       .setName("Author name for manuscripts")
       .setDesc("Leave blank to use 'Unknown Author' as the default")
-      .addText((t) =>
-        t
-          .setValue(plugin.settings.authorName || "")
-          .setPlaceholder("e.g., Jane Doe")
-          .onChange((v) => {
-            debug(`${DEBUG_PREFIX} Manuscript author name changed: ${v}`);
-            plugin.settings.authorName = v;
-            plugin.saveSettings();
-          }),
-      );
+      .addText((t) => {
+        t.inputEl.setAttribute("data-setting", "authorName");
+        t.setValue(plugin.settings.authorName || "");
+        t.setPlaceholder("e.g., Jane Doe");
+      });
+
+    new Setting(containerEl)
+      .setName("Manuscript name template")
+      .setDesc(
+        "Template for manuscript filenames. Use {{draftName}}, {{projectName}}, and moment.js date qualifiers like {{YYYY-MM-DD}}",
+      )
+      .addText((t) => {
+        t.inputEl.setAttribute("data-setting", "manuscriptNameTemplate");
+        t.setValue(plugin.settings.manuscriptNameTemplate || "{{draftName}}");
+      });
 
     new Setting(containerEl)
       .setName("Manuscript section break style")
@@ -411,27 +494,62 @@ export class WriteAidSettingTab extends PluginSettingTab {
         d.addOption("asterisks", "Asterisks (***)");
         d.addOption("dashes", "Dashes (---)");
         d.setValue(plugin.settings.manuscriptSectionBreak || "horizontal");
-        d.onChange((v) => {
-          debug(`${DEBUG_PREFIX} Manuscript section break style changed: ${v}`);
-          plugin.settings.manuscriptSectionBreak = v as WriteAidSettings["manuscriptSectionBreak"];
-          plugin.saveSettings();
-        });
+        d.selectEl.setAttribute("data-setting", "manuscriptSectionBreak");
       });
 
     new Setting(containerEl)
       .setName("Include chapter list in manuscript")
-      .setDesc(
-        "If enabled, manuscripts will include a list of all chapters at the start",
-      )
-      .addToggle((toggle) =>
-        toggle
-          .setValue(plugin.settings.manuscriptIncludeChapterList ?? false)
-          .onChange((v) => {
-            debug(`${DEBUG_PREFIX} Include manuscript chapter list changed: ${v}`);
-            plugin.settings.manuscriptIncludeChapterList = v;
-            plugin.saveSettings();
-          }),
-      );
+      .setDesc("If enabled, manuscripts will include a list of all chapters at the start")
+      .addToggle((toggle) => {
+        const checkboxEl = toggle.toggleEl as HTMLElement;
+        if (checkboxEl) checkboxEl.setAttribute("data-setting", "manuscriptIncludeChapterList");
+        toggle.setValue(plugin.settings.manuscriptIncludeChapterList ?? false);
+      });
+
+    // Save Manuscript Settings button
+    new Setting(containerEl).addButton((btn) =>
+      btn
+        .setButtonText("Save Manuscript Settings")
+        .setCta()
+        .onClick(async () => {
+          debug(`${DEBUG_PREFIX} Save Manuscript Settings button clicked`);
+          const authorInput = containerEl.querySelector(
+            'input[data-setting="authorName"]',
+          ) as HTMLInputElement;
+          const manuscriptNameInput = containerEl.querySelector(
+            'input[data-setting="manuscriptNameTemplate"]',
+          ) as HTMLInputElement;
+          const sectionBreakDropdown = containerEl.querySelector(
+            'select[data-setting="manuscriptSectionBreak"]',
+          ) as HTMLSelectElement;
+          const chapterListCheckbox = containerEl.querySelector(
+            'input[data-setting="manuscriptIncludeChapterList"]',
+          ) as HTMLInputElement;
+
+          if (authorInput) {
+            plugin.settings.authorName = authorInput.value;
+            debug(`${DEBUG_PREFIX} Author name: ${authorInput.value}`);
+          }
+          if (manuscriptNameInput) {
+            plugin.settings.manuscriptNameTemplate = manuscriptNameInput.value;
+            debug(`${DEBUG_PREFIX} Manuscript name template: ${manuscriptNameInput.value}`);
+          }
+          if (sectionBreakDropdown) {
+            plugin.settings.manuscriptSectionBreak =
+              sectionBreakDropdown.value as WriteAidSettings["manuscriptSectionBreak"];
+            debug(`${DEBUG_PREFIX} Manuscript section break style: ${sectionBreakDropdown.value}`);
+          }
+          if (chapterListCheckbox) {
+            plugin.settings.manuscriptIncludeChapterList = chapterListCheckbox.checked;
+            debug(
+              `${DEBUG_PREFIX} Include manuscript chapter list: ${chapterListCheckbox.checked}`,
+            );
+          }
+
+          await plugin.saveSettings();
+          new Notice("Manuscript settings saved successfully!");
+        }),
+    );
 
     containerEl.createEl("h3", { text: "UI & Startup" });
 
@@ -447,15 +565,7 @@ export class WriteAidSettingTab extends PluginSettingTab {
         d.addOption("left", "Left");
         d.addOption("right", "Right");
         d.setValue(plugin.settings.ribbonPlacement || "left");
-        d.onChange((v) => {
-          debug(`${DEBUG_PREFIX} Ribbon placement changed: ${v}`);
-          plugin.settings.ribbonPlacement = v as WriteAidSettings["ribbonPlacement"];
-          plugin.saveSettings();
-          if (typeof this.plugin.moveRibbon === "function" && (v === "left" || v === "right")) {
-            this.plugin.moveRibbon(v);
-          }
-          this.display();
-        });
+        d.selectEl.setAttribute("data-setting", "ribbonPlacement");
       });
 
     new Setting(containerEl)
@@ -463,65 +573,121 @@ export class WriteAidSettingTab extends PluginSettingTab {
       .setDesc(
         `If enabled, the ${APP_NAME} ribbon icon will always be visible regardless of whether projects are detected`,
       )
-      .addToggle((t) =>
-        t.setValue(Boolean(plugin.settings.ribbonAlwaysShow)).onChange((v) => {
-          debug(`${DEBUG_PREFIX} Always show ribbon changed: ${v}`);
-          plugin.settings.ribbonAlwaysShow = v;
-          plugin.saveSettings();
-          if (typeof this.plugin.refreshRibbonVisibility === "function") {
-            this.plugin.refreshRibbonVisibility();
-          }
-        }),
-      );
+      .addToggle((t) => {
+        const checkboxEl = t.toggleEl as HTMLElement;
+        if (checkboxEl) checkboxEl.setAttribute("data-setting", "ribbonAlwaysShow");
+        t.setValue(Boolean(plugin.settings.ribbonAlwaysShow));
+      });
 
     new Setting(containerEl)
       .setName("Auto-open project panel on startup")
       .setDesc(
         `If enabled, the ${APP_NAME} project panel will open on plugin load when an active project is saved. ⚠️ Requires plugin reload to take effect.`,
       )
-      .addToggle((t) =>
-        t.setValue(Boolean(plugin.settings.autoOpenPanelOnStartup)).onChange((v) => {
-          debug(`${DEBUG_PREFIX} Auto-open panel on startup changed: ${v}`);
-          plugin.settings.autoOpenPanelOnStartup = v;
-          plugin.saveSettings();
-        }),
-      );
+      .addToggle((t) => {
+        const checkboxEl = t.toggleEl as HTMLElement;
+        if (checkboxEl) checkboxEl.setAttribute("data-setting", "autoOpenPanelOnStartup");
+        t.setValue(Boolean(plugin.settings.autoOpenPanelOnStartup));
+      });
 
     new Setting(containerEl)
       .setName("Auto-select persisted project on startup")
       .setDesc(
         "If enabled, the persisted active project will be selected as the plugin's active project on load without opening the panel. ⚠️ Requires plugin reload to take effect.",
       )
-      .addToggle((t) =>
-        t.setValue(Boolean(plugin.settings.autoSelectProjectOnStartup)).onChange((v) => {
-          debug(`${DEBUG_PREFIX} Auto-select project on startup changed: ${v}`);
-          plugin.settings.autoSelectProjectOnStartup = v;
-          plugin.saveSettings();
-        }),
-      );
+      .addToggle((t) => {
+        const checkboxEl = t.toggleEl as HTMLElement;
+        if (checkboxEl) checkboxEl.setAttribute("data-setting", "autoSelectProjectOnStartup");
+        t.setValue(Boolean(plugin.settings.autoSelectProjectOnStartup));
+      });
 
     new Setting(containerEl)
       .setName(`Enable ${APP_NAME} debug logs`)
       .setDesc(
         `When enabled, ${APP_NAME} will set window.__${APP_NAME.toUpperCase()}__ to true to show verbose runtime logs useful during development.`,
       )
-      .addToggle((t) =>
-        t.setValue(Boolean(plugin.settings.debug)).onChange((v) => {
-          debug(`${DEBUG_PREFIX} Debug logs setting changed: ${v}`);
-          plugin.settings.debug = v;
-          // Apply immediately to the global runtime toggle so logs take effect without reload
-          (window as unknown as { __WRITEAID_DEBUG__?: boolean }).__WRITEAID_DEBUG__ = Boolean(v);
-          plugin.saveSettings();
-          // Show a brief visual confirmation so users know the change took effect
-          if (v) {
-            new Notice(
-              `${APP_NAME}: debug logs enabled — verbose logs will appear in the DevTools console.`,
-            );
-          } else {
-            new Notice(`${APP_NAME}: debug logs disabled.`);
+      .addToggle((t) => {
+        const checkboxEl = t.toggleEl as HTMLElement;
+        if (checkboxEl) checkboxEl.setAttribute("data-setting", "debug");
+        t.setValue(Boolean(plugin.settings.debug));
+      });
+
+    // Save UI & Startup button
+    new Setting(containerEl).addButton((btn) =>
+      btn
+        .setButtonText("Save UI & Startup")
+        .setCta()
+        .onClick(async () => {
+          debug(`${DEBUG_PREFIX} Save UI & Startup button clicked`);
+          const ribbonPlacementDropdown = containerEl.querySelector(
+            'select[data-setting="ribbonPlacement"]',
+          ) as HTMLSelectElement;
+          const ribbonAlwaysShowCheckbox = containerEl.querySelector(
+            'input[data-setting="ribbonAlwaysShow"]',
+          ) as HTMLInputElement;
+          const autoOpenPanelCheckbox = containerEl.querySelector(
+            'input[data-setting="autoOpenPanelOnStartup"]',
+          ) as HTMLInputElement;
+          const autoSelectProjectCheckbox = containerEl.querySelector(
+            'input[data-setting="autoSelectProjectOnStartup"]',
+          ) as HTMLInputElement;
+          const debugCheckbox = containerEl.querySelector(
+            'input[data-setting="debug"]',
+          ) as HTMLInputElement;
+
+          if (ribbonPlacementDropdown) {
+            const placement = ribbonPlacementDropdown.value as WriteAidSettings["ribbonPlacement"];
+            plugin.settings.ribbonPlacement = placement;
+            debug(`${DEBUG_PREFIX} Ribbon placement: ${placement}`);
+            if (
+              typeof this.plugin.moveRibbon === "function" &&
+              (placement === "left" || placement === "right")
+            ) {
+              this.plugin.moveRibbon(placement);
+            }
           }
+
+          if (ribbonAlwaysShowCheckbox) {
+            plugin.settings.ribbonAlwaysShow = ribbonAlwaysShowCheckbox.checked;
+            debug(`${DEBUG_PREFIX} Always show ribbon: ${ribbonAlwaysShowCheckbox.checked}`);
+            if (typeof this.plugin.refreshRibbonVisibility === "function") {
+              this.plugin.refreshRibbonVisibility();
+            }
+          }
+
+          if (autoOpenPanelCheckbox) {
+            plugin.settings.autoOpenPanelOnStartup = autoOpenPanelCheckbox.checked;
+            debug(`${DEBUG_PREFIX} Auto-open panel on startup: ${autoOpenPanelCheckbox.checked}`);
+          }
+
+          if (autoSelectProjectCheckbox) {
+            plugin.settings.autoSelectProjectOnStartup = autoSelectProjectCheckbox.checked;
+            debug(
+              `${DEBUG_PREFIX} Auto-select project on startup: ${autoSelectProjectCheckbox.checked}`,
+            );
+          }
+
+          if (debugCheckbox) {
+            plugin.settings.debug = debugCheckbox.checked;
+            // Apply immediately to the global runtime toggle so logs take effect without reload
+            (window as unknown as { __WRITEAID_DEBUG__?: boolean }).__WRITEAID_DEBUG__ = Boolean(
+              debugCheckbox.checked,
+            );
+            debug(`${DEBUG_PREFIX} Debug logs: ${debugCheckbox.checked}`);
+            // Show a brief visual confirmation so users know the change took effect
+            if (debugCheckbox.checked) {
+              new Notice(
+                `${APP_NAME}: debug logs enabled — verbose logs will appear in the DevTools console.`,
+              );
+            } else {
+              new Notice(`${APP_NAME}: debug logs disabled.`);
+            }
+          }
+
+          await plugin.saveSettings();
+          new Notice("UI & Startup settings saved successfully!");
         }),
-      );
+    );
 
     containerEl.createEl("h3", { text: "Panel performance" });
 
