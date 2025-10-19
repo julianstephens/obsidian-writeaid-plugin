@@ -266,7 +266,7 @@ export function buildFrontmatter(fields: Record<string, string | number>): strin
       lines.push(`${key}: ${value}`);
     }
   }
-  return `${FRONTMATTER_DELIMITER}\n${lines.join("\n")}\n${FRONTMATTER_DELIMITER}\n`;
+  return `${FRONTMATTER_DELIMITER}\n${lines.join("\n")}\n${FRONTMATTER_DELIMITER}`;
 }
 
 /**

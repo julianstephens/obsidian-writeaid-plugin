@@ -2,6 +2,7 @@ import type { WriteAidSettings } from "@/types";
 import { App, TFile, TFolder } from "obsidian";
 import {
   buildFrontmatter,
+  countWords,
   debug,
   DEBUG_PREFIX,
   extractFrontmatterFields,
@@ -119,11 +120,11 @@ export async function updateMetaStats(
     const draftFolders = draftsFolder.children.filter((child) => child instanceof TFolder);
     metadata.total_drafts = draftFolders.length;
 
-    // Update last_updated timestamp on all draft and chapter files
+    // Update last_updated timestamp and calculate word counts on all draft and chapter files
     const now = new Date().toISOString();
     for (const draftFolder of draftFolders) {
       if (draftFolder instanceof TFolder) {
-        // Update timestamps on all markdown files in this draft
+        // Update timestamps and word counts on all markdown files in this draft
         for (const file of draftFolder.children) {
           if (file instanceof TFile && file.extension === "md") {
             try {
@@ -137,12 +138,20 @@ export async function updateMetaStats(
                 // Update the last_updated field
                 fields.last_updated = now;
 
-                // Rebuild frontmatter with updated timestamp using utility function
+                // Calculate word count from the content body
+                const bodyContent = content.substring(fmMatch[0].length).trim();
+                const wordCount = countWords(bodyContent);
+                fields.word_count = wordCount;
+
+                // Rebuild frontmatter with updated timestamp and word count using utility function
                 const updatedFrontmatter = buildFrontmatter(fields);
                 const body = content.substring(fmMatch[0].length);
                 const updatedContent = `${updatedFrontmatter}${body}`;
 
                 await app.vault.modify(file, updatedContent);
+                debug(
+                  `${DEBUG_PREFIX} Updated metadata for ${file.path}: word_count=${wordCount}, last_updated=${now}`,
+                );
               }
             } catch (error) {
               debug(`Error updating metadata for ${file.path}:`, error);

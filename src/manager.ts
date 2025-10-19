@@ -7,6 +7,7 @@ import {
   debug,
   DEBUG_PREFIX,
   getDraftsFolderName,
+  PROJECT_TYPE,
   suppress,
   suppressAsync,
 } from "@/core/utils";
@@ -156,7 +157,6 @@ export class WriteAidManager {
         this._panelRefreshTimer = null;
       }, this._panelRefreshDebounceMs);
     } catch {
-      // ignore
       // fallback: immediate notify
       for (const fn of this.panelRefreshListeners) {
         suppress(() => fn());
@@ -190,9 +190,22 @@ export class WriteAidManager {
     for (const l of this.activeProjectListeners) {
       suppress(() => l(path));
     }
-    // Do not change activeDraft automatically here. Active draft should only
-    // be modified via explicit user actions: switching, creating, or deleting
-    // drafts. The UI or callers can choose to call setActiveDraft when desired.
+
+    // Auto-activate draft if project has only one draft (multi-file projects)
+    if (path) {
+      await suppressAsync(async () => {
+        const projectType = await this.projectService.getProjectType(path);
+        if (projectType === PROJECT_TYPE.MULTI) {
+          const drafts = this.listDrafts(path);
+          if (drafts.length === 1) {
+            debug(
+              `${DEBUG_PREFIX} Multi-file project with single draft detected, auto-activating: ${drafts[0]}`,
+            );
+            await this.setActiveDraft(drafts[0], path, false);
+          }
+        }
+      });
+    }
   }
 
   async createNewProjectPrompt() {
