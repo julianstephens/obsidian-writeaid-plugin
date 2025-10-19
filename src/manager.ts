@@ -54,12 +54,12 @@ export class WriteAidManager {
    * Reorder chapters in a draft.
    * @param projectPath Project folder path
    * @param draftName Draft name
-   * @param newOrder Array of chapter objects in new order
+   * @param newOrder Array of chapter objects in new order with name and chapterName
    */
   async reorderChapters(
     projectPath: string,
     draftName: string,
-    newOrder: Array<{ chapterName: string; order: number }>,
+    newOrder: Array<{ name: string; chapterName: string; order: number }>,
   ) {
     return await this.projectFileService.chapters.reorderChapters(projectPath, draftName, newOrder);
   }
@@ -243,7 +243,13 @@ export class WriteAidManager {
             },
           ).open();
         } else {
-          await this.createNewProject(projectName, singleFile, initialDraftName, parentFolder, description);
+          await this.createNewProject(
+            projectName,
+            singleFile,
+            initialDraftName,
+            parentFolder,
+            description,
+          );
           // Automatically open the project's meta.md file after creation
           await this.openProject(fullPath);
         }
