@@ -1,47 +1,34 @@
 import { debug, DEBUG_PREFIX } from "@/core/utils";
 import type { SelectProjectModalProps } from "@/types";
 import type { App } from "obsidian";
-import { Modal, Setting } from "obsidian";
+import { SuggestModal } from "obsidian";
 
 /**
  * Modal for selecting a project from available projects in the vault.
- * Displays a list of project folders for the user to choose from.
+ * Uses SuggestModal for autocomplete and filtering capabilities.
  */
-export class SelectProjectModal extends Modal {
-  props: SelectProjectModalProps;
+export class SelectProjectModal extends SuggestModal<string> {
+  folders: string[];
+  onSubmitCallback: (projectPath: string) => void;
 
   constructor(app: App, props: SelectProjectModalProps) {
     super(app);
-    this.props = props;
+    this.folders = props.folders || [];
+    this.onSubmitCallback = props.onSubmit;
+    this.setPlaceholder("Search for a project...");
   }
 
-  onOpen() {
-    const { contentEl } = this;
-    contentEl.createEl("h2", { text: "Select Project for Draft" });
-
-    let selected = "";
-    const folders = this.props.folders || [];
-    new Setting(contentEl).setName("Project folder").addDropdown((drop) => {
-      drop.addOption("", "(Vault root)");
-      for (const f of folders) drop.addOption(f, f || "(Vault root)");
-      drop.onChange((v) => (selected = v));
-    });
-
-    new Setting(contentEl).addButton((btn) =>
-      btn
-        .setButtonText("Select")
-        .setCta()
-        .onClick(() => {
-          debug(
-            `${DEBUG_PREFIX} SelectProjectModal: selected project "${selected || "(Vault root)"}"`,
-          );
-          this.close();
-          this.props.onSubmit(selected || "");
-        }),
-    );
+  getSuggestions(inputStr: string): string[] {
+    const lowerInput = inputStr.toLowerCase();
+    return this.folders.filter((folder) => folder.toLowerCase().includes(lowerInput));
   }
 
-  onClose() {
-    this.contentEl.empty();
+  renderSuggestion(folder: string, el: HTMLElement): void {
+    el.createEl("div", { text: folder || "(Vault root)" });
+  }
+
+  onChooseSuggestion(folder: string, evt: MouseEvent | KeyboardEvent): void {
+    debug(`${DEBUG_PREFIX} SelectProjectModal: selected project "${folder}"`);
+    this.onSubmitCallback(folder);
   }
 }

@@ -335,7 +335,12 @@ export class WriteAidManager {
   }
 
   async switchDraftPrompt() {
-    const drafts = this.listDrafts();
+    const project = this.activeProject || this.getCurrentProjectPath();
+    if (!project) {
+      new Notice("No active project selected.");
+      return;
+    }
+    const drafts = this.listDrafts(project);
     if (drafts.length === 0) {
       new Notice("No drafts found in the current project.");
       return;
