@@ -1,3 +1,8 @@
+# v0.2.1
+
+- Enhanced manuscript generation capabilities.
+- Added comprehensive JSDoc/TSDoc documentation to all exported functions and classes.
+
 # v0.2.0
 
 - Added support for updating single-file draft metadata.
