@@ -717,14 +717,12 @@ export class WriteAidSettingTab extends PluginSettingTab {
           const clamped = Math.min(Math.floor(n), PANEL_DEBOUNCE_MAX);
           debug(`${DEBUG_PREFIX} Panel refresh debounce changed: ${clamped}ms`);
           plugin.settings.panelRefreshDebounceMs = clamped;
-          try {
+          suppress(() => {
             const res = plugin.saveSettings();
             if (res && typeof (res as Promise<unknown>).catch === "function") {
               (res as Promise<unknown>).catch(() => {});
             }
-          } catch {
-            // ignore
-          }
+          });
           if (
             this.plugin.manager &&
             typeof this.plugin.manager === "object" &&
@@ -782,7 +780,6 @@ export class WriteAidSettingTab extends PluginSettingTab {
             applyValue(v);
           });
         } catch {
-          // ignore
           // if anything fails, fall back to simple text behavior
           t.onChange((v: string) => {
             const n = Number(v);

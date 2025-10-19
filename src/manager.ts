@@ -413,11 +413,9 @@ export class WriteAidManager {
     suppress(() => this.notifyPanelRefresh());
     if (project && draftName) {
       // Best-effort: set active draft to the created draft
-      try {
+      await suppressAsync(async () => {
         await this.setActiveDraft(draftName, project, false);
-      } catch {
-        // ignore failures to set active draft
-      }
+      });
     }
     return;
   }
