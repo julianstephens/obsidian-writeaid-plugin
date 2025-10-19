@@ -780,7 +780,7 @@ export class WriteAidSettingTab extends PluginSettingTab {
             applyValue(v);
           });
         } catch {
-          // if anything fails, fall back to simple text behavior
+          // Exception intentionally suppressed: fallback to simple text input behavior for robustness.
           t.onChange((v: string) => {
             const n = Number(v);
             if (!Number.isFinite(n) || n < PANEL_DEBOUNCE_MIN) {
