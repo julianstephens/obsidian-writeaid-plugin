@@ -2,6 +2,7 @@ import type { WriteAidSettings } from "@/types";
 import { App, TFile, TFolder } from "obsidian";
 import {
   buildFrontmatter,
+  countWords,
   debug,
   DEBUG_PREFIX,
   extractFrontmatterFields,
@@ -68,13 +69,15 @@ export async function readMetaFile(app: App, filePath: string): Promise<ProjectM
  * @param app Obsidian App instance
  * @param filePath Path to the meta.md file
  * @param metadata Metadata to write
+ * @param projectFiles Optional organized project files to include as links
  */
 export async function writeMetaFile(
   app: App,
   filePath: string,
   metadata: ProjectMetadata,
+  projectFiles?: { [folderPath: string]: TFile[] },
 ): Promise<void> {
-  const content = formatMetaContent(metadata);
+  const content = formatMetaContent(metadata, projectFiles);
 
   const file = app.vault.getAbstractFileByPath(filePath);
   if (file && file instanceof TFile) {
@@ -119,11 +122,11 @@ export async function updateMetaStats(
     const draftFolders = draftsFolder.children.filter((child) => child instanceof TFolder);
     metadata.total_drafts = draftFolders.length;
 
-    // Update last_updated timestamp on all draft and chapter files
+    // Update last_updated timestamp and calculate word counts on all draft and chapter files
     const now = new Date().toISOString();
     for (const draftFolder of draftFolders) {
       if (draftFolder instanceof TFolder) {
-        // Update timestamps on all markdown files in this draft
+        // Update timestamps and word counts on all markdown files in this draft
         for (const file of draftFolder.children) {
           if (file instanceof TFile && file.extension === "md") {
             try {
@@ -137,12 +140,20 @@ export async function updateMetaStats(
                 // Update the last_updated field
                 fields.last_updated = now;
 
-                // Rebuild frontmatter with updated timestamp using utility function
+                // Calculate word count from the content body
+                const bodyContent = content.substring(fmMatch[0].length).trim();
+                const wordCount = countWords(bodyContent);
+                fields.word_count = wordCount;
+
+                // Rebuild frontmatter with updated timestamp and word count using utility function
                 const updatedFrontmatter = buildFrontmatter(fields);
                 const body = content.substring(fmMatch[0].length);
                 const updatedContent = `${updatedFrontmatter}${body}`;
 
                 await app.vault.modify(file, updatedContent);
+                debug(
+                  `${DEBUG_PREFIX} Updated metadata for ${file.path}: word_count=${wordCount}, last_updated=${now}`,
+                );
               }
             } catch (error) {
               debug(`Error updating metadata for ${file.path}:`, error);
@@ -196,7 +207,26 @@ export async function updateMetaStats(
     );
   }
 
-  await writeMetaFile(app, metaPath, metadata);
+  // Collect all project files organized by folder
+  const projectFolder = app.vault.getAbstractFileByPath(projectPath);
+  const projectFiles: { [folderPath: string]: TFile[] } = {};
+  if (projectFolder && projectFolder instanceof TFolder) {
+    const collectFiles = (folder: TFolder, basePath: string) => {
+      for (const child of folder.children) {
+        if (child instanceof TFile) {
+          if (!projectFiles[basePath]) {
+            projectFiles[basePath] = [];
+          }
+          projectFiles[basePath].push(child);
+        } else if (child instanceof TFolder) {
+          collectFiles(child, child.path);
+        }
+      }
+    };
+    collectFiles(projectFolder, projectPath);
+  }
+
+  await writeMetaFile(app, metaPath, metadata, projectFiles);
 }
 
 /**
@@ -243,7 +273,10 @@ function parseFrontmatter(content: string): ProjectMetadata | null {
 /**
  * Format metadata as markdown with YAML frontmatter and human-readable section
  */
-function formatMetaContent(metadata: ProjectMetadata): string {
+function formatMetaContent(
+  metadata: ProjectMetadata,
+  projectFiles?: { [folderPath: string]: TFile[] },
+): string {
   // Build frontmatter fields
   const fields: Record<string, string | number> = {};
 
@@ -338,6 +371,33 @@ function formatMetaContent(metadata: ProjectMetadata): string {
     );
   }
   lines.push("");
+
+  // Add project files section with links
+  if (projectFiles && Object.keys(projectFiles).length > 0) {
+    lines.push("## Project Files");
+    lines.push("");
+
+    // Sort folders alphabetically
+    const sortedFolders = Object.keys(projectFiles).sort();
+
+    for (const folderPath of sortedFolders) {
+      const files = projectFiles[folderPath];
+      if (files.length === 0) continue;
+
+      // Extract folder name for display
+      const folderName = folderPath.split("/").pop() || folderPath;
+      lines.push(`### ${folderName}`);
+      lines.push("");
+
+      // Sort files by name within folder
+      const sortedFiles = files.sort((a, b) => a.name.localeCompare(b.name));
+
+      for (const file of sortedFiles) {
+        lines.push(`- [[${file.path}]]`);
+      }
+      lines.push("");
+    }
+  }
 
   return lines.join("\n");
 }

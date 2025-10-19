@@ -239,14 +239,12 @@ export class ProjectService {
             return false;
           }
         } catch {
-          // ignore
           return false;
         }
       }
 
       return true;
     } catch {
-      // ignore
       return false;
     }
   }

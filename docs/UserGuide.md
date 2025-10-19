@@ -247,10 +247,114 @@ Generate a compiled manuscript from your active draft:
 1. Ensure you have an active draft
 2. Open the command palette and search for **"Generate Manuscript"**
 3. A new file is created in the `manuscripts/` folder
-4. Multi-file projects: chapters are automatically concatenated with section headings
-5. Single-file projects: your draft file content is used
+4. Multi-file projects: chapters are automatically concatenated with section breaks
+5. Single-file projects: your draft file content is compiled
 
-The manuscript is ready for export or formatting!
+### Manuscript Features
+
+Each generated manuscript includes a professional metadata header with:
+
+- **Project title** - Your project name
+- **Draft name** - Which draft version this is
+- **Author name** - Configured in plugin settings
+- **Generation date** - When the manuscript was created
+- **Word count** - Total word count formatted with commas
+- **Chapter count** - Number of chapters (or 1 for single-file projects)
+
+### Manuscript Example
+
+**Single-File Project:**
+
+```markdown
+# My Project
+
+**Draft:** Draft 1
+**Author:** Jane Doe
+**Generated:** October 19, 2025 at 3:45 PM
+**Word Count:** 25,000
+**Chapters:** 1
+
+---
+
+Your draft content here...
+```
+
+**Multi-File Project:**
+
+```markdown
+# The Great Adventure
+
+**Draft:** Draft 1
+**Author:** John Smith
+**Generated:** October 19, 2025 at 3:45 PM
+**Word Count:** 58,450
+**Chapters:** 12
+
+---
+
+## Chapter 1: The Beginning
+
+Chapter 1 content...
+
+---
+
+## Chapter 2: The Journey
+
+Chapter 2 content...
+
+---
+
+## Chapter 3: The Challenge
+
+Chapter 3 content...
+```
+
+### Configuring Manuscript Settings
+
+Open plugin settings (Obsidian Settings → Community Plugins → WriteAid):
+
+#### Author Name
+
+1. Go to **Manuscript Settings** section
+2. Enter your name in **Author name for manuscripts**
+3. This name appears in all generated manuscripts
+4. Leave blank for "Unknown Author" default
+
+#### Section Break Style
+
+1. In **Manuscript Settings**, select **Manuscript section break style**
+2. Choose from:
+   - **Horizontal Rule** (---) - Professional solid lines
+   - **Asterisks** (\*\*\*) - Eye-catching triple asterisks
+   - **Dashes** (---) - Alternative dash style
+
+Each style renders the same but may appear different in different markdown editors.
+
+#### Manuscript Filename Template
+
+1. Go to **Manuscript Settings**
+2. Set **Manuscript name template**
+3. Available variables:
+   - `{{draftName}}` - Draft folder name
+   - `{{projectName}}` - Project folder name
+   - `{{draftSlug}}` - Slugified draft name (removes spaces)
+   - Date variables: `{{YYYY-MM-DD}}`, `{{YYYY}}`, `{{MM}}`, `{{DD}}`
+
+**Examples:**
+
+- `{{draftName}}` → `Draft 1.md`
+- `{{projectName}} - {{draftName}}` → `MyNovel - Draft 1.md`
+- `{{draftSlug}}-{{YYYY-MM-DD}}` → `draft-1-2025-10-19.md`
+
+### Exporting Your Manuscript
+
+Once generated, your manuscript is saved as a Markdown file that you can:
+
+- **Export to PDF** - Use Obsidian's PDF export or external tools
+- **Format in Word** - Copy content to Microsoft Word for formatting
+- **Send to agents** - Share the manuscript with publishers or agents
+- **Self-publish** - Upload to self-publishing platforms
+- **Print** - Print directly from Obsidian or other tools
 
 ## Backup Management
 
@@ -311,21 +415,60 @@ Open the command palette and search for **"Open Project Meta"** to quickly view 
 
 Access settings via Obsidian Settings → Community Plugins → WriteAid:
 
-### Project Settings
+### Template Settings
 
-- **Active Project** - Currently selected project
-- **Slug Style** - How draft names are converted to filenames
+- **Include outline file on draft creation** - Automatically create outline.md for new drafts
+- **Include metadata in outline files** - Add YAML frontmatter to outline files
+- **Outline metadata fields** - Which metadata fields to include in outlines
+- **Outline template** - Custom template for new outline files
+- **Chapter template** - Custom template for new chapter files
+- **Manuscript name template** - Filename template for generated manuscripts
+
+### Filenames
+
+- **Draft filename slug style** - How draft names convert to filenames
   - `compact` (default): "Draft 1" → `draft1.md`
   - `kebab`: "Draft 1" → `draft-1.md`
+
+### Folders & Files
+
+- **Drafts folder name** - Name of the drafts folder (default: `drafts`)
+- **Manuscripts folder name** - Name of the manuscripts folder (default: `manuscripts`)
+- **Backups folder name** - Name of the backups folder (default: `.writeaid-backups`)
+- **Meta file name** - Name of the project metadata file (default: `meta.md`)
+- **Outline file name** - Name of the outline file (default: `outline.md`)
+
+### Word Count Targets
+
+- **Default target word count for multi-file projects** - Target for new novels (default: 50,000)
+- **Default target word count for single-file projects** - Target for new stories (default: 20,000)
+
+### Manuscript Settings
+
+- **Author name for manuscripts** - Your name in manuscript headers (default: "Unknown Author")
+- **Manuscript name template** - Filename template with variables
+- **Manuscript section break style** - Style for breaks between chapters
+  - Horizontal Rule (---)
+  - Asterisks (\*\*\*)
+  - Dashes (---)
+- **Include chapter list in manuscript** - Toggle for future TOC feature
 
 ### Backup Settings
 
 - **Maximum backups per draft** - How many backups to keep (default: 5)
 - **Maximum backup age (days)** - Retention period in days (default: 30)
 
-### UI Settings
+### UI & Startup
 
-- **Panel refresh debounce** - Delay before refreshing panels (milliseconds)
+- **Ribbon placement** - Left or right sidebar (default: left)
+- **Always show ribbon** - Always show WriteAid icon (default: off)
+- **Auto-open project panel on startup** - Open panel with active project (default: off)
+- **Auto-select persisted project on startup** - Auto-select last used project (default: off)
+- **Enable WriteAid debug logs** - Show verbose logs in DevTools console (default: off)
+
+### Panel Performance
+
+- **Panel refresh debounce** - Delay before refreshing panels in milliseconds (default: 500ms)
 
 ## Tips & Tricks
 

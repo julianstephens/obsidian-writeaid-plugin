@@ -321,38 +321,54 @@ The hero must save the kingdom from darkness.
 
 ### Manuscript Files (manuscripts/)
 
-Auto-generated compiled versions of your drafts.
+Auto-generated compiled versions of your drafts ready for export, printing, or sharing.
 
 **Single-File Project:**
-Simply a copy of the draft file.
+
+The manuscript is compiled from your draft file with metadata header added.
+
+```markdown
+# My Project
+
+**Draft:** Draft 1
+**Author:** Jane Doe
+**Generated:** October 19, 2025 at 3:45 PM
+**Word Count:** 25,000
+**Chapters:** 1
+
+---
+
+Your draft content here...
+```
 
 **Multi-File Project:**
-All chapters concatenated with structure:
+
+All chapters are concatenated in order with section breaks:
 
 ```markdown
 # The Great Adventure
 
-**Author:** [Your Name]
 **Draft:** Draft 1
-**Date Generated:** 2025-01-15
+**Author:** [Author Name From Settings]
+**Generated:** 2025-01-15 at 2:45 PM
 **Word Count:** 58,450
 **Chapters:** 12
 
 ---
 
-# Chapter 1: The Beginning
+## Chapter 1: The Beginning
 
 [Chapter 1 content...]
 
 ---
 
-# Chapter 2: The Journey
+## Chapter 2: The Journey
 
 [Chapter 2 content...]
 
 ---
 
-# Chapter 3: The Challenge
+## Chapter 3: The Challenge
 
 [Chapter 3 content...]
 
@@ -360,17 +376,40 @@ All chapters concatenated with structure:
 
 ---
 
-# Chapter 12: The Resolution
+## Chapter 12: The Resolution
 
 [Chapter 12 content...]
 ```
 
+**Metadata Header Format:**
+
+- **Title**: Project name (H1)
+- **Draft**: Which draft version this is
+- **Author**: Author name from plugin settings (customizable)
+- **Generated**: Date and time in locale format
+- **Word Count**: Total word count with thousand separators
+- **Chapters**: Chapter count (1 for single-file projects)
+- **Section break**: Configured style (horizontal rule, asterisks, or dashes)
+
 **Generation Details:**
 
-- Generated at: `manuscripts/{DraftName}.md`
-- Includes: Title page, all chapters in order, section breaks
-- Format: Standard Markdown for export compatibility
-- Overwrites: Previous manuscript with same name
+- **Generated at:** `manuscripts/{DraftName}.md` (customizable via template)
+- **Includes:** Metadata header, all chapters in order, section breaks
+- **Format:** Standard Markdown for export compatibility
+- **Overwrites:** Previous manuscript with confirmation modal
+- **Customizable settings:**
+  - Author name (default: "Unknown Author")
+  - Section break style (horizontal, asterisks, or dashes)
+  - Filename template (with variables: `{{draftName}}`, `{{projectName}}`, `{{draftSlug}}`, `{{YYYY-MM-DD}}`)
+
+**Customizable Filename Template:**
+
+Use the "Manuscript name template" setting to customize filenames:
+
+- `{{draftName}}` → `Draft 1.md`
+- `{{projectName}} - {{draftName}}` → `MyNovel - Draft 1.md`
+- `{{draftSlug}}-{{YYYY-MM-DD}}` → `draft-1-2025-10-19.md`
+- `{{projectName}}_{{draftName}}_v{{YYYY}}.md` → `MyNovel_Draft 1_v2025.md`
 
 ---
 
@@ -456,6 +495,39 @@ Access WriteAid settings via Obsidian Settings → Community Plugins → WriteAi
   - `{{draftName}}` → `Draft 1.md`
   - `{{projectName}} - {{draftName}}` → `MyNovel - Draft 1.md`
   - `{{draftSlug}}-{{YYYY-MM-DD}}` → `draft-1-2025-01-15.md`
+
+---
+
+### Manuscript Settings
+
+#### Author Name for Manuscripts
+
+- **Type:** Text input
+- **Description:** Your name to appear in manuscript metadata headers
+- **Default:** "Unknown Author" (if left blank)
+- **Used in:** Manuscript metadata header
+- **Example:** "Jane Doe" or "John Smith"
+- **When used:** Every time a manuscript is generated
+
+#### Manuscript Section Break Style
+
+- **Type:** Dropdown
+- **Description:** Visual style for breaks between chapters in manuscripts
+- **Options:**
+  - **Horizontal Rule** (---) - Professional solid lines (default)
+  - **Asterisks** (***) - Eye-catching triple asterisks
+  - **Dashes** (---) - Alternative dash style
+- **Default:** "horizontal"
+- **When used:** Between each chapter in multi-file project manuscripts
+- **Note:** All styles render as breaks; appearance may vary in different editors
+
+#### Include Chapter List in Manuscript
+
+- **Type:** Toggle (on/off)
+- **Description:** Include a table of contents at the start of manuscripts
+- **Default:** OFF (false)
+- **When used:** When generating manuscripts (future feature)
+- **Note:** Currently a toggle for future enhancement; TOC generation not yet implemented
 
 ---
 

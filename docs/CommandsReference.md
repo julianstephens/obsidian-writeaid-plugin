@@ -303,22 +303,104 @@ created: "2025-01-15T14:30:45.123Z"
 
 **For single-file projects:**
 
-1. Copies the main draft file
-2. Saves to `manuscripts/{DraftName}.md`
+1. Reads the main draft file
+2. Generates professional metadata header
+3. Saves to `manuscripts/{ManuscriptFilename}.md`
+4. Ready for export or formatting
 
 **For multi-file projects:**
 
-1. Concatenates all chapters in order
-2. Adds section breaks between chapters
-3. Creates single file in `manuscripts/{DraftName}.md`
-4. Includes title page with metadata
+1. Reads all chapters in order
+2. Generates professional metadata header
+3. Concatenates all chapters with section breaks
+4. Saves to `manuscripts/{ManuscriptFilename}.md`
+5. Formats for easy reading and exporting
 
-**Output file includes:**
+**Manuscript Header Format:**
 
-- Story title and author
-- All content in reading order
-- Chapter headings
-- Proper formatting for export
+```markdown
+# {Project Name}
+
+**Draft:** {Draft Name}
+**Author:** {Author From Settings}
+**Generated:** {Date with Time}
+**Word Count:** {Total Word Count}
+**Chapters:** {Chapter Count}
+
+---
+```
+
+**Section Break Styles:**
+
+The section breaks between chapters can be customized in settings:
+
+- **Horizontal Rule** (default): `---`
+- **Asterisks**: `***`
+- **Dashes**: `---` (alternative style)
+
+**Output Examples:**
+
+**Single-File Project Manuscript:**
+
+```markdown
+# My Project
+
+**Draft:** Draft 1
+**Author:** Jane Doe
+**Generated:** October 19, 2025 at 3:45 PM
+**Word Count:** 25,000
+**Chapters:** 1
+
+---
+
+Your draft content here...
+```
+
+**Multi-File Project Manuscript:**
+
+```markdown
+# The Great Adventure
+
+**Draft:** Draft 1
+**Author:** John Smith
+**Generated:** October 19, 2025 at 3:45 PM
+**Word Count:** 58,450
+**Chapters:** 12
+
+---
+
+## Chapter 1: The Beginning
+
+Chapter 1 content...
+
+---
+
+## Chapter 2: The Journey
+
+Chapter 2 content...
+
+---
+
+## Chapter 3: The Challenge
+
+Chapter 3 content...
+```
+
+**Customization:**
+
+- Author name from "Author name for manuscripts" setting
+- Section break style from "Manuscript section break style" setting
+- Filename from "Manuscript name template" setting with variables:
+  - `{{draftName}}` - Draft folder name
+  - `{{projectName}}` - Project folder name
+  - `{{draftSlug}}` - Slugified draft name
+  - Date variables: `{{YYYY-MM-DD}}`, `{{YYYY}}`, `{{MM}}`, `{{DD}}`
+
+**If file already exists:**
+
+1. A confirmation modal appears asking if you want to overwrite
+2. Click "Confirm" to overwrite with new manuscript
+3. Click "Cancel" to keep existing file
 
 ---
 

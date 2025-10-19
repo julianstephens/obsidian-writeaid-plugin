@@ -4,11 +4,11 @@
     "type": "split",
     "children": [
       {
-        "id": "2ca5be5a06394517",
+        "id": "b9613ac2958bcc95",
         "type": "tabs",
         "children": [
           {
-            "id": "5280a970130968c9",
+            "id": "3b54e8a94d3dcf15",
             "type": "leaf",
             "state": {
               "type": "markdown",
@@ -179,42 +179,43 @@
       "bases:Create new base": false
     }
   },
-  "active": "5280a970130968c9",
+  "active": "36a4b021559a3158",
   "lastOpenFiles": [
+    "Novel/meta.md",
+    "Novel/drafts/Draft 1/chapter2.md",
+    "Novel/drafts/Draft 1/chapter3.md",
+    "Novel/manuscripts/Draft 1.md",
     "Short Story/drafts/Draft 1/draft1.md",
-    "Short Story/drafts/Draft 1",
+    "Short Story/drafts/Draft 2/draft2.md",
+    "Novel/drafts/Draft 1/chapter1.md",
+    "Short Story/drafts/Draft 2",
+    "Novel/manuscripts",
+    "Short Story/manuscripts/Draft 1.md",
+    "Novel/drafts/Draft 1",
+    "Novel/drafts",
+    "Novel",
+    "Short Story/manuscripts/Draft 1-10-19.md",
+    "Short Story/manuscripts",
     "Short Story/meta.md",
+    "Short Story/drafts/Draft 1",
     "Short Story/drafts",
     "Short Story",
     "Short Story/drafts/First Draft/firstdraft.md",
     "Short Story/drafts/First Draft",
-    "Novel/meta.md",
-    "Novel/drafts/Draft 1/chapter1.md",
-    "Novel/drafts/Draft 1",
-    "Novel/drafts",
-    "Novel",
     "Test 2/drafts/Draft 1/draft1.md",
     "Test 2/meta.md",
-    "Test 2/drafts/Draft 1",
-    "Test 2/drafts",
-    "Test 2",
     "Test/drafts/Draft 1/chapter1.md",
     "Test/meta.md",
     "Test/drafts/Draft 1/outline.md",
     "Test/drafts/Draft 1/draft1.md",
     "Novel/drafts/Draft 1/outline.md",
     "Move/meta.md",
-    "Novel/manuscripts/Draft 1.md",
-    "Novel/drafts/Draft 1/chapter2.md",
     "Move/drafts/Draft 1/chapter1.md",
     "Move/drafts/Draft 1/chapter2.md",
-    "Novel/drafts/Draft 1/chapter3.md",
     "novel/Drafts/Draft 2/chapter1.md",
     "novel/Drafts/Draft 2/Chapter 3.md",
     "novel/meta.md",
     "Story/Drafts/Draft 8/draft8.md",
-    "Story/Drafts/Draft 5/draft5.md",
-    "Story/Drafts/Draft 6/draft6.md",
-    "Story/Drafts/Draft 7/draft7.md"
+    "Story/Drafts/Draft 5/draft5.md"
   ]
 }
