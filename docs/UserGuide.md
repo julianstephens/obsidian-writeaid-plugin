@@ -95,6 +95,43 @@ MyNovel/
 2. Select the draft you want to work on from the modal
 3. The active draft is now displayed in the status bar
 
+### Draft Metadata Management
+
+Each draft automatically includes metadata that helps WriteAid track and manage your work.
+
+**Single-File Draft Metadata:**
+
+When you create a single-file draft, WriteAid automatically generates this metadata:
+
+```yaml
+---
+id: "abc123def456"
+draft_name: "Draft 1"
+project_id: "proj789"
+word_count: 58450
+last_updated: 2025-01-15T14:30:45Z
+---
+```
+
+**What each field does:**
+
+- **`id`** - Unique identifier for this draft (auto-generated on creation)
+- **`draft_name`** - Display name of your draft
+- **`project_id`** - Links this draft to its parent project
+- **`word_count`** - Automatically updated as you edit
+- **`last_updated`** - Automatically updated whenever you modify the draft
+
+**Metadata Maintenance:**
+
+- WriteAid **automatically maintains** `word_count` and `last_updated`
+- **Don't manually edit** `id` and `project_id` - these should stay fixed
+- You **can edit** `draft_name` if you want to rename it (though use the "Rename Draft" command instead)
+- **Corrupted metadata?** Run "Update Project Metadata" to repair it
+
+**Backward Compatibility:**
+
+If you have old drafts created before metadata improvements, WriteAid automatically updates them to the new format when you next modify them.
+
 ### Creating an Outline
 
 Outlines help you organize your story before diving into writing. WriteAid creates comprehensive outline files with structured sections.
@@ -149,6 +186,9 @@ This makes outlines machine-readable and trackable across your project.
 
 - **Template variables** - Use `{{draftName}}` in custom templates
 - **Metadata control** - Toggle frontmatter generation in settings
+
+---
+
 - **Field selection** - Choose which metadata fields to include
 - **Template editing** - Customize the outline structure in settings
 

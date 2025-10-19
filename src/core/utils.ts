@@ -318,10 +318,8 @@ export function extractFrontmatterFields(
  * @returns true if all required chapter fields are present
  */
 export function isValidChapterFrontmatter(frontmatterContent: string): boolean {
-  // Check for minimum required chapter fields (chapter_id, order, chapter_name)
-  // These are the fields that distinguish a valid chapter from other markdown files
-  const hasChapterId = /^chapter_id:\s/m.test(frontmatterContent);
-  const hasOrder = /^order:\s/m.test(frontmatterContent);
-  const hasChapterName = /^chapter_name:\s/m.test(frontmatterContent);
-  return hasChapterId && hasOrder && hasChapterName;
+  // Check for minimum required chapter fields from REQUIRED_CHAPTER_FIELDS constant
+  // The first 3 fields (chapter_id, order, chapter_name) are the distinguishing fields
+  const requiredFields = REQUIRED_CHAPTER_FIELDS.slice(0, 3);
+  return requiredFields.every((field) => new RegExp(`^${field}:\\s`, "m").test(frontmatterContent));
 }

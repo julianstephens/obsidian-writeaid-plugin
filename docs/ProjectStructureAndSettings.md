@@ -104,7 +104,11 @@ total_word_count: 58450
 
 #### Single-File Project Draft
 
-For single-file projects, the main draft file is `draft.md`:
+For single-file projects, each draft is stored as a single markdown file with metadata in YAML frontmatter:
+
+**File:** `Project Name/drafts/Draft 1.md` (or per configured slug style)
+
+**Frontmatter Format:**
 
 ```yaml
 ---
@@ -124,13 +128,63 @@ Your story content goes here...
 Once upon a time...
 ```
 
-**Frontmatter Fields:**
+**Frontmatter Fields (5 fields required):**
 
-- `id` (UUID): Unique identifier for this draft
-- `draft_name` (string): Display name
-- `project_id` (UUID): Links to parent project
-- `word_count` (number): Auto-calculated
-- `last_updated` (ISO 8601 timestamp): Auto-updated
+| Field          | Type     | Purpose                              | Example                |
+| -------------- | -------- | ------------------------------------ | ---------------------- |
+| `id`           | UUID     | Unique identifier for this draft     | `"abc123def456"`       |
+| `draft_name`   | String   | Display name of the draft            | `"Draft 1"`            |
+| `project_id`   | UUID     | ID of the parent project             | `"proj789"`            |
+| `word_count`   | Number   | Current word count (auto-calculated) | `58450`                |
+| `last_updated` | ISO 8601 | Last modification timestamp          | `2025-01-15T14:30:45Z` |
+
+**Field Details:**
+
+- **`id`** (UUID)
+  - **Generated:** Automatically on draft creation
+  - **Immutable:** Should not be changed
+  - **Purpose:** Unique identifier for draft-to-project relationships
+
+- **`draft_name`** (String)
+  - **Generated:** From user input during draft creation
+  - **Editable:** Can be changed by user
+  - **Purpose:** Display name shown in UI
+  - **Note:** Always stored as JSON string if contains special characters
+
+- **`project_id`** (UUID)
+  - **Generated:** From parent project metadata on draft creation
+  - **Immutable:** Should not be changed
+  - **Purpose:** Links draft to parent project for programmatic access
+  - **Storage:** Always a UUID (not project name)
+
+- **`word_count`** (Number)
+  - **Initial Value:** 0 when draft created
+  - **Updated:** Automatically when draft content changes
+  - **Calculation:** Counts words in body content (excludes frontmatter and markdown syntax)
+  - **Purpose:** Tracks current draft length
+
+- **`last_updated`** (ISO 8601 Timestamp)
+  - **Generated:** ISO 8601 UTC format on draft creation (e.g., `2025-01-15T14:30:45.123Z`)
+  - **Updated:** Automatically whenever draft content is modified
+  - **Format:** Always UTC with `Z` suffix (timezone-independent)
+  - **Purpose:** Tracks last modification time for auditing and sorting
+
+**Metadata Maintenance:**
+
+- Fields are automatically maintained by WriteAid
+- Manual editing of `id` and `project_id` not recommended
+- `word_count` and `last_updated` are auto-updated
+- If fields become corrupted, draft can be recovered by updating project metadata
+
+**Backward Compatibility:**
+
+WriteAid supports reading old field names for existing single-file drafts:
+
+- `draft` (old) → `draft_name` (new)
+- `project` (old) → `project_id` (new)
+- `created` (old) → `last_updated` (new)
+
+Old drafts are automatically migrated to the new schema on next modification.
 
 ---
 

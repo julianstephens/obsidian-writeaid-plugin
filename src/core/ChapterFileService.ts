@@ -49,7 +49,7 @@ export class ChapterFileService {
       debug(`${DEBUG_PREFIX} ChapterFileService.reorderChapters: no project resolved`);
       return false;
     }
-    const draftsFolderName = this.getDraftsFolderName(project);
+    const draftsFolderName = this.getDraftsFolderName();
     if (!draftsFolderName) {
       debug(`${DEBUG_PREFIX} ChapterFileService.reorderChapters: no drafts folder found`);
       return false;
@@ -102,7 +102,7 @@ export class ChapterFileService {
       return [];
     }
     // Find the drafts folder, case-insensitively
-    const draftsFolderName = this.getDraftsFolderName(project);
+    const draftsFolderName = this.getDraftsFolderName();
     if (!draftsFolderName) {
       debug(
         `${DEBUG_PREFIX} ChapterFileService.listChapters: no drafts folder found in project ${project}`,
@@ -204,7 +204,7 @@ export class ChapterFileService {
       return false;
     }
     // Find the drafts folder, case-insensitively
-    const draftsFolderName = this.getDraftsFolderName(project);
+    const draftsFolderName = this.getDraftsFolderName();
     if (!draftsFolderName) {
       debug(`${DEBUG_PREFIX} createChapter: no drafts folder found`);
       return false;
@@ -308,7 +308,7 @@ export class ChapterFileService {
       return false;
     }
     // Find the drafts folder, case-insensitively
-    const draftsFolderName = this.getDraftsFolderName(project);
+    const draftsFolderName = this.getDraftsFolderName();
     if (!draftsFolderName) {
       debug(`${DEBUG_PREFIX} deleteChapter: no drafts folder found`);
       return false;
@@ -357,7 +357,7 @@ export class ChapterFileService {
       return false;
     }
     // Find the drafts folder, case-insensitively
-    const draftsFolderName = this.getDraftsFolderName(project);
+    const draftsFolderName = this.getDraftsFolderName();
     if (!draftsFolderName) {
       debug(`${DEBUG_PREFIX} renameChapter: no drafts folder found`);
       return false;
@@ -404,7 +404,7 @@ export class ChapterFileService {
   ): Promise<boolean> {
     const project = this.resolveProjectPath(projectPath);
     if (!project) return false;
-    const draftsFolderName = this.getDraftsFolderName(project);
+    const draftsFolderName = this.getDraftsFolderName();
     if (!draftsFolderName) return false;
     const filePath = `${project}/${draftsFolderName}/${draftName}/${chapterName}${MARKDOWN_FILE_EXTENSION}`;
     const file = this.app.vault.getAbstractFileByPath(filePath);
@@ -422,17 +422,9 @@ export class ChapterFileService {
     return projectPath || this.manager?.activeProject || null;
   }
 
-  private getDraftsFolderName(project: string): string | null {
-    const projectFolder = this.app.vault.getAbstractFileByPath(project);
-    const draftsName = getDraftsFolderName(this.manager?.settings);
-    if (projectFolder && projectFolder instanceof TFolder) {
-      for (const child of projectFolder.children) {
-        if (child instanceof TFolder && child.name.toLowerCase() === draftsName.toLowerCase()) {
-          return child.name;
-        }
-      }
-    }
-    return null;
+  private getDraftsFolderName(): string {
+    // Return the configured drafts folder name without legacy checks
+    return getDraftsFolderName(this.manager?.settings);
   }
 
   /**
@@ -531,7 +523,7 @@ export class ChapterFileService {
       return false;
     }
 
-    const draftsFolderName = this.getDraftsFolderName(project);
+    const draftsFolderName = this.getDraftsFolderName();
     if (!draftsFolderName) {
       debug(`${DEBUG_PREFIX} updateChapterLastUpdated: no drafts folder found`);
       return false;

@@ -8,6 +8,7 @@ import {
   asyncFilter,
   debug,
   DEBUG_PREFIX,
+  generateDraftId,
   getDraftsFolderName,
   getManuscriptsFolderName,
   getMetaFileName,
@@ -71,12 +72,15 @@ export class ProjectService {
       const targetWordCount = singleFile
         ? (settings?.defaultSingleTargetWordCount ?? 20000)
         : (settings?.defaultMultiTargetWordCount ?? 50000);
+      // Generate a unique project ID
+      const projectId = generateDraftId();
       // Use updateMetaStats to create meta.md with proper formatting and version
       await updateMetaStats(
         this.app,
         projectPath,
         undefined,
         {
+          project_id: projectId,
           project_name: projectName,
           description: description || "",
           date_created: new Date().toISOString(),
@@ -93,7 +97,9 @@ export class ProjectService {
     await this.projectFileService.drafts.createDraft(draftName, undefined, projectPath, settings);
 
     // Update metadata after creating the draft to properly count chapters
-    await updateMetaStats(this.app, projectPath, draftName, undefined, settings);
+    // Read existing metadata first to preserve all existing fields
+    const existingMeta = await readMetaFile(this.app, metaPath);
+    await updateMetaStats(this.app, projectPath, draftName, existingMeta || undefined, settings);
 
     return projectPath;
   }
@@ -174,20 +180,12 @@ export class ProjectService {
 
   /** Get the Drafts folder TFolder object, or null if not found */
   getDraftsFolder(projectPath: string): TFolder | null {
-    // First try the configured drafts folder name
+    // Get the configured drafts folder name
     const draftsPath = `${projectPath}/${getDraftsFolderName()}`;
-    let draftsFolder = this.app.vault.getAbstractFileByPath(draftsPath);
+    const draftsFolder = this.app.vault.getAbstractFileByPath(draftsPath);
     if (draftsFolder && draftsFolder instanceof TFolder) {
       return draftsFolder;
     }
-
-    // If not found, try capitalized "Drafts" for backward compatibility
-    const capitalizedDraftsPath = `${projectPath}/Drafts`;
-    draftsFolder = this.app.vault.getAbstractFileByPath(capitalizedDraftsPath);
-    if (draftsFolder && draftsFolder instanceof TFolder) {
-      return draftsFolder;
-    }
-
     return null;
   }
 
@@ -213,15 +211,9 @@ export class ProjectService {
       const metaPath = normalizePath(`${base}/${getMetaFileName()}`);
       const hasMeta = await this.app.vault.adapter.exists(metaPath);
 
-      // Check for drafts folder - try configured name first
+      // Check for drafts folder
       const draftsPath = normalizePath(`${base}/${getDraftsFolderName()}`);
-      let hasDrafts = await this.app.vault.adapter.exists(draftsPath);
-
-      // If configured name doesn't exist, check for capitalized "Drafts" for backward compatibility
-      if (!hasDrafts) {
-        const capitalizedDraftsPath = normalizePath(`${base}/Drafts`);
-        hasDrafts = await this.app.vault.adapter.exists(capitalizedDraftsPath);
-      }
+      const hasDrafts = await this.app.vault.adapter.exists(draftsPath);
 
       // Accept folder as project if it has meta.md OR drafts folder
       if (!hasMeta && !hasDrafts) {
