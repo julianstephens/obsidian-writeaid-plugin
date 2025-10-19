@@ -2,6 +2,10 @@ import { debug, DEBUG_PREFIX } from "@/core/utils";
 import type { CreateDraftModalProps } from "@/types";
 import { Modal, Setting } from "obsidian";
 
+/**
+ * Modal for creating a new draft within a project.
+ * Provides options to set the draft name and optionally copy from an existing draft.
+ */
 export class CreateDraftModal extends Modal {
   props: CreateDraftModalProps;
 

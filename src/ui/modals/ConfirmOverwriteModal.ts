@@ -1,6 +1,10 @@
 import { debug, DEBUG_PREFIX } from "@/core/utils";
 import { App, ButtonComponent, Modal } from "obsidian";
 
+/**
+ * Modal for confirming overwrite of an existing draft or manuscript file.
+ * Returns a promise that resolves to true if user confirms overwrite.
+ */
 export class ConfirmOverwriteModal extends Modal {
   private resolve!: (value: boolean) => void;
 

@@ -2,6 +2,12 @@ import { checkActive, debug, DEBUG_PREFIX, getDraftsFolderName } from "@/core/ut
 import type { WriteAidManager } from "@/manager";
 import { Notice, TFolder } from "obsidian";
 
+/**
+ * Creates a command that clears old backups for the currently active draft.
+ * Removes backups that exceed the configured maximum age.
+ * @param manager - The WriteAid manager instance containing active project and draft information
+ * @returns An async function that executes the clear old backups command
+ */
 export function clearOldBackupsCommand(manager: WriteAidManager) {
   return async () => {
     const activeProjectPath = manager.activeProject;

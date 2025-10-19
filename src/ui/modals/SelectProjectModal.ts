@@ -3,6 +3,10 @@ import type { SelectProjectModalProps } from "@/types";
 import type { App } from "obsidian";
 import { Modal, Setting } from "obsidian";
 
+/**
+ * Modal for selecting a project from available projects in the vault.
+ * Displays a list of project folders for the user to choose from.
+ */
 export class SelectProjectModal extends Modal {
   props: SelectProjectModalProps;
 

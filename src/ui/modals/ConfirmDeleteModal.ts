@@ -1,6 +1,10 @@
 import { debug, DEBUG_PREFIX } from "@/core/utils";
 import { App, Modal } from "obsidian";
 
+/**
+ * Modal for confirming deletion of a draft or chapter.
+ * Displays a warning message and provides delete/cancel options.
+ */
 export class ConfirmDeleteModal extends Modal {
   private name: string;
   private onConfirm: () => void;

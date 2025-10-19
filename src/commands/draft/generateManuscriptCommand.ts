@@ -2,6 +2,11 @@ import { checkActive, debug, DEBUG_PREFIX } from "@/core/utils";
 import type { WriteAidManager } from "@/manager";
 import { Notice } from "obsidian";
 
+/**
+ * Creates a command that generates a complete manuscript by combining all chapters from the active draft.
+ * @param manager - The WriteAid manager instance containing active project and draft information
+ * @returns An async function that executes the manuscript generation command
+ */
 export function generateManuscriptCommand(manager: WriteAidManager) {
   return async () => {
     const draftService = manager.projectFileService.drafts;

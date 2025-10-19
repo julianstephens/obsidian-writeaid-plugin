@@ -26,6 +26,10 @@ interface MinimalPlugin {
   registerSettingsChangedCallback?: (callback: () => void) => void;
 }
 
+/**
+ * Settings tab for configuring WriteAid plugin preferences.
+ * Provides UI for templates, folder names, backup settings, and other configuration options.
+ */
 export class WriteAidSettingTab extends PluginSettingTab {
   plugin: MinimalPlugin;
 

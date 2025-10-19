@@ -2,6 +2,10 @@ import { debug, DEBUG_PREFIX } from "@/core/utils";
 import type { App } from "obsidian";
 import { Modal, Setting } from "obsidian";
 
+/**
+ * Modal displayed when attempting to create a project that already exists.
+ * Provides options to open the existing project, create anyway, or cancel.
+ */
 export class ConfirmExistingProjectModal extends Modal {
   path: string;
   onCreateAnyway: (createAnyway: boolean) => void;

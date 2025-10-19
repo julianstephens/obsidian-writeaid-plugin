@@ -26,6 +26,10 @@ import { BackupService } from "./BackupService";
 import { ChapterFileService } from "./ChapterFileService";
 import { ProjectService } from "./ProjectService";
 
+/**
+ * Service for managing draft files and operations.
+ * Handles creation, deletion, duplication, manuscript generation, and outline management for drafts.
+ */
 export class DraftFileService {
   app: App;
   tpl: TemplateService;

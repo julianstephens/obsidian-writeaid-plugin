@@ -11,6 +11,10 @@ declare global {
   }
 }
 
+/**
+ * Service for rendering templates with dynamic variable substitutions.
+ * Supports inline templates or vault file paths, with {{key}} syntax and moment.js date formatting.
+ */
 export class TemplateService {
   app: App;
 

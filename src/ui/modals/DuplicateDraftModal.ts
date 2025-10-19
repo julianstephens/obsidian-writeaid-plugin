@@ -7,6 +7,10 @@ export interface DuplicateDraftModalProps {
   onSubmit: (draftName: string) => void;
 }
 
+/**
+ * Modal for duplicating an existing draft.
+ * Prompts for a new draft name and creates a copy of the source draft.
+ */
 export class DuplicateDraftModal extends Modal {
   props: DuplicateDraftModalProps;
 

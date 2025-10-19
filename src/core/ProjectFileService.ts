@@ -5,6 +5,10 @@ import { ChapterFileService } from "./ChapterFileService";
 import { DraftFileService } from "./DraftFileService";
 import { ProjectService } from "./ProjectService";
 
+/**
+ * Service aggregating all file-related services for projects.
+ * Provides unified access to draft, chapter, and backup services.
+ */
 export class ProjectFileService {
   drafts: DraftFileService;
   chapters: ChapterFileService;

@@ -1,6 +1,10 @@
 import { debug, DEBUG_PREFIX } from "@/core/utils";
 import { App, Modal } from "obsidian";
 
+/**
+ * Modal for renaming a restored draft when the original no longer exists.
+ * Prompts for a new name before restoring the draft from backup.
+ */
 export class RenameRestoredDraftModal extends Modal {
   oldName: string;
   onSubmit: (newName: string) => void;

@@ -1,6 +1,10 @@
 import { debug, DEBUG_PREFIX } from "@/core/utils";
 import { App, Modal } from "obsidian";
 
+/**
+ * Modal for renaming a draft.
+ * Prompts for a new draft name and optionally renames the main draft file.
+ */
 export class RenameDraftModal extends Modal {
   oldName: string;
   onSubmit: (newName: string, renameFile: boolean) => void;

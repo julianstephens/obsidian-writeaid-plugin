@@ -60,6 +60,13 @@ async function convertSingleToMultiFileProject(
   return true;
 }
 
+/**
+ * Command to convert a single-file project to a multi-file project structure.
+ * Renames all draft files from their slugified names to "Chapter 1.md" format and updates project metadata.
+ * @param app - The Obsidian app instance
+ * @param projectPath - The path to the project to convert
+ * @param settings - Optional WriteAid settings for configuration
+ */
 export async function convertSingleToMultiFileProjectCommand(
   app: App,
   projectPath: string | undefined,

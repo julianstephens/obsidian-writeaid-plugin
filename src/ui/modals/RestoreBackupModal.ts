@@ -21,6 +21,10 @@ interface BackupItem {
   draftId: string;
 }
 
+/**
+ * Modal for listing and restoring draft backups.
+ * Displays available backups with timestamps and file sizes, allowing users to restore selected backups.
+ */
 export class RestoreBackupModal extends SuggestModal<BackupItem> {
   private backups: BackupItem[] = [];
   private draftFolder: string = "";

@@ -2,6 +2,11 @@ import { debug, DEBUG_PREFIX, getMetaFileName } from "@/core/utils";
 import type { WriteAidManager } from "@/manager";
 import { Notice, TFile } from "obsidian";
 
+/**
+ * Creates a command that opens the project metadata file for the currently active project.
+ * @param manager - The WriteAid manager instance containing active project information
+ * @returns An async function that executes the open project meta command
+ */
 export function openProjectMetaCommand(manager: WriteAidManager) {
   return async () => {
     const activeProjectPath = manager.activeProject;

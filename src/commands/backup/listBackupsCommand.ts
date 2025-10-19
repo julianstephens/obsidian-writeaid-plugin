@@ -4,6 +4,12 @@ import { RestoreBackupModal } from "@/ui/modals/RestoreBackupModal";
 import type { ProjectPanelView } from "@/ui/sidepanel/ProjectPanelView";
 import { VIEW_TYPE_PROJECT_PANEL } from "@/ui/sidepanel/ProjectPanelView";
 
+/**
+ * Creates a command that opens a modal to list and restore backups.
+ * Allows users to view available backups and restore them to the active draft.
+ * @param manager - The WriteAid manager instance containing active project and draft information
+ * @returns An async function that executes the list backups command
+ */
 export function listBackupsCommand(manager: WriteAidManager) {
   return async () => {
     debug(`${DEBUG_PREFIX} List backups command called`);

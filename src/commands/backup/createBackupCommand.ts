@@ -68,6 +68,12 @@ class ConfirmBackupCleanupModal extends Modal {
   }
 }
 
+/**
+ * Creates a command that backs up the currently active draft to a ZIP file.
+ * Prompts user for confirmation if creating the backup will exceed maximum backup limits.
+ * @param manager - The WriteAid manager instance containing active project and draft information
+ * @returns An async function that executes the backup creation command
+ */
 export function createBackupCommand(manager: WriteAidManager) {
   return async () => {
     const activeProjectPath = manager.activeProject;
