@@ -84,7 +84,8 @@
               "title": "WriteAid Projects"
             }
           }
-        ]
+        ],
+        "currentTab": 3
       }
     ],
     "direction": "horizontal",
@@ -178,7 +179,7 @@
       "bases:Create new base": false
     }
   },
-  "active": "3b54e8a94d3dcf15",
+  "active": "36a4b021559a3158",
   "lastOpenFiles": [
     "Novel/meta.md",
     "Novel/drafts/Draft 1/chapter2.md",
