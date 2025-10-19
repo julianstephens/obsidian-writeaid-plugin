@@ -503,7 +503,7 @@ export class ChapterFileService {
 
   /**
    * Check if a file is a valid chapter (has all required frontmatter fields)
-   * See REQUIRED_CHAPTER_FIELDS constant in utils for the full list of fields
+   * Uses isValidChapterFrontmatter for validation of required fields.
    */
   isValidChapter(content: string): boolean {
     const fmMatch = content.match(FRONTMATTER_REGEX);
