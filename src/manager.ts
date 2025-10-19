@@ -194,6 +194,7 @@ export class WriteAidManager {
         projectName: string,
         singleFile: boolean,
         initialDraftName?: string,
+        description?: string,
         parentFolder?: string,
       ) => {
         if (!projectName) {
@@ -229,6 +230,7 @@ export class WriteAidManager {
                   singleFile,
                   initialDraftName,
                   parentFolder,
+                  description,
                 );
                 // Automatically open the project's meta.md file after creation
                 await this.openProject(fullPath);
@@ -240,7 +242,7 @@ export class WriteAidManager {
             },
           ).open();
         } else {
-          await this.createNewProject(projectName, singleFile, initialDraftName, parentFolder);
+          await this.createNewProject(projectName, singleFile, initialDraftName, parentFolder, description);
           // Automatically open the project's meta.md file after creation
           await this.openProject(fullPath);
         }
@@ -257,6 +259,7 @@ export class WriteAidManager {
     singleFile: boolean,
     initialDraftName?: string,
     parentFolder?: string,
+    description?: string,
   ) {
     const path = await this.projectService.createProject(
       projectName,
@@ -264,6 +267,7 @@ export class WriteAidManager {
       initialDraftName,
       parentFolder,
       this.settings,
+      description,
     );
     // set as active project by default after successful creation
     if (path) {
