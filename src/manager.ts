@@ -85,6 +85,7 @@ export class WriteAidManager {
       projectPath,
       draftName,
       chapterName,
+      this.settings,
     );
   }
   async renameChapter(projectPath: string, draftName: string, oldName: string, newName: string) {

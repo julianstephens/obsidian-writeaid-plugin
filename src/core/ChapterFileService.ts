@@ -14,6 +14,7 @@ import {
 import type { WriteAidManager } from "@/manager";
 import type { WriteAidSettings } from "@/types";
 import { App, TFile, TFolder } from "obsidian";
+import { updateMetaStats } from "./meta";
 
 export class ChapterFileService {
   app: App;
@@ -296,11 +297,17 @@ export class ChapterFileService {
         last_updated: now,
       }
     );
+    
+    // Update metadata to recalculate total_chapters
+    await suppressAsync(async () => {
+      await updateMetaStats(this.app, project, draftName, undefined, settings);
+    });
+    
     return true;
   }
 
   /** Delete a chapter file from a draft folder. */
-  async deleteChapter(projectPath: string, draftName: string, chapterName: string) {
+  async deleteChapter(projectPath: string, draftName: string, chapterName: string, settings?: WriteAidSettings) {
     debug(`${DEBUG_PREFIX} deleteChapter called: chapterName=${chapterName}, draft=${draftName}`);
     const project = this.resolveProjectPath(projectPath);
     if (!project) {
@@ -337,6 +344,12 @@ export class ChapterFileService {
           }
         }
       }
+      
+      // Update metadata to recalculate total_chapters
+      await suppressAsync(async () => {
+        await updateMetaStats(this.app, project, draftName, undefined, settings);
+      });
+      
       return true;
     }
     return false;
