@@ -13,7 +13,9 @@ import {
   getManuscriptsFolderName,
   getMetaFileName,
   getOutlineFileName,
+  getProjectIdFromMetadata,
   MARKDOWN_FILE_EXTENSION,
+  migrateOldDraftMetadata,
   PROJECT_TYPE,
   slugifyDraftName,
   suppressAsync,
@@ -184,16 +186,31 @@ export class DraftFileService {
         const draftMainPath = `${newDraftFolder}/${draftFileName}`;
         if (!this.app.vault.getAbstractFileByPath(draftMainPath)) {
           const draftId = generateDraftId();
-          const fm = buildFrontmatter({
-            draft: draftName,
-            id: draftId,
-            project: projectName,
-            created: new Date().toISOString(),
+          const now = new Date().toISOString();
+          
+          // Get project ID from metadata
+          const metaPath = `${projectPathResolved}/${getMetaFileName(settings)}`;
+          let projectId = projectName; // fallback to project name if metadata not available
+          await suppressAsync(async () => {
+            const metadata = await readMetaFile(this.app, metaPath);
+            if (metadata) {
+              projectId = getProjectIdFromMetadata(metadata);
+            }
           });
+          
+          // Create frontmatter with all 5 documented fields
+          const frontmatter = buildFrontmatter({
+            id: draftId,
+            draft_name: draftName,
+            project_id: projectId,
+            word_count: 0,
+            last_updated: now,
+          });
+          
           const projectContent = await this.tpl.render("# {{draftName}}", {
             draftName,
           });
-          await this.app.vault.create(draftMainPath, fm + projectContent);
+          await this.app.vault.create(draftMainPath, frontmatter + projectContent);
         }
       } else {
         // Multi-file project: ensure at least one valid chapter exists
@@ -337,6 +354,121 @@ export class DraftFileService {
       }
     } catch (error) {
       debug(`${DEBUG_PREFIX} ensureChaptersDraftId error:`, error);
+    }
+  }
+
+  /**
+   * Update draft metadata (word count and last_updated)
+   * Called after draft content changes to maintain up-to-date metadata
+   * @param projectPath - Project folder path
+   * @param draftName - Name of the draft
+   * @param wordCount - New word count
+   * @returns true if update was successful
+   */
+  async updateDraftMetadata(
+    projectPath: string,
+    draftName: string,
+    wordCount: number,
+  ): Promise<boolean> {
+    const project = this.resolveProjectPath(projectPath);
+    if (!project) {
+      debug(`${DEBUG_PREFIX} updateDraftMetadata: no project resolved`);
+      return false;
+    }
+
+    const draftsFolderName = this.getDraftsFolderName(project);
+    if (!draftsFolderName) {
+      debug(`${DEBUG_PREFIX} updateDraftMetadata: no drafts folder found`);
+      return false;
+    }
+
+    // Check project type to determine which file to update
+    const metaPath = `${project}/${getMetaFileName(this.manager?.settings)}`;
+    const projectType = await suppressAsync(async () => {
+      const metadata = await readMetaFile(this.app, metaPath);
+      return metadata?.project_type || PROJECT_TYPE.MULTI;
+    });
+
+    if (projectType === PROJECT_TYPE.SINGLE) {
+      // Single-file project: update the main draft file
+      const slug = slugifyDraftName(draftName, this.manager?.settings?.slugStyle);
+      const filePath = `${project}/${draftsFolderName}/${draftName}/${slug}${MARKDOWN_FILE_EXTENSION}`;
+      return this.updateDraftLastUpdated(filePath, wordCount);
+    } else {
+      // Multi-file project: sum all chapters and update draft metadata if needed
+      const draftFolder = `${project}/${draftsFolderName}/${draftName}`;
+      const files = this.app.vault.getFiles().filter((f) => f.path.startsWith(draftFolder));
+      
+      // For multi-file projects, we update all chapters' last_updated
+      for (const file of files) {
+        if (file instanceof TFile && file.extension === MARKDOWN_FILE_EXTENSION.slice(1)) {
+          const content = await this.app.vault.read(file);
+          if (this.chapters.isValidChapter(content)) {
+            await suppressAsync(async () => {
+              await this.updateDraftLastUpdated(file.path);
+            });
+          }
+        }
+      }
+      return true;
+    }
+  }
+
+  /**
+   * Update draft last_updated timestamp and optionally word count
+   * Maintains both new field names (draft_name, project_id, last_updated)
+   * and supports backward compatibility with old field names (draft, project, created)
+   * @param filePath - Full path to the draft file
+   * @param wordCount - Optional new word count
+   * @returns true if update was successful
+   */
+  async updateDraftLastUpdated(
+    filePath: string,
+    wordCount?: number,
+  ): Promise<boolean> {
+    debug(`${DEBUG_PREFIX} updateDraftLastUpdated called for ${filePath}`);
+
+    const file = this.app.vault.getAbstractFileByPath(filePath);
+    if (!file || !(file instanceof TFile)) {
+      debug(`${DEBUG_PREFIX} updateDraftLastUpdated: file not found at ${filePath}`);
+      return false;
+    }
+
+    try {
+      const content = await this.app.vault.read(file);
+      const fmMatch = content.match(FRONTMATTER_REGEX);
+
+      if (!fmMatch) {
+        debug(`${DEBUG_PREFIX} updateDraftLastUpdated: no frontmatter found`);
+        return false;
+      }
+
+      let fields = extractFrontmatterFields(fmMatch[1]);
+      
+      // Apply migration to support old field names
+      fields = migrateOldDraftMetadata(fields);
+
+      // Always update last_updated
+      fields.last_updated = new Date().toISOString();
+
+      // Update word count if provided
+      if (wordCount !== undefined) {
+        fields.word_count = wordCount;
+      }
+
+      const body = content.substring(fmMatch[0].length);
+      const updatedContent = `${buildFrontmatter(fields)}${body}`;
+
+      await this.app.vault.modify(file, updatedContent);
+      debug(
+        `${DEBUG_PREFIX} updateDraftLastUpdated: updated ${filePath} with last_updated ${fields.last_updated}${
+          wordCount !== undefined ? ` and word_count ${wordCount}` : ""
+        }`,
+      );
+      return true;
+    } catch (error) {
+      debug(`${DEBUG_PREFIX} updateDraftLastUpdated error:`, error);
+      return false;
     }
   }
 
@@ -840,13 +972,17 @@ function updateDuplicatedFileMetadata(
   const body = content.substring(fmMatch[0].length);
 
   // Parse frontmatter into fields
-  const fields = extractFrontmatterFields(frontmatter);
+  let fields = extractFrontmatterFields(frontmatter);
+  
+  // Apply migration to support old field names
+  fields = migrateOldDraftMetadata(fields);
 
-  // Update fields for the duplicated draft
-  fields.draft = draftName;
+  // Update fields for the duplicated draft (using new schema)
+  fields.draft_name = draftName;
   fields.id = generateDraftId();
-  fields.project = projectName;
-  fields.created = new Date().toISOString();
+  fields.project_id = projectName;
+  fields.last_updated = new Date().toISOString();
+  // word_count should already be present from migration or set by migrateOldDraftMetadata
 
   // Reconstruct the content
   return `${buildFrontmatter(fields)}${body}`;
