@@ -1,3 +1,13 @@
+# v0.2.0
+
+- Added support for updating single-file draft metadata.
+- Extended project metadata capabilities.
+- Introduced outline metadata support.
+- Added extra chapter metadata options.
+- Improved maintainability and consistency by extracting frontmatter construction to a dedicated helper function.
+- Fixed an issue where the Gemini API changelog response included an unnecessary preamble.
+- Improved tag deletion to correctly handle both tags and branches.
+
 # v0.1.2
 
 Here are the changelog entries:
