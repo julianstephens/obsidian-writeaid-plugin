@@ -89,8 +89,6 @@ export async function readMetaFile(app: App, filePath: string): Promise<ProjectM
       );
     }
 
-    // Initialize description as empty string if not set
-
     // Initialize total_chapters if not set (will be calculated by updateMetaStats)
     if (metadata.total_chapters === undefined) {
       metadata.total_chapters = 0;
