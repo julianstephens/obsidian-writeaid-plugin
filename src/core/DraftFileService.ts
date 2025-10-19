@@ -824,7 +824,8 @@ export class DraftFileService {
       manuscriptContent += `${sectionBreak}\n\n`;
 
       // Add chapters with section breaks
-      for (const chapter of chapters) {
+      for (let i = 0; i < chapters.length; i++) {
+        const chapter = chapters[i];
         const chapterFilePath = `${draftFolder}/${chapter.name}${MARKDOWN_FILE_EXTENSION}`;
         const chapterFile = this.app.vault.getAbstractFileByPath(chapterFilePath);
         if (chapterFile && chapterFile instanceof TFile) {
@@ -833,7 +834,10 @@ export class DraftFileService {
           const chapterTitle = chapter.chapterName || chapter.name;
           manuscriptContent += `## ${chapterTitle}\n\n`;
           manuscriptContent += stripHeadings(stripFrontmatter(content));
-          manuscriptContent += `\n\n${sectionBreak}\n\n`;
+          // Add section break between chapters, but not after the final chapter
+          if (i < chapters.length - 1) {
+            manuscriptContent += `\n\n${sectionBreak}\n\n`;
+          }
         }
       }
 

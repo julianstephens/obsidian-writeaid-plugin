@@ -23,7 +23,5 @@
   "metaFileName": "meta.md",
   "outlineFileName": "outline.md",
   "maxBackups": 5,
-  "maxBackupAgeDays": 30,
-  "authorName": "Julian Stephens",
-  "manuscriptSectionBreak": "horizontal"
+  "maxBackupAgeDays": 30
 }

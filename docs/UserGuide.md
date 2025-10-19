@@ -325,7 +325,7 @@ Open plugin settings (Obsidian Settings → Community Plugins → WriteAid):
 1. In **Manuscript Settings**, select **Manuscript section break style**
 2. Choose from:
    - **Horizontal Rule** (---) - Professional solid lines
-   - **Asterisks** (***) - Eye-catching triple asterisks
+   - **Asterisks** (\*\*\*) - Eye-catching triple asterisks
    - **Dashes** (---) - Alternative dash style
 
 Each style renders the same but may appear different in different markdown editors.
@@ -449,7 +449,7 @@ Access settings via Obsidian Settings → Community Plugins → WriteAid:
 - **Manuscript name template** - Filename template with variables
 - **Manuscript section break style** - Style for breaks between chapters
   - Horizontal Rule (---)
-  - Asterisks (***)
+  - Asterisks (\*\*\*)
   - Dashes (---)
 - **Include chapter list in manuscript** - Toggle for future TOC feature
 
