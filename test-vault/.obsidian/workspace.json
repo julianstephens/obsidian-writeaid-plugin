@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Short Story/meta.md",
+                "file": "Short Story/manuscripts/Draft 1.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "meta"
+              "title": "Draft 1"
             }
           }
         ]
@@ -84,8 +84,7 @@
               "title": "WriteAid Projects"
             }
           }
-        ],
-        "currentTab": 3
+        ]
       }
     ],
     "direction": "horizontal",
@@ -182,8 +181,10 @@
   "active": "5280a970130968c9",
   "lastOpenFiles": [
     "Short Story/drafts/Draft 1/draft1.md",
-    "Short Story/drafts/Draft 1",
+    "Short Story/manuscripts/Draft 1.md",
+    "Short Story/manuscripts",
     "Short Story/meta.md",
+    "Short Story/drafts/Draft 1",
     "Short Story/drafts",
     "Short Story",
     "Short Story/drafts/First Draft/firstdraft.md",
@@ -197,7 +198,6 @@
     "Test 2/meta.md",
     "Test 2/drafts/Draft 1",
     "Test 2/drafts",
-    "Test 2",
     "Test/drafts/Draft 1/chapter1.md",
     "Test/meta.md",
     "Test/drafts/Draft 1/outline.md",

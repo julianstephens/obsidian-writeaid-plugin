@@ -730,7 +730,10 @@ export class DraftFileService {
     const manuscriptPath = `${manuscriptFolder}/${manuscriptBaseName}${MARKDOWN_FILE_EXTENSION}`;
 
     // Get manuscript settings
-    const authorName = this.manager?.settings?.authorName || "Unknown Author";
+    // Use configured author name if set, otherwise fall back to "Unknown Author"
+    const authorName = this.manager?.settings?.authorName?.trim() 
+      ? this.manager.settings.authorName 
+      : "Unknown Author";
     const sectionBreakStyle = this.manager?.settings?.manuscriptSectionBreak || "horizontal";
 
     // Format current date and time

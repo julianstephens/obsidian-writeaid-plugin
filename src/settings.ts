@@ -391,14 +391,14 @@ export class WriteAidSettingTab extends PluginSettingTab {
 
     new Setting(containerEl)
       .setName("Author name for manuscripts")
-      .setDesc("Name to appear in manuscript metadata headers (default: Unknown Author)")
+      .setDesc("Leave blank to use 'Unknown Author' as the default")
       .addText((t) =>
         t
-          .setValue(plugin.settings.authorName || "Unknown Author")
-          .setPlaceholder("Unknown Author")
+          .setValue(plugin.settings.authorName || "")
+          .setPlaceholder("e.g., Jane Doe")
           .onChange((v) => {
             debug(`${DEBUG_PREFIX} Manuscript author name changed: ${v}`);
-            plugin.settings.authorName = v || "Unknown Author";
+            plugin.settings.authorName = v;
             plugin.saveSettings();
           }),
       );
