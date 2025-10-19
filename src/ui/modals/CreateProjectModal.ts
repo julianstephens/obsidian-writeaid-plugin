@@ -2,6 +2,10 @@ import { debug, DEBUG_PREFIX } from "@/core/utils";
 import type { App } from "obsidian";
 import { Modal, Setting, TextAreaComponent } from "obsidian";
 
+/**
+ * Modal for creating a new writing project.
+ * Collects project name, type (single-file or multi-file), initial draft name, description, and parent folder.
+ */
 export class CreateProjectModal extends Modal {
   onSubmit: (
     projectName: string,

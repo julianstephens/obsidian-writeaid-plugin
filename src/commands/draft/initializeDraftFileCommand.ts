@@ -136,6 +136,12 @@ class SelectDraftFileModal extends SuggestModal<FileItem> {
   }
 }
 
+/**
+ * Creates a command that initializes or updates draft metadata in markdown files.
+ * Prompts the user to select a file and adds or updates frontmatter with draft metadata including ID, draft name, project name, and creation date.
+ * @param manager - The WriteAid manager instance containing active project and draft information
+ * @returns An async function that executes the draft file initialization command
+ */
 export function initializeDraftFileCommand(manager: WriteAidManager) {
   return async () => {
     const activeProjectPath = manager.activeProject;

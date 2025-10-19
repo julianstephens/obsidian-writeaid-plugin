@@ -18,6 +18,10 @@ import {
   type ProjectType,
 } from "./utils";
 
+/**
+ * Service for managing projects at a high level.
+ * Handles project creation, listing, validation, and lifecycle operations.
+ */
 export class ProjectService {
   app: App;
   manager: WriteAidManager | null;

@@ -18,6 +18,10 @@ import { SelectProjectModal } from "@/ui/modals/SelectProjectModal";
 import { SwitchDraftModal } from "@/ui/modals/SwitchDraftModal";
 import { App, Notice } from "obsidian";
 
+/**
+ * Central manager class for WriteAid plugin operations.
+ * Manages active projects and drafts, coordinates file services, and handles user interactions.
+ */
 export class WriteAidManager {
   app: App;
   activeDraft: string | null = null;

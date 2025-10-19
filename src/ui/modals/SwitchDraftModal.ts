@@ -2,6 +2,10 @@ import { debug, DEBUG_PREFIX } from "@/core/utils";
 import type { App } from "obsidian";
 import { Modal, Setting } from "obsidian";
 
+/**
+ * Modal for switching the active draft within the current project.
+ * Displays a dropdown list of available drafts for selection.
+ */
 export class SwitchDraftModal extends Modal {
   onSubmit: (draftName: string) => void;
   drafts: string[];

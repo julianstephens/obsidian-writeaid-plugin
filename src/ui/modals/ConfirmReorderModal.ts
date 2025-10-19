@@ -8,6 +8,10 @@ export interface ConfirmReorderOptions {
   proposedOrder: string[]; // display names in proposed order
 }
 
+/**
+ * Modal for confirming chapter reordering operation.
+ * Displays current and proposed order, with optional backup creation before reordering.
+ */
 export class ConfirmReorderModal extends Modal {
   opts: ConfirmReorderOptions;
   onConfirm: (createBackups: boolean) => void;

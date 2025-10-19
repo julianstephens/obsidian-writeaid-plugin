@@ -2,6 +2,12 @@ import { debug, DEBUG_PREFIX, getDraftsFolderName, MARKDOWN_FILE_EXTENSION } fro
 import type { WriteAidManager } from "@/manager";
 import { Notice } from "obsidian";
 
+/**
+ * Creates a command that navigates to the next chapter in the current draft.
+ * Automatically opens the next chapter file if one exists after the currently active chapter.
+ * @param manager - The WriteAid manager instance containing chapter navigation methods
+ * @returns An async function that executes the navigate to next chapter command
+ */
 export function navigateToNextChapterCommand(manager: WriteAidManager) {
   return async () => {
     debug(`${DEBUG_PREFIX} Navigate to next chapter command called`);

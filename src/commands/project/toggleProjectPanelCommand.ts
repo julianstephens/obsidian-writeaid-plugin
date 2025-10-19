@@ -3,6 +3,12 @@ import type { WriteAidManager } from "@/manager";
 import { VIEW_TYPE_PROJECT_PANEL } from "@/ui/sidepanel/ProjectPanelView";
 import type { App } from "obsidian";
 
+/**
+ * Creates a command that toggles the visibility of the project panel in the sidebar.
+ * @param manager - The WriteAid manager instance
+ * @param app - The Obsidian app instance for workspace management
+ * @returns A function that executes the toggle project panel command
+ */
 export function toggleProjectPanelCommand(manager: WriteAidManager, app: App) {
   return () => {
     debug(`${DEBUG_PREFIX} Toggle project panel command called`);

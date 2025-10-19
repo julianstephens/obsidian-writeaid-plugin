@@ -17,6 +17,10 @@ import type { WriteAidSettings } from "@/types";
 import { App, TFile, TFolder } from "obsidian";
 import { updateMetaStats } from "./meta";
 
+/**
+ * Service for managing chapter files within drafts.
+ * Handles creation, deletion, renaming, reordering, and listing of chapters.
+ */
 export class ChapterFileService {
   app: App;
   manager: WriteAidManager | null;

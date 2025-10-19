@@ -12,6 +12,10 @@ interface ProjectPanelComponent extends SvelteComponent {
   refreshDrafts?: () => void;
 }
 
+/**
+ * View class for the WriteAid project panel in the sidebar.
+ * Displays project and draft information, and provides UI for managing projects, drafts, and chapters.
+ */
 export class ProjectPanelView extends ItemView {
   app: App;
   manager: WriteAidManager;

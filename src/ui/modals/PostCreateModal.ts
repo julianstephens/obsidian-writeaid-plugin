@@ -2,6 +2,10 @@ import { debug, DEBUG_PREFIX } from "@/core/utils";
 import type { App } from "obsidian";
 import { Modal, Setting } from "obsidian";
 
+/**
+ * Modal displayed after successfully creating a new project.
+ * Provides options to open the project immediately or close the dialog.
+ */
 export class PostCreateModal extends Modal {
   projectPath: string;
   onOpenProject?: () => Promise<unknown>;

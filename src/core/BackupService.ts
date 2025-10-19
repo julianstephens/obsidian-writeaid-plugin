@@ -9,6 +9,10 @@ import {
   getBackupsFolderName,
 } from "./utils";
 
+/**
+ * Service for managing draft backups.
+ * Handles creation, listing, deletion, and cleanup of ZIP backups for drafts.
+ */
 export class BackupService {
   constructor(
     private app: App,

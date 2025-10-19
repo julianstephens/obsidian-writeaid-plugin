@@ -2,6 +2,11 @@ import { DEBUG_PREFIX, debug } from "@/core/utils";
 import type { WriteAidManager } from "@/manager";
 import { Notice } from "obsidian";
 
+/**
+ * Creates an outline file for the currently active draft using the configured template.
+ * Shows an error if no active project/draft is selected or if the outline already exists.
+ * @param manager - The WriteAid manager instance containing active project and draft information
+ */
 export async function createOutlineCommand(manager: WriteAidManager): Promise<void> {
   debug(`${DEBUG_PREFIX} createOutlineCommand called`);
 

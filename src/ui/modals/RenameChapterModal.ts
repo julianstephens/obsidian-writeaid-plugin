@@ -1,6 +1,10 @@
 import { debug, DEBUG_PREFIX } from "@/core/utils";
 import { App, Modal } from "obsidian";
 
+/**
+ * Modal for renaming a chapter.
+ * Prompts for a new chapter name and validates the input.
+ */
 export class RenameChapterModal extends Modal {
   oldName: string;
   onSubmit: (newName: string) => void;

@@ -3,6 +3,11 @@ import type { WriteAidManager } from "@/manager";
 import { WriteAidError } from "@/types";
 import { Notice, TFolder } from "obsidian";
 
+/**
+ * Creates a command that deletes the oldest backup for the currently active draft.
+ * @param manager - The WriteAid manager instance containing active project and draft information
+ * @returns An async function that executes the delete backup command
+ */
 export function deleteBackupCommand(manager: WriteAidManager) {
   return async () => {
     const activeProjectPath = manager.activeProject;
