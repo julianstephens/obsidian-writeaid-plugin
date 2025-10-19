@@ -30,7 +30,7 @@ export class CreateProjectModal extends Modal {
     let projectName = "";
     let singleFile = true;
     let initialDraftName = "Draft 1";
-    let description = "";
+    let descriptionTextArea: any;
 
     new Setting(contentEl)
       .setName("Project folder name")
@@ -51,18 +51,19 @@ export class CreateProjectModal extends Modal {
     new Setting(contentEl)
       .setName("Description (optional)")
       .setDesc("Add a brief description for your project")
-      .addTextArea((text) =>
+      .addTextArea((text) => {
+        descriptionTextArea = text;
         text
           .setPlaceholder("e.g., An epic fantasy novel exploring themes of courage and redemption")
-          .onChange((v) => (description = v))
-          .inputEl.style.setProperty("min-height", "80px"),
-      );
+          .inputEl.style.setProperty("min-height", "80px");
+      });
 
     new Setting(contentEl).addButton((btn) =>
       btn
         .setButtonText("Create Project")
         .setCta()
         .onClick(() => {
+          const description = descriptionTextArea.getValue();
           debug(
             `${DEBUG_PREFIX} CreateProjectModal: creating project "${projectName}", singleFile: ${singleFile}, initialDraftName: ${initialDraftName}, description: ${description}`,
           );
