@@ -289,7 +289,7 @@ function formatMetaContent(metadata: ProjectMetadata): string {
   if (metadata.project_name !== undefined) {
     fields.project_name = metadata.project_name;
   }
-  if (metadata.description !== undefined && metadata.description !== "") {
+  if (metadata.description !== undefined) {
     fields.description = metadata.description;
   }
   if (metadata.date_created !== undefined) {
