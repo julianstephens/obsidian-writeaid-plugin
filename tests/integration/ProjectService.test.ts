@@ -30,6 +30,7 @@ describe("ProjectService Integration", () => {
         true, // single-file
         "Draft 1",
         undefined,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         { defaultSingleTargetWordCount: 20000 } as any,
         description,
       );
@@ -68,6 +69,7 @@ describe("ProjectService Integration", () => {
         false, // multi-file
         "Draft 1",
         undefined,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         { defaultMultiTargetWordCount: 50000 } as any,
         description,
       );

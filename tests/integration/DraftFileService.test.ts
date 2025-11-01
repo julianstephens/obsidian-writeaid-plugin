@@ -4,8 +4,7 @@ import { DraftFileService } from "@/core/DraftFileService";
 import { ProjectService } from "@/core/ProjectService";
 import { ChapterFileService } from "@/core/ChapterFileService";
 import { BackupService } from "@/core/BackupService";
-import { countWords, FRONTMATTER_REGEX } from "@/core/utils";
-import { TFile } from "obsidian";
+
 import * as path from "path";
 
 describe("DraftFileService Integration", () => {

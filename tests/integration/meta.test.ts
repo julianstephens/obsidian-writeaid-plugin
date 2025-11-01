@@ -52,7 +52,8 @@ This is chapter one with ten words in it.`;
       const file = app.vault.getAbstractFileByPath(chapterFile) as TFile;
       const updatedContent = await app.vault.read(file);
 
-      expect(updatedContent).toContain("word_count: 10");
+      // The body has 9 words: "This is chapter one with ten words in it."
+      expect(updatedContent).toContain("word_count: 9");
       expect(updatedContent).not.toContain("last_updated: 2024-01-01T00:00:00.000Z");
       expect(updatedContent).toContain("last_updated:");
     });

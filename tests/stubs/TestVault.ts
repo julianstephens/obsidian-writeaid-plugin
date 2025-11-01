@@ -237,7 +237,7 @@ export class TestVault extends Vault {
   /**
    * Delete a file
    */
-  async delete(file: TFile | TFolder, force?: boolean): Promise<void> {
+  async delete(file: TFile | TFolder, _force?: boolean): Promise<void> {
     if (file instanceof TFile) {
       await this.adapter.remove(file.path);
       this.fileCache.delete(file.path);

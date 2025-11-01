@@ -6,6 +6,7 @@ import { TestVault } from "./TestVault";
  */
 export class TestApp extends App {
   vault: TestVault;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   plugins: any;
 
   constructor(basePath: string) {

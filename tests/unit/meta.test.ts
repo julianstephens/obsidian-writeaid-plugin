@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect } from "vitest";
 import { buildFrontmatter, extractFrontmatterFields } from "@/core/utils";
 
 describe("meta.ts helpers", () => {

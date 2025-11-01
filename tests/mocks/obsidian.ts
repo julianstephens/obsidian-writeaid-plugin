@@ -4,7 +4,7 @@
  */
 
 export class Notice {
-  constructor(message: string, timeout?: number) {
+  constructor(_message: string, _timeout?: number) {
     // Mock - do nothing in tests
   }
 }
