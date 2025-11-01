@@ -1,3 +1,7 @@
+# v0.2.2
+
+- Added a new word count donut chart to display word counts visually.
+
 # v0.2.1
 
 - Enhanced manuscript generation capabilities.

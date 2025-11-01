@@ -1,7 +1,7 @@
 {
   "id": "obsidian-writeaid-plugin",
   "name": "WriteAid",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "minAppVersion": "0.15.0",
   "description": "A novel writing plugin for Obsidian supporting multiple drafts per project.",
   "author": "julianstephens",
@@ -13,7 +13,10 @@
       "name": "Create New Draft",
       "hotkeys": [
         {
-          "modifiers": ["Mod", "Alt"],
+          "modifiers": [
+            "Mod",
+            "Alt"
+          ],
           "key": "D"
         }
       ]
@@ -23,7 +26,10 @@
       "name": "Create Outline",
       "hotkeys": [
         {
-          "modifiers": ["Mod", "Alt"],
+          "modifiers": [
+            "Mod",
+            "Alt"
+          ],
           "key": "O"
         }
       ]
@@ -33,7 +39,10 @@
       "name": "Create New Project",
       "hotkeys": [
         {
-          "modifiers": ["Mod", "Shift"],
+          "modifiers": [
+            "Mod",
+            "Shift"
+          ],
           "key": "P"
         }
       ]
@@ -43,7 +52,10 @@
       "name": "Switch Active Draft",
       "hotkeys": [
         {
-          "modifiers": ["Mod", "Alt"],
+          "modifiers": [
+            "Mod",
+            "Alt"
+          ],
           "key": "S"
         }
       ]
@@ -53,7 +65,10 @@
       "name": "Update Project Metadata",
       "hotkeys": [
         {
-          "modifiers": ["Mod", "Alt"],
+          "modifiers": [
+            "Mod",
+            "Alt"
+          ],
           "key": "M"
         }
       ]
@@ -63,7 +78,10 @@
       "name": "Select Active Project",
       "hotkeys": [
         {
-          "modifiers": ["Mod", "Alt"],
+          "modifiers": [
+            "Mod",
+            "Alt"
+          ],
           "key": "A"
         }
       ]
@@ -73,7 +91,10 @@
       "name": "Generate Manuscript",
       "hotkeys": [
         {
-          "modifiers": ["Mod", "Shift"],
+          "modifiers": [
+            "Mod",
+            "Shift"
+          ],
           "key": "M"
         }
       ]
@@ -87,7 +108,10 @@
       "name": "Navigate to Next Chapter",
       "hotkeys": [
         {
-          "modifiers": ["Mod", "Alt"],
+          "modifiers": [
+            "Mod",
+            "Alt"
+          ],
           "key": "N"
         }
       ]
@@ -97,7 +121,10 @@
       "name": "Navigate to Previous Chapter",
       "hotkeys": [
         {
-          "modifiers": ["Mod", "Alt"],
+          "modifiers": [
+            "Mod",
+            "Alt"
+          ],
           "key": "P"
         }
       ]
