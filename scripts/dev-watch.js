@@ -7,7 +7,8 @@ const distDir = path.join(repoRoot, "dist");
 const manifest = path.join(repoRoot, "manifest.json");
 const pluginPath = ".obsidian/plugins/obsidian-writeaid-plugin";
 const wslDest = path.join(repoRoot, "test-vault", pluginPath);
-const destinations = [wslDest];
+const windowsDest = path.join("/mnt/c/Users/leahs/OneDrive/Writing/WIP", pluginPath);
+const destinations = [wslDest, windowsDest];
 
 /**
  * @type {string | number | NodeJS.Timeout | null | undefined}

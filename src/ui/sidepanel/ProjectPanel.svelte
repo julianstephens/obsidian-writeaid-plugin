@@ -15,6 +15,7 @@
   import BaseButton from "@/ui/components/BaseButton.svelte";
   import IconButton from "@/ui/components/IconButton.svelte";
   import Select from "@/ui/components/Select.svelte";
+  import WordCountDonut from "@/ui/components/WordCountDonut.svelte";
   import { ConfirmDeleteModal } from "@/ui/modals/ConfirmDeleteModal";
   import { DuplicateDraftModal } from "@/ui/modals/DuplicateDraftModal";
   import { RenameChapterModal } from "@/ui/modals/RenameChapterModal";
@@ -57,6 +58,7 @@
   let sortAsc = true;
   let activeDraft: string | null = null;
   let activeProjectListener: ((p: string | null) => void) | null = null;
+  let panelRefreshListener: (() => void) | null = null;
   const ICON_SIZE = 20;
 
   // Chapter management state
@@ -67,6 +69,10 @@
   let newChapterNameValue = "";
   let isMultiFileProject = false;
   let initialized = false;
+
+  // Word count progress state
+  let currentWordCount: number = 0;
+  let targetWordCount: number = 0;
 
   // Debounce flags to prevent infinite refresh loops (especially on Windows)
   let refreshChaptersTimeout: ReturnType<typeof setTimeout> | null = null;
@@ -91,6 +97,8 @@
       debug(`${DEBUG_PREFIX} active draft updated -> ${draft}`);
       // Refresh chapters when active draft changes
       refreshChapters();
+      // Refresh word counts when active draft changes
+      refreshWordCounts();
     };
     manager.addActiveDraftListener(activeDraftListener);
 
@@ -105,6 +113,7 @@
       // Refresh everything when active project changes
       if (project) {
         refresh();
+        refreshWordCounts();
       } else {
         // Clear state when no project is active
         selected = undefined;
@@ -112,12 +121,23 @@
         drafts = [];
         chapters = [];
         isMultiFileProject = false;
+        currentWordCount = 0;
+        targetWordCount = 0;
       }
     };
     manager.addActiveProjectListener(activeProjectListener);
 
+    // Listen for generic panel refresh notifications (e.g., metadata updates)
+    panelRefreshListener = () => {
+      refreshWordCounts();
+    };
+    if (typeof manager.addPanelRefreshListener === "function") {
+      manager.addPanelRefreshListener(panelRefreshListener);
+    }
+
     // Load initial data
     refresh();
+    refreshWordCounts();
   }
 
   // Cleanup on destroy
@@ -125,6 +145,13 @@
     try {
       if (manager && activeProjectListener) {
         manager.removeActiveProjectListener(activeProjectListener);
+      }
+      if (
+        manager &&
+        panelRefreshListener &&
+        typeof manager.removePanelRefreshListener === "function"
+      ) {
+        manager.removePanelRefreshListener(panelRefreshListener);
       }
       // Clean up any pending refresh timeouts
       if (refreshChaptersTimeout) {
@@ -247,6 +274,8 @@
     if (selectedValue) await refreshDrafts();
     // Also refresh chapters if we have a selected project and active draft
     if (selectedValue && manager?.activeDraft) await refreshChapters();
+    // Always refresh word counts after refresh completes
+    await refreshWordCounts();
     return newProjects;
   }
 
@@ -338,6 +367,38 @@
     } finally {
       await minSpin;
       loadingChapters = false;
+    }
+  }
+
+  // Refresh the word count progress from meta.md
+  async function refreshWordCounts() {
+    try {
+      if (!selectedValue) {
+        currentWordCount = 0;
+        targetWordCount = 0;
+        return;
+      }
+      const metaPath = `${selectedValue}/${getMetaFileName(manager?.settings)}`;
+      const meta = await readMetaFile(manager.app, metaPath);
+      const c = Number((meta as any)?.current_draft_word_count ?? 0);
+      currentWordCount = Number.isFinite(c) ? c : 0;
+
+      // Prefer per-project target; fall back to settings defaults by project type
+      const projectType = (meta as any)?.project_type;
+      const settings = manager?.settings as any;
+      const defaultMulti = Number(settings?.defaultMultiTargetWordCount ?? 50000);
+      const defaultSingle = Number(settings?.defaultSingleTargetWordCount ?? 20000);
+      const tFromMeta = Number((meta as any)?.target_word_count ?? 0);
+      if (Number.isFinite(tFromMeta) && tFromMeta > 0) {
+        targetWordCount = tFromMeta;
+      } else {
+        // The meta stores multi-file as "multi-file"
+        const isMulti = projectType === "multi-file";
+        targetWordCount = isMulti ? defaultMulti : defaultSingle;
+      }
+    } catch (e) {
+      currentWordCount = 0;
+      targetWordCount = 0;
     }
   }
 
@@ -538,6 +599,7 @@
     activeDraft = manager?.activeDraft ?? null;
     await refreshDrafts();
     await refreshChapters();
+    await refreshWordCounts();
   }
 
   // Handle opening the create project modal
@@ -680,6 +742,17 @@
   {/if}
 
   {#if selectedValue}
+    <!-- Word Count Progress -->
+    <div class="wa-row" style="gap: 16px; align-items: center; margin-top: 8px;">
+      <WordCountDonut current={currentWordCount} target={targetWordCount} size={120} />
+      <div>
+        <div class="wa-title" style="margin-bottom: 4px;">Draft Progress</div>
+        <div class="wa-muted">
+          {currentWordCount.toLocaleString()} / {targetWordCount.toLocaleString()} words
+        </div>
+      </div>
+    </div>
+
     <div class="draft-controls" style="margin-top:16px;">
       <div class="wa-panel-header">
         <div class="wa-row justify-between">

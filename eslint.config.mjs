@@ -42,7 +42,15 @@ export default defineConfig([
     rules: {
       ...js.configs.recommended.rules,
       ...typescriptEslint.configs.recommended.rules,
-      "@typescript-eslint/no-unused-vars": "warn",
+      "@typescript-eslint/no-unused-vars": [
+        "warn",
+        {
+          argsIgnorePattern: '^_',
+          varsIgnorePattern: '^_',
+          caughtErrorsIgnorePattern: '^_',
+          destructuredArrayIgnorePattern: '^_',
+        }
+      ],
       "@typescript-eslint/explicit-module-boundary-types": "off",
     },
   },

@@ -26,7 +26,7 @@ export class SwitchDraftModal extends SuggestModal<string> {
     el.createEl("div", { text: draft });
   }
 
-  onChooseSuggestion(draft: string, evt: MouseEvent | KeyboardEvent): void {
+  onChooseSuggestion(draft: string, _: MouseEvent | KeyboardEvent): void {
     debug(`${DEBUG_PREFIX} SwitchDraftModal: selected draft "${draft}"`);
     this.onSubmitCallback(draft);
   }

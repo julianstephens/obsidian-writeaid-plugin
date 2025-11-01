@@ -27,7 +27,7 @@ export class SelectProjectModal extends SuggestModal<string> {
     el.createEl("div", { text: folder || "(Vault root)" });
   }
 
-  onChooseSuggestion(folder: string, evt: MouseEvent | KeyboardEvent): void {
+  onChooseSuggestion(folder: string, _: MouseEvent | KeyboardEvent): void {
     debug(`${DEBUG_PREFIX} SelectProjectModal: selected project "${folder}"`);
     this.onSubmitCallback(folder);
   }

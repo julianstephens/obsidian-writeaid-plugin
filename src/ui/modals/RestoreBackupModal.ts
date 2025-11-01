@@ -209,8 +209,7 @@ export class RestoreBackupModal extends SuggestModal<BackupItem> {
     el.createEl("div", { text: backup.displayText });
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  async onChooseSuggestion(backup: BackupItem, _evt: MouseEvent | KeyboardEvent) {
+  async onChooseSuggestion(backup: BackupItem, _: MouseEvent | KeyboardEvent) {
     const previousActiveDraft = this.manager.activeDraft;
     debug(
       `${DEBUG_PREFIX} Restoring backup: ${backup.draftName} (${backup.timestamp}), current active draft: ${previousActiveDraft}`,

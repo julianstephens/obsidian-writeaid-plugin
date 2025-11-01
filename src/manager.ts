@@ -359,6 +359,8 @@ export class WriteAidManager {
     if (this.activeProject) {
       await updateMetaStats(this.app, this.activeProject, undefined, undefined, this.settings);
       new Notice(`Metadata updated for ${this.activeProject}`);
+      // Notify panels so any metadata-driven UI (e.g., word count donut) refreshes
+      suppress(() => this.notifyPanelRefresh());
       return;
     }
 
@@ -372,6 +374,8 @@ export class WriteAidManager {
         onSubmit: async (projectPath: string) => {
           await updateMetaStats(this.app, projectPath, undefined, undefined, this.settings);
           new Notice(`Metadata updated for ${projectPath}`);
+          // Notify panels so any metadata-driven UI refreshes
+          suppress(() => this.notifyPanelRefresh());
         },
       }).open();
     })();
