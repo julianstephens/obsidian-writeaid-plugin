@@ -1,0 +1,220 @@
+{
+  "main": {
+    "id": "66050535fb56d8ab",
+    "type": "split",
+    "children": [
+      {
+        "id": "b9613ac2958bcc95",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "3b54e8a94d3dcf15",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "Novel/drafts/Draft 1/chapter1.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "chapter1"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "ee173cea8bacfbda",
+    "type": "split",
+    "children": [
+      {
+        "id": "52169454cfd331e6",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "03e1d346535ab3d0",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {
+                "sortOrder": "alphabetical",
+                "autoReveal": false
+              },
+              "icon": "lucide-folder-closed",
+              "title": "Files"
+            }
+          },
+          {
+            "id": "a86e8793b7db5cf9",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              },
+              "icon": "lucide-search",
+              "title": "Search"
+            }
+          },
+          {
+            "id": "fddc88cbc333f216",
+            "type": "leaf",
+            "state": {
+              "type": "bookmarks",
+              "state": {},
+              "icon": "lucide-bookmark",
+              "title": "Bookmarks"
+            }
+          },
+          {
+            "id": "36a4b021559a3158",
+            "type": "leaf",
+            "state": {
+              "type": "writeaid-project-panel",
+              "state": {},
+              "icon": "pen-tool",
+              "title": "WriteAid Projects"
+            }
+          }
+        ],
+        "currentTab": 3
+      }
+    ],
+    "direction": "horizontal",
+    "width": 475.5
+  },
+  "right": {
+    "id": "741f9b7f0069bec9",
+    "type": "split",
+    "children": [
+      {
+        "id": "7a870b35851237d2",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "d2abc8a23dae2f49",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "file": "novel/Drafts/Draft 1/Chapter 2.md",
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-coming-in",
+              "title": "Backlinks for Chapter 2"
+            }
+          },
+          {
+            "id": "27a7fa514a745b84",
+            "type": "leaf",
+            "state": {
+              "type": "outgoing-link",
+              "state": {
+                "linksCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-going-out",
+              "title": "Outgoing links"
+            }
+          },
+          {
+            "id": "b330a024dfe5c7dd",
+            "type": "leaf",
+            "state": {
+              "type": "tag",
+              "state": {
+                "sortOrder": "frequency",
+                "useHierarchy": true,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-tags",
+              "title": "Tags"
+            }
+          },
+          {
+            "id": "8aa3e6666efd65f9",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {
+                "followCursor": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-list",
+              "title": "Outline"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300,
+    "collapsed": true
+  },
+  "left-ribbon": {
+    "hiddenItems": {
+      "obsidian-writeaid-plugin:WriteAid Projects": false,
+      "switcher:Open quick switcher": false,
+      "graph:Open graph view": false,
+      "canvas:Create new canvas": false,
+      "daily-notes:Open today's daily note": false,
+      "templates:Insert template": false,
+      "command-palette:Open command palette": false,
+      "bases:Create new base": false
+    }
+  },
+  "active": "3b54e8a94d3dcf15",
+  "lastOpenFiles": [
+    "Novel/drafts/Draft 1/chapter3.md",
+    "Novel/drafts/Draft 1/chapter2.md",
+    "Novel/drafts/Draft 1/chapter1.md",
+    "Short Story/meta.md",
+    "Short Story/manuscripts/Draft 1.md",
+    "Short Story/manuscripts",
+    "Short Story/drafts/Draft 2/draft2.md",
+    "Short Story/drafts/Draft 2",
+    "Novel/manuscripts/Draft 1.md",
+    "Novel/drafts/Draft 1",
+    "Novel/meta.md",
+    "Novel/manuscripts",
+    "Novel/drafts",
+    "Novel",
+    "Short Story/drafts/Draft 1/draft1.md",
+    "Short Story/manuscripts/Draft 1-10-19.md",
+    "Short Story/drafts/Draft 1",
+    "Short Story/drafts",
+    "Short Story",
+    "Short Story/drafts/First Draft/firstdraft.md",
+    "Short Story/drafts/First Draft",
+    "Test 2/drafts/Draft 1/draft1.md",
+    "Test 2/meta.md",
+    "Test/drafts/Draft 1/chapter1.md",
+    "Test/meta.md",
+    "Test/drafts/Draft 1/outline.md",
+    "Test/drafts/Draft 1/draft1.md",
+    "Novel/drafts/Draft 1/outline.md",
+    "Move/meta.md",
+    "Move/drafts/Draft 1/chapter1.md",
+    "Move/drafts/Draft 1/chapter2.md",
+    "novel/Drafts/Draft 2/chapter1.md",
+    "novel/Drafts/Draft 2/Chapter 3.md",
+    "novel/meta.md",
+    "Story/Drafts/Draft 8/draft8.md"
+  ]
+}

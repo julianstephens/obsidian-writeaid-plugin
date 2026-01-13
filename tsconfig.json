@@ -16,6 +16,6 @@
     },
     "types": ["vite/client", "svelte"]
   },
-  "include": ["src/**/*", "*.svelte"],
+  "include": ["src/**/*", "*.svelte", "tests/**/*", "vitest.config.ts"],
   "exclude": ["node_modules/*", "dist/*", "scripts/**"]
 }
