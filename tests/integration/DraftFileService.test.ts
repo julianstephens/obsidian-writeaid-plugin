@@ -66,8 +66,17 @@ Let's make sure the word count is accurate.`;
 
     it("should calculate total word count for multi-file draft", async () => {
       const app = vaultManager.getApp()!;
+      const projectService = new ProjectService(app);
+      
+      // Create a multi-file project (singleFile = false)
+      const multiFileProjectPath = await projectService.createProject(
+        "Multi File Project",
+        false,
+        "Draft 1"
+      );
+      
       const draftName = "Draft 2";
-      const draftPath = `${projectPath}/drafts/${draftName}`;
+      const draftPath = `${multiFileProjectPath}/drafts/${draftName}`;
 
       await app.vault.createFolder(draftPath);
 
@@ -103,7 +112,7 @@ last_updated: 2024-01-01T00:00:00.000Z
 Second chapter with more words for testing.`,
       );
 
-      const wordCount = await draftService.calculateDraftWordCount(projectPath, draftName);
+      const wordCount = await draftService.calculateDraftWordCount(multiFileProjectPath!, draftName);
 
       // Total: "First chapter content here." (4) + "Second chapter with more words for testing." (7) = 11
       expect(wordCount).toBe(11);
@@ -161,7 +170,7 @@ Only these five words count.`;
       expect(draftFolder).not.toBeNull();
 
       // Delete the draft (without backup)
-      await draftService.deleteDraft(draftName, false, projectPath);
+      await draftService.deleteDraft(projectPath, draftName, false);
 
       // Refresh cache to reflect deletion
       await app.vault.refreshCache();

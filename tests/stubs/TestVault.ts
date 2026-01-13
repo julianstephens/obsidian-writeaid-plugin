@@ -156,23 +156,9 @@ export class TestVault extends Vault {
       return this.folderCache.get(normalPath)!;
     }
 
-    // Try to find it by scanning
-    try {
-      const fullPath = path.join((this.adapter as TestAdapter).basePath, normalPath);
-      const stats = fs.statSync(fullPath);
-
-      if (stats.isDirectory()) {
-        const folder = new TestTFolder(this, normalPath);
-        this.folderCache.set(normalPath, folder);
-        return folder;
-      } else {
-        const file = new TestTFile(this, normalPath);
-        this.fileCache.set(normalPath, file);
-        return file;
-      }
-    } catch {
-      return null;
-    }
+    // If not in cache, return null (don't re-scan filesystem)
+    // This prevents deleted items from being re-added to cache
+    return null;
   }
 
   /**
