@@ -1,6 +1,5 @@
 import { TAbstractFile, TFile, TFolder, Vault } from "obsidian";
 import { TestAdapter } from "./TestAdapter";
-import * as fs from "fs";
 import * as path from "path";
 
 /**
